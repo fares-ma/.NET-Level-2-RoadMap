@@ -1,58 +1,65 @@
 # 🧭 Mentorship Timeline
 
-### 🎤 23 Oct
+### 🎤 19 Oct
 **Orientation**
 
 ⬇️
 
-### 🟦 Sprint 1 · Domain, Architecture & Persistence
-**24 Oct → 6 Nov**
+### 🟦 Sprint 1 · Clean Architecture, Identity & Categories
+**20 Oct → 2 Nov**
 
-> 🚀 24 Oct — Kickoff  
-> 🔄 31 Oct — Stand-up  
-> ✅ 7 Nov — Sprint Review
-
-⬇️
-
-### 🟩 Sprint 2 · CQRS, MediatR & Security
-**7 Nov → 20 Nov**
-
-> 🚀 7 Nov — Kickoff  
-> 🔄 14 Nov — Stand-up  
-> ✅ 21 Nov — Sprint Review
+> 🚀 20 Oct — Kickoff  
+> 🔄 27 Oct — Stand-up  
+> ✅ 3 Nov — Sprint Review
 
 ⬇️
 
-### 🟨 Sprint 3 · Business Rules & API Engineering
-**21 Nov → 4 Dec**
+### 🟩 Sprint 2 · Campaigns, CQRS, MediatR & Unit Testing
+**3 Nov → 16 Nov**
 
-> 🚀 21 Nov — Kickoff  
-> 🔄 28 Nov — Stand-up  
-> ✅ 5 Dec — Sprint Review
-
-⬇️
-
-### 🟧 Sprint 4 · Production Engineering
-**5 Dec → 18 Dec**
-
-> 🚀 5 Dec — Kickoff  
-> 🔄 12 Dec — Stand-up  
-> ✅ 19 Dec — Sprint Review
+> 🚀 3 Nov — Kickoff  
+> 🔄 10 Nov — Stand-up  
+> ✅ 17 Nov — Sprint Review
 
 ⬇️
 
-### 🟥 Sprint 5 · Testing, AI & Payment
-**19 Dec → 1 Jan**
+### 🟨 Sprint 3 · Donations, Authorization & API Engineering
+**17 Nov → 30 Nov**
 
-> 🚀 19 Dec — Kickoff  
-> 🔄 26 Dec — Stand-up  
-> ✅ 2 Jan — Sprint Review
+> 🚀 17 Nov — Kickoff  
+> 🔄 24 Nov — Stand-up  
+> ✅ 1 Dec — Sprint Review
 
 ⬇️
 
-### 🟪 Sprint 6 · Docker, CI/CD & Deployment
-**2 Jan → 15 Jan**
+### 🟧 Sprint 4 · Notifications, Files, Hangfire & Serilog
+**1 Dec → 14 Dec**
 
-> 🚀 2 Jan — Kickoff  
-> 🔄 9 Jan — Stand-up  
-> 🏁 16 Jan — Final Review & Project Presentation
+> 🚀 1 Dec — Kickoff  
+> 🔄 8 Dec — Stand-up  
+> ✅ 15 Dec — Sprint Review
+
+⬇️
+
+### 🟥 Sprint 5 · Payments (Stripe), Idempotency & Integration Testing
+**15 Dec → 28 Dec**
+
+> 🚀 15 Dec — Kickoff  
+> 🔄 22 Dec — Stand-up  
+> ✅ 29 Dec — Sprint Review
+
+⬇️
+
+### 🟪 Sprint 6 · Reports, Admin, Docker, CI/CD & Health Checks
+**29 Dec → 11 Jan**
+
+> 🚀 29 Dec — Kickoff  
+> 🔄 5 Jan — Stand-up  
+> ✅ 12 Jan — Sprint Review
+
+⬇️
+
+### 🏁 Final Period · Fixes, Documentation & Discussion
+**12 Jan → 20 Jan**
+
+> 🏁 20 Jan — Final Review & Project Presentation

@@ -1,19 +1,20 @@
-# Sprint 6 — Docker, CI/CD & Deployment
+# Sprint 6 — Reports, Admin, Docker, CI/CD & Health Checks
 
-> Project: **TeamFlow — Project & Team Operations Platform**
+> Project: **DonationHub — Donation Management Platform**
 > Duration: **2 weeks (~15 hours/week)**
 > Evaluation: **100 points**
 
 ## Sprint Goal
 
-Take TeamFlow from 'it works on my machine' to a system that can be built, tested, containerized, and deployed consistently.
+Take DonationHub from "it works on my machine" to a system that can be built, tested, containerized, and deployed consistently. Implement the Reports and Admin modules, add health checks, and finalize the project.
+
 ## How to use this sprint plan
 
 For every task:
 
 1. Read the **MUST** resources before implementation.
 2. Read **DEEP DIVE** only when the concept is unclear or the learner wants deeper understanding.
-3. Implement the requested TeamFlow change.
+3. Implement the requested DonationHub change.
 4. Verify the behavior manually.
 5. Add/update tests when the task naturally requires them.
 6. Commit the work in small, meaningful commits.
@@ -23,189 +24,220 @@ For every task:
 
 ## Sprint Tasks
 
-### Task 1 — Dockerfile
+### Task 1 — Dashboard & Reports
 
-Create a production-oriented Dockerfile.
+Implement the Admin dashboard:
 
-Required understanding:
-- build context
-- layers
-- build vs runtime image
-- ports
-- environment configuration
-- multi-stage build
+- **RPT-01:** Dashboard summary: total raised, number of succeeded donations, number of distinct donors, active/completed/expired campaign counts.
+- **RPT-02:** Top N campaigns by raised amount.
+- **RPT-03:** Donations over time (per day) for a date range.
+- **RPT-04:** Dashboard responses are **cached** (default 5 minutes) and the numbers must match the database.
+
+| Method | Path | Access |
+|--------|------|--------|
+| GET | `/admin/dashboard/summary` | Admin |
+| GET | `/admin/dashboard/top-campaigns?count=5` | Admin |
+| GET | `/admin/dashboard/donations-over-time?from=&to=` | Admin |
 
 ### Resources
-- **MUST** — [Docker Get Started](https://docs.docker.com/get-started/)
-- **MUST** — [Docker build best practices](https://docs.docker.com/build/building/best-practices/)
+- **MUST** — [EF Core — Efficient querying](https://learn.microsoft.com/en-us/ef/core/performance/efficient-querying)
+- **MUST** — [ASP.NET Core — Distributed caching](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed)
+- **VIDEO** — [Milan Jovanović — High-Performance Aggregations in EF Core](https://www.youtube.com/watch?v=cM3k0ZqP4f0)
 
 ---
 
-### Task 2 — Docker Compose
+### Task 2 — Admin User Management
 
-Create:
+Implement:
+
+- **ADM-01:** Admin lists all users (paged, filter by role, search by name or email).
+- **ADM-02:** Admin activates or deactivates a user. A deactivated user cannot log in.
+- **ADM-03:** Admin lists, updates, and deletes staff users. Delete means deactivate. An Admin cannot deactivate themselves, and the last active Admin cannot be removed.
+
+| Method | Path | Access |
+|--------|------|--------|
+| GET | `/admin/users` | Admin |
+| PATCH | `/admin/users/{id}/status` | Admin |
+| GET | `/admin/staff` | Admin |
+| PUT | `/admin/staff/{id}` | Admin |
+| DELETE | `/admin/staff/{id}` | Admin |
+
+### Resources
+- **MUST** — [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity)
+
+---
+
+### Task 3 — Health Checks
+
+Implement:
+
+- `/health/live` — the process is up (no dependency checks)
+- `/health/ready` — SQL Server, Redis, and write access to the file storage folder
+- Responses are JSON with each check's status
+
+### Resources
+- **MUST** — [ASP.NET Core — Health checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks)
+- **VIDEO** — [Nick Chapsas — Health Checks in ASP.NET Core (.NET 8)](https://www.youtube.com/watch?v=kY8c2_J6F9Y)
+- **VIDEO** — [Milan Jovanović — Health Checks Monitoring SQL & Redis](https://www.youtube.com/watch?v=d_Z9Q4u0n7A)
+
+---
+
+### Task 4 — Dockerfile
+
+Create a production-oriented, multi-stage Dockerfile:
+
+- Build stage: restore, build, publish
+- Runtime stage: minimal image, **non-root user**
+- Understand: build context, layers, build vs runtime image, ports, environment configuration
+
+### Resources
+- **MUST** — [Docker — Get Started](https://docs.docker.com/get-started/)
+- **MUST** — [Docker — Build best practices](https://docs.docker.com/build/building/best-practices/)
+- **VIDEO** — [Nick Chapsas — Dockerizing .NET Applications (Multi-Stage & Non-Root)](https://www.youtube.com/watch?v=bb_t_kY6zNo)
+- **VIDEO** — [Milan Jovanović — Containerizing .NET 8 Applications with Docker](https://www.youtube.com/watch?v=p7_x1M4n2qA)
+
+---
+
+### Task 5 — Docker Compose
+
+Create `docker-compose.yml` with services:
+
 ```text
-API
-SQL Server
-Redis
+api          (DonationHub API)
+sqlserver    (SQL Server)
+redis        (Redis)
+mailpit      (Mailpit for development emails)
 ```
-and make the local environment reproducible.
+
+- Use **named volumes** for SQL data and uploaded files
+- All settings through **environment variables**
+- `docker compose up` must produce a working API with migrations applied and admin seeded
+- Health checks and `depends_on` conditions for startup order
 
 ### Resources
-- **MUST** — [Docker Compose getting started](https://docs.docker.com/compose/gettingstarted/)
-- **MUST** — [Compose file reference](https://docs.docker.com/reference/compose-file/)
+- **MUST** — [Docker Compose — Getting started](https://docs.docker.com/compose/gettingstarted/)
+- **MUST** — [Docker Compose — File reference](https://docs.docker.com/reference/compose-file/)
+- **MUST** — [Docker Compose — Environment variables](https://docs.docker.com/compose/how-tos/environment-variables/)
+- **VIDEO** — [Milan Jovanović — Docker Compose for .NET Developers](https://www.youtube.com/watch?v=9_Y_j1c8k8A)
+- **VIDEO** — [Amichai Mantinband — Docker Compose for ASP.NET Core & Dependencies](https://www.youtube.com/watch?v=W7m_8n4_4wU)
 
 ---
 
-### Task 3 — Environment Configuration
+### Task 6 — Environment Configuration & Secrets
 
-Move environment-specific configuration outside source code.
-
-Examples:
-- Connection strings
-- JWT configuration
-- Redis configuration
-- AI API keys
-- Payment API keys
+- Move all environment-specific configuration outside source code:
+  - Connection strings, JWT configuration, Redis, Stripe keys, email settings, file storage path
+- Secrets are NOT committed to Git
+- Use `user-secrets` for local development, environment variables for Docker
+- `appsettings.json` contains only placeholders
 
 ### Resources
-- **MUST** — [ASP.NET Core configuration](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/)
-- **MUST** — [Docker Compose environment variables](https://docs.docker.com/compose/how-tos/environment-variables/)
+- **MUST** — [ASP.NET Core — Configuration](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/)
+- **MUST** — [GitHub Actions — Secrets](https://docs.github.com/en/actions/concepts/security/secrets)
 
 ---
 
-### Task 4 — Secrets
+### Task 7 — GitHub Actions CI
 
-Ensure secrets are not committed to Git.
+Create a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs on every push and pull request:
 
-Use environment configuration or the appropriate CI/CD secret mechanism.
+```text
+Restore
+  ↓
+Build
+  ↓
+Unit Tests
+  ↓
+Integration Tests
+```
+
+The CI badge appears at the top of the README.
 
 ### Resources
-- **MUST** — [GitHub Actions secrets](https://docs.github.com/en/actions/concepts/security/secrets)
-- **MUST** — [Docker build secrets](https://docs.docker.com/build/building/secrets/)
+- **MUST** — [GitHub Actions — Building and testing .NET](https://docs.github.com/en/actions/tutorials/build-and-test-code/net)
+- **MUST** — [GitHub Actions](https://docs.github.com/en/actions)
+- **VIDEO** — [Nick Chapsas — GitHub Actions CI/CD for .NET Developers](https://www.youtube.com/watch?v=3g_t_N4K4hY)
+- **VIDEO** — [Milan Jovanović — Automating .NET Builds & Tests with GitHub Actions](https://www.youtube.com/watch?v=k2Z_q6p8v3A)
 
 ---
 
-### Task 5 — Local Production-like Environment
+### Task 8 — Docker Build in CI
 
-Run TeamFlow through Docker Compose.
+Extend the CI workflow to build the Docker image:
 
-Verify:
-- API starts
-- SQL Server is reachable
+```text
+Build
+  ↓
+Test
+  ↓
+Docker Build
+  ↓
+Image
+```
+
+### Resources
+- **MUST** — [Docker — Build documentation](https://docs.docker.com/build/)
+
+---
+
+### Task 9 — Local Production Verification
+
+Run DonationHub through Docker Compose and verify:
+
+- API starts and responds
+- SQL Server is reachable, migrations applied
 - Redis is reachable
-- configuration is injected correctly
+- Mailpit receives emails
+- Hangfire dashboard accessible
+- Configuration injected correctly
+- Authentication works
+- Important endpoints work
 
 ### Resources
-- **MUST** — [Docker Compose getting started](https://docs.docker.com/compose/gettingstarted/)
+- **MUST** — [Docker Compose — Getting started](https://docs.docker.com/compose/gettingstarted/)
 
 ---
 
-### Task 6 — GitHub Actions
+### Task 10 — Final Refactoring
 
-Create a CI workflow for push/pull-request validation.
+Review the entire codebase:
 
-### Resources
-- **MUST** — [GitHub Actions — Building and testing .NET](https://docs.github.com/en/actions/tutorials/build-and-test-code/net)
-- **MUST** — [GitHub Actions](https://docs.github.com/en/actions)
-
----
-
-### Task 7 — Build Validation
-
-The pipeline must fail when the application does not build.
-
-### Resources
-- **MUST** — [GitHub Actions — Building and testing .NET](https://docs.github.com/en/actions/tutorials/build-and-test-code/net)
-
----
-
-### Task 8 — Automated Tests
-
-The pipeline must execute:
-- Unit tests
-- Integration tests
-
-### Resources
-- **MUST** — [GitHub Actions — Building and testing .NET](https://docs.github.com/en/actions/tutorials/build-and-test-code/net)
-
----
-
-### Task 9 — Docker Build
-
-Build the Docker image through CI.
-
-### Resources
-- **MUST** — [Docker build documentation](https://docs.docker.com/build/)
-- **MUST** — [GitHub Actions](https://docs.github.com/en/actions)
-
----
-
-### Task 10 — Deployment
-
-Deploy the application to a real hosting environment.
-
-The hosting provider is secondary; understanding the deployment path is the objective.
-
-### Resources
-- **MUST** — [GitHub Actions deployment documentation](https://docs.github.com/en/actions/deployment/about-deployments/deploying-with-github-actions)
-
----
-
-### Task 11 — Production Verification
-
-Verify:
-- API availability
-- Database connectivity
-- Authentication
-- Important endpoints
-- Redis
-- Background processing
-- AI integration
-- Payment integration
-
-### Resources
-- **MUST** — [ASP.NET Core health checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks)
-- **MUST** — [ASP.NET Core integration testing](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests)
-
----
-
-### Task 12 — Final Refactoring
-
-Review:
-- Architecture
-- Naming
-- Dead code
+- Architecture consistency
+- Naming conventions
+- Dead code removal
 - Unnecessary abstractions
-- Error handling
-- Business rules
-- Configuration
-- Logging
+- Error handling completeness
+- Business rules enforcement
+- Configuration correctness
+- Logging quality
 - API consistency
+- Test coverage of important flows
 
 ### Resources
-- **DEEP DIVE** — [Robert C. Martin — Clean Architecture](Book)
-- **DEEP DIVE** — [Michael Nygard — Release It!](Book)
+- **DEEP DIVE** — Robert C. Martin — `Book: Clean Architecture`
 
 ---
 
-### Task 13 — Final README
+### Task 11 — Final README
 
-Document:
+Write a comprehensive README documenting:
+
 - Project overview
-- Architecture
-- Domain
-- Authentication
-- Authorization
-- Data access
-- Background processing
-- Caching
-- AI integration
-- Payment integration
-- Testing
-- Docker
+- Architecture explanation (why this structure)
+- Domain model
+- Authentication and authorization
+- Data access strategy (repository for writes, DbContext for reads)
+- Background processing (Hangfire jobs)
+- Caching strategy and invalidation
+- Payment flow (Stripe)
+- Email notifications
+- File handling
+- Testing strategy
+- How to run locally (with and without Docker)
+- How to test Stripe locally (Stripe CLI)
+- Docker and Docker Compose
 - CI/CD
-- Deployment
+- List of design decisions and trade-offs
 
 ### Resources
 - **MUST** — [GitHub — README documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes)
@@ -214,35 +246,43 @@ Document:
 
 ## Sprint Deliverables
 
-- [ ] Production Dockerfile
-- [ ] Docker Compose
-- [ ] Environment configuration
-- [ ] Secrets strategy
-- [ ] GitHub Actions workflow
-- [ ] Automated build
-- [ ] Automated tests
-- [ ] Docker image build
-- [ ] Deployed API
-- [ ] Production verification
-- [ ] Final README
+- [ ] Dashboard summary, top campaigns, donations over time
+- [ ] Dashboard cached
+- [ ] Admin user management (list, activate/deactivate)
+- [ ] Admin staff management (list, update, delete/deactivate)
+- [ ] Self-deactivation and last-admin protection
+- [ ] Health checks (liveness + readiness)
+- [ ] Production Dockerfile (multi-stage, non-root)
+- [ ] Docker Compose (api, sqlserver, redis, mailpit)
+- [ ] Named volumes for data persistence
+- [ ] Environment configuration (no secrets in repo)
+- [ ] GitHub Actions CI workflow (restore, build, test)
+- [ ] Docker image built in CI
+- [ ] Local production verification through Docker Compose
 - [ ] Final refactoring
+- [ ] Final comprehensive README
 
 ## Definition of Done
 
-- [ ] Dockerfile works
-- [ ] Docker Compose works
-- [ ] API runs in Docker
-- [ ] SQL Server works
-- [ ] Redis works
+- [ ] Dashboard returns correct numbers
+- [ ] Dashboard responses cached
+- [ ] Admin can list, search, and filter users
+- [ ] Admin can activate/deactivate users
+- [ ] Admin cannot deactivate themselves
+- [ ] Last active Admin cannot be removed
+- [ ] Health checks respond correctly
+- [ ] Dockerfile builds successfully
+- [ ] Docker Compose runs all services
+- [ ] `docker compose up` produces a working API
+- [ ] Migrations applied automatically
+- [ ] Admin seeded automatically
 - [ ] Configuration environment-based
-- [ ] Secrets protected
-- [ ] GitHub Actions succeeds
-- [ ] Build automated
-- [ ] Tests automated
-- [ ] Docker image built automatically
-- [ ] Application deployed
-- [ ] Production verified
-- [ ] README complete
+- [ ] No secrets in repository
+- [ ] GitHub Actions CI passes on tagged commit
+- [ ] Docker image built in CI
+- [ ] All tests pass with `dotnet test`
+- [ ] README is complete and accurate
+- [ ] Learner can explain architecture and trade-offs
 
 ## Review Rule
 

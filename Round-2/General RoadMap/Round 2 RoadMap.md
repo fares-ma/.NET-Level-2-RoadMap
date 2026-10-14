@@ -1,2520 +1,868 @@
-# Tawjeh Level 2 — Advanced .NET Backend
+# 🚀 Tawjeh .NET Level 2 — Advanced Backend Master Roadmap
+### Comprehensive General Plan, Architecture & Unabridged Sprint Specifications
 
-# Sprint Specifications
-
-> **Project:** TeamFlow — Project & Team Operations Platform
-> **Duration:** 6 Sprints × 2 Weeks
-> **Expected Commitment:** ~15 Hours / Week
-> **Total Commitment:** ~180 Hours
-> **Evaluation:** 100 Points / Sprint
-> **Total:** 600 Points
+> **Program:** Tawjeh Mentorship Program — Level 2  
+> **Core Project:** **DonationHub** (Donation Management & Charity Crowdfunding Platform)  
+> **Duration:** 12 Weeks (6 Sprints × 2 Weeks) + Final Defense Period (9 Days)  
+> **Total Effort:** ~180 Hours (~15 Hours / Week)  
+> **Evaluation:** 600 Points Total (100 Points / Sprint)  
+> **Target Audience:** Junior to Intermediate .NET Developers transitioning to Production-Ready Backend Engineers  
 
 ---
 
-# 🎯 Level 2 Goal
+## 📖 Table of Contents
 
-The goal of Level 2 is not to teach as many technologies as possible.
+1. [🎯 Level 2 Mission & Educational Philosophy](#-level-2-mission--educational-philosophy)
+2. [🏗️ Project Spotlight: DonationHub](#️-project-spotlight-donationhub)
+3. [👥 Roles & Permissions Matrix](#-roles--permissions-matrix)
+4. [🏛️ Architectural Blueprint & Layering Rules](#️-architectural-blueprint--layering-rules)
+5. [🧭 Mentorship Schedule & Timeline](#-mentorship-schedule--timeline)
+6. [🟦 Sprint 1 — Clean Architecture, Identity & Categories](#-sprint-1--clean-architecture-identity--categories)
+7. [🟩 Sprint 2 — Campaigns, CQRS, MediatR & Unit Testing](#-sprint-2--campaigns-cqrs-mediatr--unit-testing)
+8. [🟨 Sprint 3 — Donations, Authorization & API Engineering](#-sprint-3--donations-authorization--api-engineering)
+9. [🟧 Sprint 4 — Notifications, Files, Hangfire & Serilog](#-sprint-4--notifications-files-hangfire--serilog)
+10. [🟥 Sprint 5 — Payments (Stripe), Idempotency & Integration Testing](#-sprint-5--payments-stripe-idempotency--integration-testing)
+11. [🟪 Sprint 6 — Reports, Admin, Docker, CI/CD & Health Checks](#-sprint-6--reports-admin-docker-cicd--health-checks)
+12. [🏁 Final Period, Defense & Graduation Guidelines](#-final-period-defense--graduation-guidelines)
+13. [📏 Universal Architectural Rules & Definition of Done](#-universal-architectural-rules--definition-of-done)
+14. [🚫 Explicitly Out of Scope](#-explicitly-out-of-scope)
+15. [📂 Quick Navigation & Documentation Links](#-quick-navigation--documentation-links)
 
-The goal is to teach the learner how to take a non-trivial backend requirement and progressively turn it into a maintainable, secure, testable, production-ready backend system.
+---
 
-The learner should practice:
+## 🎯 Level 2 Mission & Educational Philosophy
+
+Most backend developers get stuck in **"Tutorial Hell"** — they know how to generate an API controller, bind a model with Entity Framework Core, and write basic CRUD operations. However, when faced with real-world enterprise requirements, critical gaps appear:
+
+- *How do we ensure financial accuracy when multiple donors donate to the same campaign simultaneously?*
+- *How do we handle network timeouts during external payment gateway calls without double-charging?*
+- *Why is sending emails and generating PDFs inside an HTTP request lifecycle an anti-pattern?*
+- *How do we isolate use cases so modifying one feature never inadvertently breaks another?*
+- *How do we design automated tests that verify critical domain behaviors rather than testing EF Core's built-in methods?*
+
+**Level 2 bridges this exact gap.** It transforms learners from junior CRUD developers into confident, production-grade backend engineers.
 
 ```text
-Understand
+Junior CRUD Developer                          Production Backend Engineer
+┌───────────────────────┐                     ┌──────────────────────────────┐
+│ • Models = DB Tables  │                     │ • Rich Domain Invariants     │
+│ • Fat Controllers     │     Tawjeh Level 2  │ • Clean Arch + CQRS Slices   │
+│ • Untested Code       │  ────────────────►  │ • Idempotent Stripe Payments │
+│ • Heavy Work in HTTP  │                     │ • Background Job Workers     │
+│ • "Works on Machine"  │                     │ • Containerized CI/CD System │
+└───────────────────────┘                     └──────────────────────────────┘
+```
+
+### The Production Engineering Cycle:
+```text
+Understand  ➔  Model  ➔  Design  ➔  Implement  ➔  Debug  ➔  Refactor  ➔  Test  ➔  Deploy  ➔  Explain
+```
+
+### The Single Evolving Project Principle
+Learners will **not** build six disconnected toys. You will build, evolve, refactor, and defend a single production platform — **DonationHub** — watching it transform from an empty solution into an enterprise-grade backend across six sprints:
+
+```text
+Sprint 1: Architecture, Rich Invariants, Persistence & Identity
     ↓
-Model
+Sprint 2: CQRS Slices, MediatR Pipeline, Validation, Result Pattern & Unit Tests
     ↓
-Design
+Sprint 3: Core Donation Flows, Resource Ownership, Distributed Caching & Localization
     ↓
-Implement
+Sprint 4: Asynchronous Processing, Hangfire, MailKit, QuestPDF & Serilog
     ↓
-Debug
+Sprint 5: Stripe Checkout, Webhook Verification, Idempotency & Integration Testing
     ↓
-Refactor
-    ↓
-Test
-    ↓
-Deploy
-    ↓
-Explain
+Sprint 6: Analytics Dashboard, Admin Management, Docker, Health Checks & CI/CD
 ```
 
-The project evolves throughout the six sprints.
+---
 
-The learner should **not** build six disconnected mini-projects.
+## 🏗️ Project Spotlight: DonationHub
+
+**DonationHub** is a financial donation and charity crowdfunding platform. It empowers charitable organizations and campaign managers to launch fundraising campaigns transparently, while enabling donors worldwide to contribute securely via credit cards and obtain certified tax receipts.
+
+### Why DonationHub?
+Unlike simple task managers or blogs, a donation platform introduces real financial and architectural stakes:
+1. **Financial Integrity:** Money cannot be lost, double-counted, or corrupted by race conditions.
+2. **Third-Party Payment Gateways:** Real integration with **Stripe Checkout**, handling asynchronous webhooks and payment failures.
+3. **Strict State Transitions:** A campaign moves through well-defined states (`Active` ➔ `Completed` or `Expired`), and donations transition from `Pending` ➔ `Succeeded` or `Failed`.
+4. **Decoupled Asynchronous Workloads:** Generating PDF receipts and sending transactional emails must happen reliably in background workers (**Hangfire**), completely decoupled from HTTP responses.
+5. **Idempotency:** Network retries must never result in duplicate charges or duplicate donation records.
 
 ---
 
-# 🏗️ TeamFlow
+## 👥 Roles & Permissions Matrix
 
-TeamFlow is a project and team operations platform.
+DonationHub enforces strict, real-world authorization policies:
 
-The system allows organizations to:
+| Feature / Action | Anonymous | Donor | Campaign Manager | System Admin |
+|---|:---:|:---:|:---:|:---:|
+| Browse active campaigns & success stories | ✅ | ✅ | ✅ | ✅ |
+| View campaign details & categories | ✅ | ✅ | ✅ | ✅ |
+| Register, Log in, Refresh token | ✅ | ✅ | ✅ | ✅ |
+| Make a donation via Stripe | ❌ | ✅ | ✅ | ✅ |
+| View own donation history & download own PDF receipts | ❌ | ✅ | ✅ | ✅ |
+| Create new campaigns | ❌ | ❌ | ✅ | ✅ |
+| Edit, close, or delete campaigns | ❌ | ❌ | ✅ *(Own campaigns only)* | ✅ *(All campaigns)* |
+| Upload campaign banner image | ❌ | ❌ | ✅ *(Own campaigns only)* | ✅ *(All campaigns)* |
+| Manage categories (Create, Update, Delete) | ❌ | ❌ | ❌ | ✅ |
+| View all platform donations & export reports | ❌ | ❌ | ❌ | ✅ |
+| Access Admin Analytics Dashboard | ❌ | ❌ | ❌ | ✅ |
+| Manage Users & Staff Accounts | ❌ | ❌ | ❌ | ✅ |
 
-* Create teams
-* Manage team members
-* Create projects
-* Manage project members
-* Create and manage tasks
-* Assign tasks
-* Track task completion
-* Organize project work
-* Receive notifications
-* Use an AI assistant
-* Purchase a paid capability
-
-The system will gradually evolve from a basic backend into a production-oriented application.
+> [!NOTE]
+> **Security Rule:** When a user attempts to access a private resource belonging to someone else (e.g., another donor's receipt or another manager's unpublished campaign), the API must return **`404 Not Found`** instead of `403 Forbidden` to prevent resource enumeration attacks.
 
 ---
 
-# 📅 Sprint 1 — Domain Modeling, Clean Architecture & Persistence
+## 🏛️ Architectural Blueprint & Layering Rules
 
-## 🎯 Sprint Goal
-
-Build the architectural and persistence foundation of TeamFlow.
-
-The learner should be able to move from:
+The platform implements **Clean Architecture** with a **Vertical Slice** feature organization inside the Application layer:
 
 ```text
-Domain Model
-    ↓
-Business Rules
-    ↓
-Architecture
-    ↓
-Persistence
-    ↓
-Working API
+┌────────────────────────────────────────────────────────────────────────┐
+│                          DonationHub.Api                               │
+│  Controllers (Thin) │ Middleware (Idempotency, Rate Limiter) │ Swagger │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Depends on
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                      DonationHub.Application                           │
+│  Organized by Feature Slices (e.g., Features/Donations/CreateDonation) │
+│  Commands │ Queries │ MediatR Handlers │ FluentValidation │ DTOs       │
+└───────────────────┬────────────────────────────────┬───────────────────┘
+                    │ Depends on                     │ Implemented by
+                    ▼                                ▼
+┌──────────────────────────────────────┐  ┌──────────────────────────────┐
+│         DonationHub.Domain           │  │  DonationHub.Infrastructure  │
+│  Entities │ Invariants │ Value Objects│  │  EF Core │ SQL Server │ Redis│
+│  Enums │ State Machines              │  │  MailKit │ Hangfire │ Stripe │
+│  (Zero External Dependencies)        │  │  QuestPDF │ File Storage     │
+└──────────────────────────────────────┘  └──────────────────────────────┘
 ```
 
-The focus is **practical domain modeling and architecture**, not learning DDD as a separate subject.
-
----
-
-# 📚 What You Will Learn
-
-## 1. Domain Modeling
-
-Learn:
-
-* Entities
-* Relationships
-* Encapsulation
-* Business responsibilities
-* Invariants
-* Value Objects where appropriate
-* Domain vs application responsibilities
-
-The learner should understand why a behavior belongs to a particular part of the system.
-
----
-
-# 2. Clean Architecture
-
-Learn:
-
-* Separation of concerns
-* Dependency direction
-* Dependency Inversion
-* Domain layer
-* Application layer
-* Infrastructure layer
-* API layer
-* Dependency Injection
-
-Target structure:
-
-```text
-TeamFlow.Domain
-        ↑
-TeamFlow.Application
-        ↑
-TeamFlow.Infrastructure
-        ↑
-TeamFlow.API
-```
-
-Infrastructure implements abstractions defined by the inner layers.
-
----
-
-# 3. Repository Design
-
-Learn:
-
-* Repository abstraction
-* Repository responsibilities
-* Repository vs DbContext
-* Repository vs application service
-* When an abstraction is useful
-* Avoiding unnecessary generic repositories
-
-Important principle:
-
-> A repository is not simply a wrapper around every DbSet method.
-
----
-
-# 4. EF Core Persistence
-
-Learn:
-
-* DbContext
-* DbSet
-* Entity configuration
-* Fluent API
-* Relationships
-* Foreign keys
-* Constraints
-* Indexes where appropriate
-* Migrations
-* Basic transaction boundaries
-
-The learner is expected to already understand database fundamentals.
-
----
-
-# 🛠️ Practical Implementation
-
-## Organization
-
-Implement:
-
-* Create organization
-* Get organization
-* Update organization
-
----
-
-## Team
-
-Implement:
-
-* Create team
-* Add member
-* Remove member
-* Get members
-
----
-
-## Project
-
-Implement:
-
-* Create project
-* Get project
-* Update project
-* Archive project
-
----
-
-## Project Membership
-
-Implement:
-
-* Add member
-* Remove member
-* List members
-
----
-
-# 📝 Sprint Tasks
-
-### Task 1 — Domain Model
-
-Create a domain model containing:
-
-* Entities
-* Important relationships
-* Business responsibilities
-* Important invariants
-* Value Objects where appropriate
-
----
-
-### Task 2 — Architecture
-
-Create:
-
-```text
-Domain
-Application
-Infrastructure
-API
-```
-
-Configure dependency direction correctly.
-
----
-
-### Task 3 — Repository Abstractions
-
-Create repository abstractions only where they provide meaningful value.
-
-Implement them inside Infrastructure.
-
----
-
-### Task 4 — EF Core Persistence
-
-Configure:
-
-* Relationships
-* Foreign keys
-* Required fields
-* Constraints
-* Important indexes
-* Migrations
-
----
-
-### Task 5 — Organization Feature
-
-Implement the Organization use cases.
-
----
-
-### Task 6 — Team Feature
-
-Implement Team management.
-
----
-
-### Task 7 — Project Feature
-
-Implement Project management.
-
----
-
-### Task 8 — Project Membership
-
-Implement membership rules.
-
----
-
-### Task 9 — API Documentation
-
-Configure Swagger/OpenAPI.
-
----
-
-# 📦 Sprint Deliverables
-
-The learner must submit:
-
-### 1. Domain Model
-
-Showing:
-
-* Entities
-* Relationships
-* Responsibilities
-* Important invariants
-
-### 2. Architecture Diagram
-
-Showing:
-
-```text
-API
- ↓
-Application
- ↓
-Domain
-
-Infrastructure
-```
-
-and the dependency direction.
-
-### 3. TeamFlow Solution
-
-Containing:
-
-* Domain
-* Application
-* Infrastructure
-* API
-
-### 4. Persistence
-
-* SQL Server
-* EF Core
-* Fluent configurations
-* Migrations
-* Relationships
-
-### 5. Features
-
-* Organization
-* Team
-* Project
-* Project Membership
-
-### 6. Architecture Explanation
-
-Answer:
-
-> Why does each layer exist?
-
-> Why is this dependency direction used?
-
-> Why are repositories abstracted?
-
----
-
-# 📊 Evaluation — 100 Points
-
-| Area                                      |  Points |
-| ----------------------------------------- | ------: |
-| Domain Modeling                            |      20 |
-| Clean Architecture & Dependency Direction |      25 |
-| Repository Design                         |      15 |
-| EF Core Persistence                       |      20 |
-| Feature Implementation                    |      15 |
-| Documentation & Explanation               |       5 |
-| **Total**                                 | **100** |
-
----
-
-# ✅ Definition of Done
-
-* [ ] Domain model is documented
-* [ ] Architecture is correctly separated
-* [ ] Dependency direction is correct
-* [ ] Repository abstractions are meaningful
-* [ ] EF Core persistence works
-* [ ] Migrations work
-* [ ] Organization feature works
-* [ ] Team feature works
-* [ ] Project feature works
-* [ ] Project membership works
-* [ ] Swagger is configured
-* [ ] Learner can explain the architecture decisions
-
----
-
-# 🎓 Expected Outcome
-
-By the end of Sprint 1, the learner should be able to take a business requirement and turn it into a structured backend foundation without immediately starting from database tables or controllers.
-
----
-
-# 📅 Sprint 2 — Application Architecture, CQRS, MediatR & Security
-
-## 🎯 Sprint Goal
-
-Transform TeamFlow from a basic API into a **use-case-oriented application**.
-
-The learner should understand:
-
-```text
-HTTP Request
-    ↓
-Application Use Case
-    ↓
-Command / Query
-    ↓
-Handler
-    ↓
-Domain
-    ↓
-Infrastructure
-```
-
-and implement authentication and authorization.
-
----
-
-# 📚 What You Will Learn
-
-## 1. Application Architecture
-
-Learn:
-
-* Application use cases
-* Commands
-* Queries
-* DTOs
-* Request/response models
-* Separation between API and Application
-
----
-
-# 2. CQRS
-
-Learn:
-
-* Command
-* Query
-* Command Handler
-* Query Handler
-* Read vs write responsibilities
-* Why CQRS can improve application organization
-* When CQRS adds unnecessary complexity
-
-The learner should understand CQRS as an organizational pattern, not as a requirement for distributed systems.
-
----
-
-# 3. MediatR
-
-Learn:
-
-* Mediator pattern
-* Request/Handler
-* Notifications where appropriate
-* Pipeline behaviors
-* Dependency flow
-
----
-
-# 4. Validation
-
-Learn:
-
-* FluentValidation
-* Input validation
-* Validation vs business rules
-* Validation pipeline
-* Validation behavior
-
----
-
-# 5. Result Pattern
-
-Learn:
-
-* Success results
-* Failure results
-* Validation failures
-* Business failures
-* Consistent application responses
-
----
-
-# 6. Async Programming
-
-Learn:
-
-* async/await
-* Task
-* CancellationToken
-* Cancellation propagation
-* Async EF Core operations
-
----
-
-# 7. Authentication
-
-Learn:
-
-* ASP.NET Core Identity
-* Password management
-* JWT
-* Claims
-* Refresh tokens
-* Token expiration
-* Token revocation
-* Logout
-
----
-
-# 8. Authorization
-
-Learn:
-
-* Authentication vs authorization
-* Claims
-* Policies
-* Project-level authorization
-* Resource authorization
-
-Keep authorization intentionally simple.
-
-Example:
-
-```text
-Project Owner
-Project Member
-```
-
-No unnecessary role hierarchy.
-
----
-
-# 🛠️ Practical Implementation
-
-# Authentication
-
-Implement:
-
-* Registration
-* Login
-* Refresh token
-* Token revocation
-* Logout
-* Current user
-
----
-
-# Authorization
-
-Implement project-level authorization.
-
-Examples:
-
-* Project owner can update project
-* Project member can access project
-* Unauthorized users cannot access project data
-
----
-
-# Task Foundation
-
-Implement:
-
-* Create task
-* Get task
-* Update task
-* Assign task
-
----
-
-# 📝 Sprint Tasks
-
-### Task 1 — CQRS Conversion
-
-Convert important existing features to:
-
-```text
-Command
-Query
-Handler
-DTO
-Validator
-```
-
----
-
-### Task 2 — MediatR
-
-Introduce MediatR for application use cases.
-
----
-
-### Task 3 — Validation Pipeline
-
-Implement automatic validation through a MediatR pipeline behavior.
-
----
-
-### Task 4 — Result Pattern
-
-Introduce a consistent application result model.
-
----
-
-### Task 5 — Cancellation
-
-Propagate:
-
-```text
-HTTP Request
- ↓
-Handler
- ↓
-Repository / EF Core
-```
-
----
-
-### Task 6 — Identity
-
-Implement user registration and authentication.
-
----
-
-### Task 7 — JWT
-
-Implement access-token authentication.
-
----
-
-### Task 8 — Refresh Tokens
-
-Implement:
-
-* Creation
-* Expiration
-* Rotation
-* Revocation
-
----
-
-### Task 9 — Authorization
-
-Implement project-level authorization.
-
----
-
-### Task 10 — Task Management
-
-Create the initial Task feature using CQRS + MediatR.
-
----
-
-# 📦 Sprint Deliverables
-
-The learner must submit:
-
-* CQRS implementation
-* MediatR implementation
-* Validation pipeline
-* Result Pattern
-* Cancellation propagation
-* Authentication
-* JWT
-* Refresh Tokens
-* Authorization
-* Task feature
-* Request-flow explanation
-
-The learner should be able to explain:
-
-```text
-HTTP Request
-     ↓
-Controller
-     ↓
-MediatR
-     ↓
-Command / Query
-     ↓
-Handler
-     ↓
-Application Logic
-     ↓
-Domain
-     ↓
-Infrastructure
-```
-
----
-
-# 📊 Evaluation — 100 Points
-
-| Area                        |  Points |
-| --------------------------- | ------: |
-| Application Architecture    |      15 |
-| CQRS Design                 |      20 |
-| MediatR Implementation      |      15 |
-| Validation & Result Pattern |      10 |
-| Async / Cancellation        |      10 |
-| Authentication              |      15 |
-| Authorization               |      10 |
-| Task Feature                |       5 |
-| **Total**                   | **100** |
-
----
-
-# ✅ Definition of Done
-
-* [ ] Important use cases use CQRS
-* [ ] MediatR is correctly integrated
-* [ ] Validation pipeline works
-* [ ] Result Pattern is consistent
-* [ ] Cancellation is propagated
-* [ ] Registration works
-* [ ] Login works
-* [ ] JWT works
-* [ ] Refresh tokens work
-* [ ] Token revocation works
-* [ ] Authorization rules work
-* [ ] Task foundation works
-* [ ] Learner can explain CQRS and Mediator decisions
-
----
-
-# 🎓 Expected Outcome
-
-The learner should now understand how to structure a non-trivial application around **use cases instead of controllers becoming the center of the application**.
-
----
-
-# 📅 Sprint 3 — Business Rules & API Engineering
-
-## 🎯 Sprint Goal
-
-Move TeamFlow beyond basic CRUD.
-
-The learner should understand that backend engineering is largely about controlling **business behavior and API behavior**, not simply creating endpoints.
-
----
-
-# 📚 What You Will Learn
-
-## 1. Practical Business Rules
-
-Learn:
-
-* Business rules
-* Invariants
-* Encapsulation
-* Domain behavior
-* Application rules
-* Where business rules should be enforced
-
-Examples:
-
-```text
-A member cannot be added twice.
-
-A user cannot be assigned a task
-if they are not a project member.
-
-Only authorized users can modify a project.
-
-A project cannot be modified
-after it has been archived.
-```
-
-The focus is practical business modeling.
-
----
-
-# 2. Task Management
-
-Extend the Task feature with:
-
-* Create
-* Update
-* Assign
-* Complete
-* Reopen
-
-The system should enforce appropriate business rules.
-
----
-
-# 3. Advanced API Querying
-
-Learn:
-
-* Pagination
-* Filtering
-* Searching
-* Sorting
-* Query parameters
-* Query composition with EF Core
-
-Example:
-
-```text
-GET /api/projects/{projectId}/tasks
-    ?page=1
-    &pageSize=20
-    &status=Completed
-    &search=authentication
-    &sortBy=createdAt
-```
-
----
-
-# 4. API Error Handling
-
-Learn:
-
-* ProblemDetails
-* Global exception handling
-* Validation errors
-* NotFound responses
-* Conflict responses
-* Unauthorized responses
-* Forbidden responses
-* Consistent error contracts
-
----
-
-# 5. Idempotency
-
-Learn:
-
-* Why duplicate requests happen
-* Why duplicate operations can be dangerous
-* Idempotency keys
-* Safe retry behavior
-
-Implement idempotency for **one appropriate operation only**.
-
----
-
-# 🛠️ Practical Implementation
-
-## Task Management
-
-Implement:
-
-* Complete Task
-* Reopen Task
-* Assign Task
-* Update Task
-
-Enforce relevant business rules.
-
----
-
-## Search API
-
-Implement:
-
-```text
-Pagination
-Filtering
-Sorting
-Searching
-```
-
----
-
-## Error Handling
-
-Implement:
-
-```text
-Request
-   ↓
-Application
-   ↓
-Business / Validation Error
-   ↓
-Consistent ProblemDetails Response
-```
-
----
-
-## Idempotency
-
-Choose one operation where duplicate requests could cause a real problem.
-
-Implement safe handling for duplicate requests.
-
----
-
-# 📝 Sprint Tasks
-
-### Task 1 — Business Rules
-
-Identify important TeamFlow business rules.
-
----
-
-### Task 2 — Business Rule Enforcement
-
-Implement the rules in appropriate layers.
-
----
-
-### Task 3 — Task Completion
-
-Implement task completion.
-
----
-
-### Task 4 — Task Reopening
-
-Implement task reopening.
-
----
-
-### Task 5 — Task Assignment Rules
-
-Ensure users can only be assigned tasks when they satisfy the required project rules.
-
----
-
-### Task 6 — Pagination
-
-Implement reusable pagination for an appropriate read endpoint.
-
----
-
-### Task 7 — Filtering
-
-Implement useful filtering.
-
----
-
-### Task 8 — Sorting
-
-Implement controlled sorting.
-
----
-
-### Task 9 — Searching
-
-Implement basic database-backed searching.
-
----
-
-### Task 10 — ProblemDetails
-
-Implement a consistent API error contract.
-
----
-
-### Task 11 — Global Exception Handling
-
-Handle unexpected exceptions consistently.
-
----
-
-### Task 12 — Idempotency
-
-Implement idempotency for one suitable operation.
-
----
-
-# 📦 Sprint Deliverables
-
-The learner must submit:
-
-* Business rules
-* Task management improvements
-* Pagination
-* Filtering
-* Sorting
-* Searching
-* ProblemDetails
-* Global exception handling
-* One idempotent operation
-
-Plus a short document answering:
-
-> Which rules were implemented?
-
-> Where were they enforced?
-
-> Why were they placed there?
-
----
-
-# 📊 Evaluation — 100 Points
-
-| Area                                      |  Points |
-| ----------------------------------------- | ------: |
-| Business Rules & Modeling                 |      25 |
-| Task Management                           |      15 |
-| Pagination / Filtering / Sorting / Search |      25 |
-| Error Handling & ProblemDetails           |      20 |
-| Idempotency                               |      10 |
-| Code Quality & Explanation                |       5 |
-| **Total**                                 | **100** |
-
----
-
-# ✅ Definition of Done
-
-* [ ] Important business rules are enforced
-* [ ] Task completion works
-* [ ] Task reopening works
-* [ ] Task assignment rules work
-* [ ] Pagination works
-* [ ] Filtering works
-* [ ] Sorting works
-* [ ] Searching works
-* [ ] ProblemDetails is consistent
-* [ ] Global exceptions are handled
-* [ ] One operation is idempotent
-* [ ] Learner can explain where business rules belong
-
----
-
-# 🎓 Expected Outcome
-
-TeamFlow should no longer behave like a simple CRUD application.
-
-The learner should understand how to build APIs that enforce business behavior and provide predictable responses.
-
----
-
-# 📅 Sprint 4 — Production Engineering
-
-## 🎯 Sprint Goal
-
-Introduce a small number of production-oriented concerns without turning the sprint into a DevOps or distributed-systems curriculum.
-
-The learner will focus on:
-
-```text
-Observability
-Background Processing
-Caching
-```
-
----
-
-# 📚 What You Will Learn
-
-# 1. Logging
-
-Learn:
-
-* ILogger
-* Log levels
-* Structured logging
-* Useful context
-* Exception logging
-* Logging important workflows
-
-The focus is writing useful logs, not simply adding logs everywhere.
-
----
-
-# 2. Correlation IDs
-
-Learn:
-
-* What a correlation ID is
-* Why request correlation is useful
-* How to attach correlation information to logs
-* How to trace a request through application logs
-
-Basic flow:
-
-```text
-HTTP Request
-      ↓
-Correlation ID
-      ↓
-Application
-      ↓
-Logs
-```
-
----
-
-# 3. Background Processing
-
-Learn:
-
-* BackgroundService
-* Hosted Services
-* Background queues
-* Cancellation
-* Graceful shutdown
-* When work should leave the HTTP request
-
----
-
-# 4. Redis Caching
-
-Learn:
-
-* Why caching exists
-* Cache-aside pattern
-* TTL
-* Cache invalidation
-* Redis
-* Choosing appropriate data to cache
-
-The learner should understand:
-
-> Caching is a trade-off, not automatically an optimization.
-
----
-
-# 🛠️ Practical Implementation
-
-# Notification System
-
-Create a simple notification workflow.
-
-Examples:
-
-```text
-Task Assigned
-Task Completed
-```
-
----
-
-# Background Processing
-
-Instead of performing notification work directly inside the HTTP request:
-
-```text
-HTTP Request
-      ↓
-Application
-      ↓
-Background Queue
-      ↓
-Background Worker
-      ↓
-Notification Processing
-```
-
-Use:
-
-* BackgroundService
-* A simple in-process background queue
-* CancellationToken
-
-No message broker is required.
-
----
-
-# Redis
-
-Choose one read-heavy TeamFlow operation.
-
-Example:
-
-```text
-GET Project Summary
-```
-
-Implement:
-
-```text
-Request
-   ↓
-Redis
-   ↓
-Cache Hit → Response
-
-Cache Miss
-   ↓
-Database
-   ↓
-Redis
-   ↓
-Response
-```
-
-Implement appropriate invalidation when relevant data changes.
-
----
-
-# 📝 Sprint Tasks
-
-### Task 1 — Structured Logging
-
-Add useful structured logs around important workflows.
-
----
-
-### Task 2 — Correlation ID
-
-Implement request correlation.
-
----
-
-### Task 3 — Notification Model
-
-Create the notification model and application workflow.
-
----
-
-### Task 4 — Background Queue
-
-Create a simple in-process background queue.
-
----
-
-### Task 5 — Background Worker
-
-Process notification work outside the HTTP request.
-
----
-
-### Task 6 — Cancellation
-
-Handle cancellation and application shutdown correctly.
-
----
-
-### Task 7 — Redis Integration
-
-Introduce Redis for one justified use case.
-
----
-
-### Task 8 — Cache-Aside
-
-Implement:
-
-```text
-Cache Hit
-Cache Miss
-Database
-Cache Population
-```
-
----
-
-### Task 9 — Cache Invalidation
-
-Ensure relevant write operations invalidate or update affected cached data.
-
----
-
-### Task 10 — Production Scenario
-
-Document one failure scenario:
-
-```text
-Scenario
- ↓
-Failure
- ↓
-Impact
- ↓
-Detection
- ↓
-Handling
- ↓
-Recovery
-```
-
----
-
-# 📦 Sprint Deliverables
-
-The learner must submit:
-
-* Structured logging
-* Correlation ID
-* Notification system
-* Background queue
-* Background worker
-* Cancellation/shutdown handling
-* Redis integration
-* Cache-aside implementation
-* Cache invalidation
-* One documented production failure scenario
-
----
-
-# 📊 Evaluation — 100 Points
-
-| Area                        |  Points |
-| --------------------------- | ------: |
-| Logging & Correlation       |      20 |
-| Background Processing       |      35 |
-| Redis & Caching             |      30 |
-| Failure Handling            |      10 |
-| Explanation & Documentation |       5 |
-| **Total**                   | **100** |
-
----
-
-# ❌ Explicitly Out of Scope for Sprint 4
-
-The learner does NOT need to implement:
-
-* Kafka
-* RabbitMQ
-* MassTransit
-* Distributed queues
-* OpenTelemetry
-* Complex scheduling systems
-* Activity feeds
-* External HTTP integrations
-* Circuit breakers as a separate topic
-* Complex distributed caching
-
----
-
-# 🎓 Expected Outcome
-
-The learner should understand that backend systems do not consist only of:
-
-```text
-Request → Controller → Database → Response
-```
-
-They should understand basic background processing, logging, caching, cancellation, and production-oriented failure handling.
-
----
-
-# 📅 Sprint 5 — Testing, AI & Payment Integration
-
-## 🎯 Sprint Goal
-
-Teach the learner how to verify important backend behavior and safely integrate two realistic external systems:
-
-```text
-TeamFlow
-   ├── AI Assistant
-   └── Payment Gateway
-```
-
-The focus is not learning AI or payment systems as separate curricula.
-
-The focus is learning how a backend communicates safely with external providers.
-
----
-
-# 📚 What You Will Learn
-
-# 1. Unit Testing
-
-Learn:
-
-* xUnit
-* Arrange / Act / Assert
-* Test isolation
-* Test naming
-* Business-rule testing
-* Application use-case testing
-* Edge cases
-* Mocking dependencies
-
-Do not waste time testing trivial getters/setters.
-
----
-
-# 2. Integration Testing
-
-Learn:
-
-* What integration testing verifies
-* HTTP-level testing
-* Real application pipeline
-* Test database strategy
-* Authentication in integration tests
-* Test isolation
-
-Focus on important application flows rather than testing every endpoint.
-
----
-
-# 3. AI Integration
-
-Learn the backend concerns behind integrating an LLM API:
-
-* HTTP-based AI APIs
-* Request/response models
-* Prompt construction
-* Structured output where useful
-* Provider abstraction
-* Token/cost awareness
-* Rate limits
-* Timeout handling
-* Prompt injection awareness
-* Authorization and data exposure
-
-The learner should NOT build:
-
-* RAG
-* Vector databases
-* LangChain
-* Multi-agent systems
-* Fine-tuning
-
----
-
-# 4. Payment Integration
-
-Learn:
-
-* Payment lifecycle
-* Payment intent/order creation
-* External payment API
-* Payment status
-* Checkout flow
-* Webhooks
-* Signature verification
-* Idempotency
-* External failure handling
-
----
-
-# 🛠️ Practical Implementation
-
-# Part A — Unit Testing
-
-Test important business behavior.
-
-Examples:
-
-```text
-Assign Task
-Complete Task
-Reopen Task
-Archive Project
-Add Member
-```
-
-Focus on behavior and edge cases.
-
----
-
-# Part B — Integration Testing
-
-Create integration tests for a limited number of critical workflows.
-
-Examples:
-
-```text
-Register → Login
-
-Create Project
-
-Create Task → Assign Task
-
-Complete Task
-```
-
-The goal is to verify the actual application pipeline.
-
----
-
-# Part C — AI Assistant
-
-Create:
-
-```text
-TeamFlow AI Assistant
-```
-
-Users can ask questions such as:
-
-```text
-Which tasks are overdue?
-
-Which tasks are incomplete?
-
-Summarize the current project status.
-
-What are the most important unfinished tasks?
-```
-
-The AI must only receive data that the current user is authorized to access.
-
----
-
-# AI Request Flow
-
-```text
-User
- ↓
-API
- ↓
-Authorization
- ↓
-Application
- ↓
-Retrieve allowed project data
- ↓
-Build AI request
- ↓
-AI Provider
- ↓
-Response
-```
-
-The AI provider must not receive unrestricted database access.
-
----
-
-# Part D — Payment
-
-Introduce one paid TeamFlow capability.
-
-Example:
-
-```text
-Organization
-      ↓
-Paid Capability
-      ↓
-Payment
-      ↓
-Webhook
-      ↓
-Update Subscription / Entitlement
-```
-
-Implement:
-
-* Create payment
-* Track payment status
-* Handle successful payment
-* Handle failed payment
-* Process webhook
-* Verify webhook signature
-* Prevent duplicate webhook processing
-
----
-
-# 📝 Sprint Tasks
-
-### Task 1 — Unit Test Strategy
-
-Identify the most important business logic and use cases that require unit tests.
-
----
-
-### Task 2 — Business Rule Unit Tests
-
-Test:
-
-* Task assignment rules
-* Task completion
-* Task reopening
-* Project membership rules
-* Important invalid operations
-
----
-
-### Task 3 — Application Unit Tests
-
-Test important application use cases.
-
----
-
-### Task 4 — Integration Test Infrastructure
-
-Create the infrastructure required to run integration tests.
-
----
-
-### Task 5 — Critical API Integration Tests
-
-Test a small number of important HTTP workflows.
-
----
-
-### Task 6 — AI Provider Abstraction
-
-Create an abstraction around the AI provider.
-
-Avoid spreading provider-specific implementation across the application.
-
----
-
-### Task 7 — AI Assistant
-
-Implement project-related AI queries.
-
----
-
-### Task 8 — AI Authorization
-
-Ensure users cannot ask the AI about project data they cannot access.
-
----
-
-### Task 9 — AI Failure Handling
-
-Handle:
-
-* Timeout
-* Provider failure
-* Rate limiting
-* Invalid responses
-
----
-
-### Task 10 — Payment Gateway Integration
-
-Integrate one payment provider.
-
----
-
-### Task 11 — Payment Status
-
-Track payment status and update the appropriate TeamFlow entitlement.
-
----
-
-### Task 12 — Payment Webhook
-
-Implement the payment webhook endpoint.
-
----
-
-### Task 13 — Signature Verification
-
-Verify that webhook notifications are authentic.
-
----
-
-### Task 14 — Webhook Idempotency
-
-Ensure duplicate webhook delivery cannot process the same event twice.
-
----
-
-# 📦 Sprint Deliverables
-
-## Testing
-
-* Unit tests
-* Important integration tests
-* Business-rule coverage
-* Application-flow coverage
-
-## AI
-
-* AI provider abstraction
-* Project AI assistant
-* Authorization
-* Timeout handling
-* Provider failure handling
-
-## Payment
-
-* Payment integration
-* Payment status handling
-* Webhook endpoint
-* Signature verification
-* Idempotent webhook processing
-
----
-
-# 📊 Evaluation — 100 Points
-
-| Area                        |  Points |
-| --------------------------- | ------: |
-| Unit Testing                |      25 |
-| Integration Testing         |      15 |
-| AI Integration              |      20 |
-| AI Security & Authorization |      10 |
-| Payment Integration         |      20 |
-| Webhooks & Idempotency      |      10 |
-| **Total**                   | **100** |
-
----
-
-# ❌ Explicitly Out of Scope for Sprint 5
-
-The learner does NOT need to implement:
-
-* RAG
-* Vector databases
-* AI agents
-* Multi-agent systems
-* Fine-tuning
-* Multiple AI providers
-* Multiple payment providers
-* Complex subscription billing
-* Advanced payment reconciliation
-* Advanced test automation frameworks
-* Large-scale test coverage targets
-
----
-
-# 🎓 Expected Outcome
-
-The learner should understand how to verify backend behavior and integrate external systems where:
-
-```text
-Your System
-     ↓
-External Provider
-     ↓
-Success
-Failure
-Timeout
-Duplicate Request
-Unauthorized Data
-```
-
-must all be handled safely.
-
----
-
-# 📅 Sprint 6 — Docker, CI/CD & Deployment
-
-## 🎯 Sprint Goal
-
-Take TeamFlow from:
-
-> "It works on my machine."
-
-to:
-
-> "It can be built, tested, containerized, and deployed consistently."
-
-The goal is practical deployment knowledge, not a full DevOps curriculum.
-
----
-
-# 📚 What You Will Learn
-
-# 1. Docker
-
-Learn:
-
-* Images
-* Containers
-* Dockerfile
-* Build
-* Run
-* Ports
-* Environment variables
-* Networks
-* Docker Compose
-
----
-
-# 2. Production Configuration
-
-Learn:
-
-* Environment variables
-* Connection strings
-* JWT configuration
-* Redis configuration
-* AI API keys
-* Payment configuration
-* Environment-specific settings
-
-No secrets should be committed to source control.
-
----
-
-# 3. CI/CD
-
-Learn the practical basics of:
-
-* GitHub Actions
-* Workflows
-* Jobs
-* Steps
-* Restore
-* Build
-* Test
-* Docker build
-* Deployment
-
----
-
-# 🚀 Target Pipeline
-
-The learner should build approximately:
-
-```text
-Git Push / Pull Request
-        ↓
-GitHub Actions
-        ↓
-Restore
-        ↓
-Build
-        ↓
-Unit Tests
-        ↓
-Integration Tests
-        ↓
-Docker Build
-        ↓
-Deployment
-        ↓
-Health Verification
-```
-
----
-
-# 🛠️ Practical Implementation
-
-# Docker
-
-Create a production-oriented Dockerfile.
-
----
-
-# Docker Compose
-
-Create a local environment containing:
-
-```text
-TeamFlow API
-SQL Server
-Redis
-```
-
----
-
-# Configuration
-
-Move environment-specific values outside the source code.
-
-Examples:
-
-```text
-Connection Strings
-JWT Configuration
-Redis Configuration
-AI API Keys
-Payment API Keys
-```
-
----
-
-# Secrets
-
-Ensure secrets are not committed to Git.
-
-Use environment configuration or the appropriate CI/CD secret mechanism.
-
----
-
-# CI Pipeline
-
-Create a GitHub Actions workflow:
-
-```text
-Push / Pull Request
-        ↓
-Restore
-        ↓
-Build
-        ↓
-Unit Tests
-        ↓
-Integration Tests
-```
-
----
-
-# Docker Pipeline
-
-Extend the workflow:
-
-```text
-Build
- ↓
-Test
- ↓
-Docker Build
- ↓
-Image
-```
-
----
-
-# Deployment
-
-Deploy TeamFlow to a real hosting environment.
-
-The exact hosting provider is not the primary learning objective.
-
-The learner must understand the deployment process.
-
----
-
-# 📝 Sprint Tasks
-
-### Task 1 — Dockerfile
-
-Create a production-oriented Dockerfile.
-
----
-
-### Task 2 — Docker Compose
-
-Create:
-
-```text
-API
-SQL Server
-Redis
-```
-
----
-
-### Task 3 — Environment Configuration
-
-Move environment-specific configuration outside the source code.
-
----
-
-### Task 4 — Secrets
-
-Ensure secrets are not committed to Git.
-
----
-
-### Task 5 — Local Production-like Environment
-
-Run TeamFlow through Docker Compose.
-
----
-
-### Task 6 — GitHub Actions
-
-Create a CI workflow.
-
----
-
-### Task 7 — Build Validation
-
-The pipeline must fail when the application does not build.
-
----
-
-### Task 8 — Automated Tests
-
-The pipeline must execute:
-
-* Unit tests
-* Integration tests
-
----
-
-### Task 9 — Docker Build
-
-Build the Docker image through CI.
-
----
-
-### Task 10 — Deployment
-
-Deploy the application.
-
----
-
-### Task 11 — Production Verification
-
-Verify:
-
-* API availability
-* Database connectivity
-* Authentication
-* Important endpoints
-* Redis
-* Background processing
-* AI integration
-* Payment integration
-
----
-
-### Task 12 — Final Refactoring
-
-Review:
-
-* Architecture
-* Naming
-* Dead code
-* Unnecessary abstractions
-* Error handling
-* Business rules
-* Configuration
-* Logging
-* API consistency
-
----
-
-### Task 13 — Final README
-
-Document:
-
-* Project overview
-* Architecture
-* Domain
-* Authentication
-* Authorization
-* Data access
-* Background processing
-* Caching
-* AI integration
-* Payment integration
-* Testing
-* Docker
-* CI/CD
-* Deployment
-
----
-
-# 📦 Sprint Deliverables
-
-The learner must submit:
-
-* Production Dockerfile
-* Docker Compose
-* Environment configuration
-* Secrets strategy
-* GitHub Actions workflow
-* Automated build
-* Automated tests
-* Docker image build
-* Deployed API
-* Production verification
-* Final README
-* Final refactoring
-
----
-
-# 📊 Evaluation — 100 Points
-
-| Area                       |  Points |
-| -------------------------- | ------: |
-| Dockerfile                 |      25 |
-| Docker Compose             |      15 |
-| Configuration & Secrets    |      15 |
-| GitHub Actions CI/CD       |      25 |
-| Deployment                 |      15 |
-| Final README & Refactoring |       5 |
-| **Total**                  | **100** |
-
----
-
-# ✅ Definition of Done
-
-* [ ] Dockerfile works
-* [ ] Docker Compose works
-* [ ] API runs inside Docker
-* [ ] SQL Server runs correctly
-* [ ] Redis runs correctly
-* [ ] Configuration is environment-based
-* [ ] Secrets are protected
-* [ ] GitHub Actions runs successfully
-* [ ] Build is automated
-* [ ] Tests are automated
-* [ ] Docker image is built automatically
-* [ ] Application is deployed
-* [ ] Production environment is verified
-* [ ] README is complete
-
----
-
-# 🎓 Expected Outcome
-
-The learner should understand the complete path:
-
-```text
-Code
- ↓
-Build
- ↓
-Test
- ↓
-Containerize
- ↓
-Automate
- ↓
-Deploy
- ↓
-Verify
-```
-
-and should be able to explain what happens at each stage.
-
----
-
-# 🏁 Final Level Completion
-
-A learner completes Level 2 when all six sprints are completed and TeamFlow contains:
-
-```text
-Domain Modeling
-        ↓
-Clean Architecture
-        ↓
-Repository Abstractions
-        ↓
-EF Core Persistence
-        ↓
-CQRS
-        ↓
-MediatR
-        ↓
-Validation
-        ↓
-Authentication
-        ↓
-Authorization
-        ↓
-Business Rules
-        ↓
-Advanced API Engineering
-        ↓
-Background Processing
-        ↓
-Redis / Caching
-        ↓
-Unit Testing
-        ↓
-Integration Testing
-        ↓
-AI Integration
-        ↓
-Payment Integration
-        ↓
-Docker
-        ↓
-GitHub Actions
-        ↓
-CI/CD
-        ↓
-Deployment
-```
-
----
-
-# 📊 Final Evaluation
-
-| Sprint    | Focus                                     |  Points |
-| --------- | ----------------------------------------- | ------: |
-| Sprint 1  | Domain, Architecture & Persistence        |     100 |
-| Sprint 2  | CQRS, Application Architecture & Security |     100 |
-| Sprint 3  | Business Rules & API Engineering          |     100 |
-| Sprint 4  | Production Engineering                    |     100 |
-| Sprint 5  | Testing, AI & Payment                     |     100 |
-| Sprint 6  | Docker, CI/CD & Deployment                |     100 |
-| **TOTAL** |                                           | **600** |
-
----
-
-# 🎯 Final Project Review
-
-At the end of Level 2, the learner must be able to explain:
-
-## 1. Domain
-
-What does TeamFlow represent?
-
-What are the important entities and business rules?
-
----
-
-## 1. Architecture
-
-Why is the solution structured this way?
-
-Why does each layer exist?
-
----
-
-## 1. Repository
-
-Why is a repository abstraction used?
-
-Where would a repository abstraction become unnecessary?
-
----
-
-## 1. Application
-
-Why are commands and queries separated?
-
-Where does application logic belong?
-
----
-
-## 1. MediatR
-
-What problem does the Mediator pattern solve?
-
-What complexity does it introduce?
-
----
-
-## 1. Business Rules
-
-Where are important business rules enforced?
-
-Why are they enforced there?
-
----
-
-## 1. Security
-
-How are authentication and authorization handled?
-
-What is the difference between authentication and authorization?
-
----
-
-## 1. API
-
-How does the API handle:
-
-* Validation?
-* Errors?
-* Pagination?
-* Filtering?
-* Searching?
-* Sorting?
-* Duplicate requests?
-
----
-
-## 1. Background Processing
-
-Why should some work happen outside the HTTP request?
-
-What happens if the background worker is cancelled?
-
----
-
-## 1. Caching
-
-Why is this data cached?
-
-What is the cache invalidation strategy?
-
-What happens when Redis is unavailable?
-
----
-
-## 1. AI
-
-How is AI access isolated?
-
-How do you ensure the AI only receives authorized project information?
-
-What happens when the provider fails?
-
----
-
-## 1. Payment
-
-How does the payment lifecycle work?
-
-How are webhooks verified?
-
-How are duplicate webhooks handled?
-
----
-
-## 1. Testing
-
-What behavior is covered by unit tests?
-
-What application flows are covered by integration tests?
-
-Why were these cases selected?
-
----
-
-## 1. Deployment
-
-How does TeamFlow move from source code to a running environment?
-
-```text
-Source Code
- ↓
-CI
- ↓
-Build
- ↓
-Tests
- ↓
-Docker
- ↓
-Deployment
- ↓
-Verification
-```
-
----
-
-## 1. Trade-offs
-
-For important architectural decisions, the learner should be able to explain:
-
-```text
-Problem
-   ↓
-Possible Solutions
-   ↓
-Chosen Solution
-   ↓
-Why?
-   ↓
-Trade-offs
-```
-
-The learner should not be rewarded for choosing the most sophisticated technology.
-
-The learner should be rewarded for choosing a solution that is:
-
-* Appropriate
-* Understandable
-* Maintainable
-* Justified
-* Consistent with the project's requirements
-
----
-
-# 🧠 Engineering Practice Throughout All Sprints
-
-These are not separate lessons.
-
-They are part of how the learner is evaluated throughout the project.
-
----
-
-# 1. Debugging
-
-Use:
-
-```text
-Symptom
- ↓
-Observation
- ↓
-Hypothesis
- ↓
-Experiment
- ↓
-Evidence
- ↓
-Root Cause
- ↓
-Fix
- ↓
-Prevention
-```
-
-The learner should avoid:
-
-> "Change random code until it works."
-
----
-
-# 2. Architecture Decisions
-
-Before introducing an abstraction:
-
-```text
-What problem are we solving?
-
-Why is the current solution insufficient?
-
-What alternatives exist?
-
-What complexity does this introduce?
-
-Is the abstraction actually necessary?
-```
-
----
-
-# 3. Performance
-
-Use:
-
-```text
-Measure
- ↓
-Find Bottleneck
- ↓
-Understand Root Cause
- ↓
-Optimize
- ↓
-Measure Again
-```
-
-Performance optimization should be evidence-driven.
-
----
-
-# 4. Code Review
-
-Throughout the project, review:
-
-* Naming
-* Responsibility boundaries
-* Duplication
-* Abstractions
-* Error handling
-* Security
-* Query efficiency
-* Maintainability
-* Testability
-
----
-
-# 🚫 Explicitly Out of Scope
-
-The following are NOT mandatory for Level 2:
-
-* Microservices
-* Kubernetes
-* Terraform
-* Kafka
-* RabbitMQ
-* MassTransit
-* GraphQL
-* MongoDB
-* PostgreSQL
-* Elasticsearch
-* RAG
-* Vector databases
-* Multi-agent systems
-* Fine-tuning
-* Advanced cloud architecture
-* Dedicated system design curriculum
-* Large DevOps curriculum
-* OpenTelemetry
-* Advanced distributed systems
-* Complex event-driven architecture
-* Complex task dependency graphs
-* Circular dependency detection
-* Advanced payment systems
-* Multiple AI providers
-* Multiple payment providers
-
-Additional technologies should only be introduced when they solve a genuine TeamFlow problem.
-
----
-
-# 🏆 Level 2 Philosophy
-
-```text
-Learn
-  ↓
-Understand
-  ↓
-Build
-  ↓
-Break
-  ↓
-Debug
-  ↓
-Refactor
-  ↓
-Test
-  ↓
-Deploy
-  ↓
-Explain
-```
-
-The goal is not:
-
-> How many technologies did the learner use?
-
-The goal is:
-
-> Can the learner take a non-trivial backend requirement, engineer a maintainable solution, handle realistic problems, test important behavior, deploy the system, and explain the decisions behind it?
-
----
-
-# Final Principle
-
-**One Project.**
-
-**One Evolving Architecture.**
-
-**Focused Scope.**
-
-**Real Business Rules.**
-
-**Two External Integrations.**
-
-**Meaningful Testing.**
-
-**Real Deployment.**
-
-**Real Engineering Decisions.**
-
-**No Technology for Technology's Sake.**
+### Core Architecture Rules:
+1. **Domain has ZERO dependencies:** No EF Core packages, no ASP.NET packages, no third-party libraries.
+2. **Application defines abstractions:** Interfaces for repositories, email service, file storage, payment gateway, and current user reside in Application.
+3. **Infrastructure implements abstractions:** All external concerns (databases, email, Stripe, PDF, background jobs) are isolated in Infrastructure.
+4. **Thin Controllers:** Controllers only accept HTTP requests, delegate to MediatR via `ISender`, and translate the resulting `Result<T>` into HTTP responses.
+5. **No Entity Leakage:** Domain entities are **never** returned directly by API endpoints. DTOs are mandatory.
+
+---
+
+## 🧭 Mentorship Schedule & Timeline
+
+| Phase | Sprint / Milestone | Start Date | End Date | Focus & Core Deliverables |
+|:---:|---|:---:|:---:|---|
+| **Phase 1** | **Sprint 1: Architecture, Identity & Categories** | 20 Oct 2026 | 02 Nov 2026 | Clean Arch, Domain Models, EF Core, Options, JWT & Refresh Tokens, Categories CRUD |
+| **Phase 1** | **Sprint 2: CQRS, MediatR & Unit Testing** | 03 Nov 2026 | 16 Nov 2026 | CQRS slices, MediatR, FluentValidation, Result pattern, ProblemDetails, Campaigns, Unit Tests |
+| **Phase 2** | **Sprint 3: Donations, AuthZ & API Standards** | 17 Nov 2026 | 30 Nov 2026 | Ownership AuthZ, Donations module, Concurrency, Caching (Redis), Localization, Versioning, Rate Limiting |
+| **Phase 2** | **Sprint 4: Hangfire, Files & Serilog** | 01 Dec 2026 | 14 Dec 2026 | Hangfire jobs, MailKit email, QuestPDF receipts, Magic-byte uploads, Serilog structured logging |
+| **Phase 3** | **Sprint 5: Stripe Payments & Idempotency** | 15 Dec 2026 | 28 Dec 2026 | Stripe Checkout, Webhooks, Idempotency-Key middleware, WebApplicationFactory integration tests |
+| **Phase 3** | **Sprint 6: Docker, CI/CD & Final Polish** | 29 Dec 2026 | 11 Jan 2027 | Admin analytics, Multi-stage Docker, Docker Compose stack, Health checks, GitHub Actions CI |
+| **Defense** | **Final Period: Hardening & Oral Defense** | 12 Jan 2027 | 20 Jan 2027 | Architectural review, production readiness inspection, live demo & oral defense |
+
+---
+
+## 🟦 Sprint 1 — Clean Architecture, Identity & Categories
+
+* **Timeline:** 20 Oct 2026 → 02 Nov 2026 | **Effort:** ~30 Hours | **Evaluation:** 100 Points
+* **Sprint Goal:** Establish the architectural foundation of DonationHub and deliver the first two production modules: Identity (with secure JWT & refresh token rotation) and Categories.
+
+### Detailed Sprint Tasks
+
+#### Task 1 — Solution Structure (Clean Architecture)
+Create the four-layer solution adhering strictly to dependency inversion:
+* `DonationHub.Domain` (Zero dependencies)
+* `DonationHub.Application` (Depends only on Domain)
+* `DonationHub.Infrastructure` (Depends on Application and Domain)
+* `DonationHub.Api` (Depends on Application and Infrastructure as the Composition Root)
+* Inside `Application`, organize code by **feature slices** (`Features/Categories`, `Features/Auth`), not technical folders.
+* **Resources:**
+  * **MUST:** [Microsoft — Common web application architectures](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures)
+  * **MUST:** [Microsoft — Clean Architecture with ASP.NET Core](https://learn.microsoft.com/en-us/shows/dotnetconf-2022/clean-architecture-with-aspnet-core-7)
+  * **VIDEO:** [Milan Jovanović — Clean Architecture from Scratch](https://www.youtube.com/watch?v=yF9SwL0p0Y0)
+  * **VIDEO:** [Jimmy Bogard — Vertical Slice Architecture](https://www.youtube.com/watch?v=oAoaMlS1PWo)
+
+#### Task 2 — Domain Model
+Implement the rich domain model with business invariants and state machines:
+* **Entities:** `ApplicationUser`, `RefreshToken`, `Category`, `Campaign`, `Donation`, `PaymentAttempt`, `ProcessedStripeEvent`, `IdempotencyRecord`.
+* **Enums:** `CampaignStatus` (`Active`, `Completed`, `Expired`), `DonationStatus` (`Pending`, `Succeeded`, `Failed`), `PaymentAttemptStatus`.
+* **Invariants:** `GoalAmount > 0`, `EndDate` strictly in future at creation, non-empty bilingual names, valid state machine transitions.
+* **Resources:**
+  * **MUST:** [Microsoft — DDD and CQRS architecture guidance](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/)
+  * **VIDEO:** [Milan Jovanović — Domain-Driven Design with C#](https://www.youtube.com/watch?v=F3_l0Tst0tY)
+
+#### Task 3 — EF Core Persistence
+Configure persistence in Infrastructure:
+* `DonationHubDbContext` with separate `IEntityTypeConfiguration<T>` classes.
+* Concurrency token: `RowVersion` (`byte[]`) configured on `Campaign`.
+* Soft delete on `Campaign` (`IsDeleted`) with a Global Query Filter (`builder.Entity<Campaign>().HasQueryFilter(c => !c.IsDeleted)`).
+* Indexes on frequently filtered fields: `Campaign.CategoryId`, `Campaign.Status`, `Donation.CampaignId`, `Donation.DonorId`.
+* Initial migration generated and applied to SQL Server.
+* **Resources:**
+  * **MUST:** [EF Core Relationships](https://learn.microsoft.com/en-us/ef/core/modeling/relationships) | [Indexes](https://learn.microsoft.com/en-us/ef/core/modeling/indexes) | [Global query filters](https://learn.microsoft.com/en-us/ef/core/querying/filters)
+  * **VIDEO:** [Milan Jovanović — EF Core Fluent API & Relationships](https://www.youtube.com/watch?v=kYJqD2v5bX8)
+  * **VIDEO:** [Nick Chapsas — Global Query Filters & Soft Delete](https://www.youtube.com/watch?v=Zc2gZ79r_2M)
+
+#### Task 4 — Generic Repository & Unit of Work
+Implement persistence patterns:
+* `IGenericRepository<T>` and `IUnitOfWork` in Application; implemented in Infrastructure.
+* **Architectural Rule:** Write operations go through the Repository and Unit of Work. Read queries bypass repositories and query `DbContext` directly with `AsNoTracking()` and projection to DTOs for maximum performance.
+* **Resources:**
+  * **VIDEO:** [DevCreed (محمد الهلالي) — Repository Pattern & Unit of Work (Arabic)](https://youtube.com/playlist?list=PL62tSREI9C-e6nQ47brLj00iSGddiee73)
+  * **VIDEO:** [Milan Jovanović — Generic Repository & Unit of Work](https://www.youtube.com/watch?v=xdibesoH8zE)
+
+#### Task 5 — Options Pattern with Validation
+* Create strongly-typed options: `JwtOptions`, `SeedAdminOptions`, `DonationOptions`.
+* Register with `.ValidateDataAnnotations().ValidateOnStart()`. The application must fail immediately at startup if configuration is invalid or missing.
+* **Resources:**
+  * **MUST:** [ASP.NET Core — Options pattern](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options)
+  * **VIDEO:** [Nick Chapsas — Options Pattern & ValidateOnStart](https://www.youtube.com/watch?v=b4O2QkM_S7A)
+
+#### Task 6 — Identity & Authentication
+Implement full user authentication with ASP.NET Core Identity:
+* **IDN-01:** Donor registration (Email, Password, Full Name, Preferred Language).
+* **IDN-02:** Unique email (case-insensitive), password complexity policy (8+ chars, upper, lower, digit).
+* **IDN-03:** Login endpoint returning short-lived JWT access token + refresh token.
+* **IDN-04:** JWT Access Token: 15-minute lifetime with claims: `sub` (User ID), `email`, `role`.
+* **IDN-05:** Refresh Token: 7-day lifetime, stored **cryptographically hashed** (SHA-256) in database.
+* **IDN-06:** Refresh Token Rotation: on `/auth/refresh`, revoke old token, issue linked new token.
+* **IDN-07:** Logout endpoint revokes current refresh token immediately.
+* **IDN-09:** `GET /auth/me` returns authenticated user profile.
+* **IDN-10:** Deactivated user cannot log in or refresh tokens.
+* **IDN-11:** Automatic Admin user seeding at startup from configuration options.
+* **IDN-12:** Unified generic error message for invalid login credentials (anti-enumeration).
+* **Endpoints:**
+  | Method | Path | Access |
+  |---|---|---|
+  | POST | `/auth/register` | Anonymous |
+  | POST | `/auth/login` | Anonymous |
+  | POST | `/auth/refresh` | Anonymous |
+  | POST | `/auth/logout` | Authenticated |
+  | GET | `/auth/me` | Authenticated |
+* **Resources:**
+  * **MUST:** [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity) | [Configure JWT bearer](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/configure-jwt-bearer-authentication)
+  * **VIDEO:** [Milan Jovanović — JWT Authentication & Refresh Tokens](https://www.youtube.com/watch?v=M6Akbba9hnA)
+  * **VIDEO:** [Khalid Essaadani — ASP.NET Identity in Arabic](https://www.youtube.com/playlist?list=PLwj1YcMhLRN1T3fIb-JDa4xNFfVQoljGI)
+
+#### Task 7 — Staff User Creation
+* **IDN-08:** `POST /admin/staff` allows Admin to create staff users (`Admin` or `CampaignManager`) with temporary passwords.
+* **Resources:**
+  * **MUST:** [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity)
+
+#### Task 8 — Categories Module
+Implement complete CRUD for Categories with domain validation:
+* **CAT-01:** Admin creates, updates, and deletes categories with Arabic and English names/descriptions.
+* **CAT-02:** Names required in both languages, max 100 characters, unique per language.
+* **CAT-03:** Public listing and single category lookup.
+* **CAT-04:** Deleting a category that has linked campaigns is rejected (`Category.HasCampaigns`).
+* **Endpoints:**
+  | Method | Path | Access |
+  |---|---|---|
+  | GET | `/categories` | Anonymous |
+  | GET | `/categories/{id}` | Anonymous |
+  | POST | `/categories` | Admin |
+  | PUT | `/categories/{id}` | Admin |
+  | DELETE | `/categories/{id}` | Admin |
+* **Resources:**
+  * **VIDEO:** [Passionate Coders (Mohamed El-Mehdi) — ASP.NET Core Web API (Arabic)](https://www.youtube.com/playlist?list=PLsV97AQt78NQ8E7cEqovH0zLYRJgJahGh)
+
+#### Task 9 — Swagger & API Documentation
+Configure Swashbuckle with JWT Bearer Authentication schemes so protected endpoints can be tested interactively.
+* **Resources:**
+  * **VIDEO:** [Milan Jovanović — Swagger with JWT Bearer Authentication](https://www.youtube.com/watch?v=cM3k0ZqP4f0)
+
+#### Task 10 — Repository Documentation
+Add developer setup guide: connection strings, running migrations via CLI, test credentials, and architecture summary.
+
+---
+
+### Sprint 1 Deliverables & Definition of Done
+- [ ] 4-layer Clean Architecture solution compiled without warnings.
+- [ ] Rich domain entities with invariants and state machines.
+- [ ] EF Core Fluent API mappings, indexes, soft delete filter, and migrations.
+- [ ] Options pattern configured with `ValidateOnStart()`.
+- [ ] Identity auth: register, login, refresh rotation, revocation, profile.
+- [ ] Category CRUD with campaign association validation.
+- [ ] Swagger Bearer auth enabled.
+- [ ] Evaluation Rubric (100 Points): Architecture (25) + Identity (30) + Categories (20) + Data Persistence (15) + Code Quality (10).
+
+---
+
+## 🟩 Sprint 2 — Campaigns, CQRS, MediatR & Unit Testing
+
+* **Timeline:** 03 Nov 2026 → 16 Nov 2026 | **Effort:** ~30 Hours | **Evaluation:** 100 Points
+* **Sprint Goal:** Convert all use cases to CQRS vertical slices using MediatR, implement automatic FluentValidation pipelines, standard RFC 9457 ProblemDetails, the Campaigns module, and a comprehensive unit test suite.
+
+### Detailed Sprint Tasks
+
+#### Task 1 — CQRS Conversion
+Refactor all existing use cases (Identity and Categories) into distinct Command and Query feature slices:
+* `Features/<FeatureName>/<UseCase>/<UseCaseCommand|Query>.cs`
+* `Features/<FeatureName>/<UseCase>/<UseCaseHandler>.cs`
+* `Features/<FeatureName>/<UseCase>/<UseCaseValidator>.cs`
+* `Features/<FeatureName>/<UseCase>/<UseCaseDto>.cs`
+* **Resources:**
+  * **MUST:** [Microsoft — DDD/CQRS architecture guidance](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/)
+  * **VIDEO:** [Nick Chapsas — CQRS in .NET](https://www.youtube.com/watch?v=2JzQuIvxIqk)
+  * **ARTICLE:** [CodeWithMukesh — CQRS and MediatR in ASP.NET Core](https://codewithmukesh.com/blog/cqrs-and-mediatr-in-aspnet-core/)
+
+#### Task 2 — MediatR Dispatching & Thin Controllers
+Introduce MediatR for all requests:
+* Controllers contain zero business logic. They simply construct the command/query, dispatch via `ISender.Send()`, and translate the result into HTTP responses.
+* **Resources:**
+  * **VIDEO:** [Derek Comartin (CodeOpinion) — Why Use MediatR?](https://codeopinion.com/why-use-mediatr-3-reasons-why-and-1-reason-not/)
+  * **VIDEO:** [Nick Chapsas — MediatR Pipeline Behaviors](https://www.youtube.com/watch?v=2JzQuIvxIqk)
+
+#### Task 3 — Automatic Validation Pipeline Behavior
+Implement `ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>`:
+* Collects all registered `IValidator<TRequest>` for the request.
+* Runs validation asynchronously. If failures exist, short-circuits the pipeline and returns a structured validation error before the handler is ever invoked.
+* **Resources:**
+  * **MUST:** [FluentValidation Documentation](https://docs.fluentvalidation.net/)
+  * **VIDEO:** [Milan Jovanović — Validation with FluentValidation & MediatR](https://www.youtube.com/watch?v=rQ46aI0y9z0)
+
+#### Task 4 — Result Pattern & Standard Error Catalogue
+Replace exception-based control flow with functional results:
+* Implement `Result` and `Result<T>` with `Error` types (`Validation`, `NotFound`, `Conflict`, `Forbidden`).
+* Map standard error codes: `Validation.Failed` (400), `Auth.InvalidCredentials` (401), `Auth.EmailAlreadyExists` (409), `Category.NotFound` (404), `Category.HasCampaigns` (409), `Campaign.NotFound` (404), `Campaign.GoalBelowRaised` (422), `Campaign.EndDateInPast` (422), `Campaign.ConcurrencyConflict` (409).
+* **Resources:**
+  * **VIDEO:** [Milan Jovanović — Functional Error Handling with Result Pattern](https://www.youtube.com/watch?v=WCCkyeekmDo)
+  * **VIDEO:** [Amichai Mantinband — Clean Architecture Error Handling](https://www.youtube.com/watch?v=4n_sW4hH0Zk)
+
+#### Task 5 — Global Exception Handling (IExceptionHandler & ProblemDetails)
+* Register an `IExceptionHandler` in .NET 8 returning RFC 9457 `ProblemDetails`.
+* Catches unexpected 500 exceptions, logs the full exception stack trace with a unique `traceId`, and returns a safe sanitized response to clients.
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — New Exception Handling in .NET 8 (IExceptionHandler)](https://www.youtube.com/watch?v=4V_X7b9dFMo)
+  * **VIDEO:** [Milan Jovanović — Global Error Handling in ASP.NET Core](https://www.youtube.com/watch?v=x_u09X_X74s)
+
+#### Task 6 — Campaigns Module
+Implement the complete Campaigns feature slice:
+* **CMP-01:** Create campaign (Arabic & English title/description, goal amount, end date, category id). Initial status is `Active`, `RaisedAmount = 0`.
+* **CMP-02:** Update campaign, verifying invariants: goal cannot be set lower than currently raised amount, end date must remain in future.
+* **CMP-03:** Soft-delete campaign (`IsDeleted = true`), automatically hidden by global query filter.
+* **CMP-04:** Public active campaign list and public "success stories" list (`Completed` status).
+* **CMP-05:** Campaign details returning calculated fields: `progressPercent` (capped at 100) and `daysLeft`.
+* **CMP-06:** In Sprint 2, Admin creates and manages campaigns (Campaign Manager ownership arrives in Sprint 3).
+* **CMP-10:** Optimistic concurrency conflict detection using `RowVersion`.
+* **Endpoints:**
+  | Method | Path | Access |
+  |---|---|---|
+  | GET | `/campaigns` | Anonymous |
+  | GET | `/campaigns/success-stories` | Anonymous |
+  | GET | `/campaigns/{id}` | Anonymous |
+  | POST | `/campaigns` | Admin |
+  | PUT | `/campaigns/{id}` | Admin |
+  | DELETE | `/campaigns/{id}` | Admin |
+* **Resources:**
+  * **VIDEO:** [Milan Jovanović — Optimistic Concurrency in EF Core](https://www.youtube.com/watch?v=bF9EwE0_2H4)
+  * **VIDEO:** [Nick Chapsas — Concurrency Conflicts in EF Core](https://www.youtube.com/watch?v=pM9mYcEw28Q)
+
+#### Task 7 — CancellationToken Propagation
+Ensure all asynchronous methods from Controller → MediatR → Handler → EF Core accept and propagate `CancellationToken`.
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — How to Cancel Tasks with CancellationToken in .NET](https://www.youtube.com/watch?v=8V-w6Gj9w-A)
+
+#### Task 8 — TimeProvider Abstraction
+Eliminate all direct calls to `DateTime.UtcNow`. Inject `TimeProvider` across domain logic, handlers, and validation so time-dependent tests can be deterministically simulated.
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — Stop Using DateTime.UtcNow in .NET 8 (TimeProvider)](https://www.youtube.com/watch?v=S8L3kK_s7hA)
+
+#### Task 9 — Unit Testing Suite (15+ Tests)
+Create a dedicated test project `DonationHub.Application.UnitTests` using xUnit, FluentAssertions, and NSubstitute:
+* Test domain invariants: goal amount positive, end date in future, state transitions.
+* Test business rules: cannot delete category with active campaigns, cannot lower goal below raised amount.
+* Test MediatR handlers with mocked repositories and fixed `TimeProvider`.
+* Test FluentValidation rules.
+* **Resources:**
+  * **VIDEO:** [Teddy Smith — xUnit Full Course for Beginners](https://www.youtube.com/watch?v=fVVNOkbLcPw)
+  * **VIDEO:** [Mohamed El-Mehdi — Unit Testing in C# (Arabic)](https://www.youtube.com/watch?v=lY4Q8fZYSN8)
+  * **VIDEO:** [Nick Chapsas — Effective Testing Workshop](https://www.youtube.com/watch?v=kJFB8o78FBs)
+
+---
+
+### Sprint 2 Deliverables & Definition of Done
+- [ ] All use cases refactored into CQRS slices with MediatR.
+- [ ] Validation pipeline behavior active; zero manual validation in handlers.
+- [ ] Result pattern and ProblemDetails returned across all endpoints.
+- [ ] Campaigns CRUD with optimistic concurrency control (`RowVersion`).
+- [ ] TimeProvider and CancellationToken propagated everywhere.
+- [ ] At least 15 passing unit tests.
+- [ ] Evaluation Rubric (100 Points): CQRS & MediatR (25) + Campaigns Module (25) + Error Handling & Validation (20) + Unit Testing (20) + Clean Code & Timing (10).
+
+---
+
+## 🟨 Sprint 3 — Donations, Authorization & API Engineering
+
+* **Timeline:** 17 Nov 2026 → 30 Nov 2026 | **Effort:** ~30 Hours | **Evaluation:** 100 Points
+* **Sprint Goal:** Deliver the Donations module with transactional integrity, enforce resource-based authorization, implement distributed caching with Redis, bilingual localization, API versioning, rate limiting, and CORS.
+
+### Detailed Sprint Tasks
+
+#### Task 1 — Authorization Policies & Resource Ownership
+* **CMP-07:** Implement ASP.NET Core Resource-Based Authorization:
+  * Campaign Managers can create campaigns and modify/delete **only campaigns they created**.
+  * Admins can modify and delete all campaigns.
+* **Security Anti-Enumeration Rule:** When a user requests a private resource belonging to someone else, return **`404 Not Found`** (not 403) so the requester cannot discover whether the resource exists.
+* **Endpoints:**
+  | Endpoint | Campaign Manager | Admin |
+  |---|---|---|
+  | `POST /campaigns` | ✅ Create own | ✅ Create |
+  | `PUT /campaigns/{id}` | ✅ Own only | ✅ All |
+  | `DELETE /campaigns/{id}` | ✅ Own only | ✅ All |
+  | `GET /campaigns/mine` | ✅ Own campaigns | N/A |
+* **Resources:**
+  * **MUST:** [Resource-based authorization in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/resource-based)
+  * **VIDEO:** [Milan Jovanović — Resource-Based Authorization in ASP.NET Core](https://www.youtube.com/watch?v=24r7UmuRh0A)
+  * **VIDEO:** [Raw Coding — Resource-Based Authorization](https://www.youtube.com/watch?v=680Qp1r4ZFc)
+
+#### Task 2 — Donations Module
+Implement the core donation lifecycle:
+* **DON-01:** Authenticated user creates a donation for an active campaign. Starts in `Pending` status.
+* **DON-02:** Rejections: campaign is inactive, end date has passed, or amount is outside allowed bounds (configured in `DonationOptions`).
+* **DON-03:** Donor lists their own donations with pagination (`/donations/mine`).
+* **DON-04:** Donor views single donation details by ID. Accessing another donor's record yields 404.
+* **DON-05:** Admin lists all donations across the platform with multi-parameter filtering (status, campaign, donor, dates).
+* **Endpoints:**
+  | Method | Path | Access |
+  |---|---|---|
+  | POST | `/donations` | Donor, Manager, Admin |
+  | GET | `/donations/mine` | Authenticated |
+  | GET | `/donations/{id}` | Owner, Admin |
+  | GET | `/admin/donations` | Admin |
+* **Resources:**
+  * **MUST:** [EF Core Querying & Relationships](https://learn.microsoft.com/en-us/ef/core/querying/)
+
+#### Task 3 — Transactional Donation Success Flow (Temporary Stub)
+* **DON-06:** `POST /admin/donations/{id}/mark-succeeded` simulates payment success (**Temporary stub to be removed in Sprint 5**).
+* **DON-07:** Atomic transaction flow:
+  1. Set donation status to `Succeeded`, record `CompletedAt`, generate sequential `ReceiptNumber` (`DN-{yyyy}-{000000}`).
+  2. Increment campaign `RaisedAmount` by donation amount.
+  3. If `RaisedAmount >= GoalAmount`, update campaign status to `Completed`.
+  4. Commit transaction.
+* **DON-08:** Concurrency-safe raised amount update: handle simultaneous donations without lost updates using optimistic concurrency (`RowVersion`) or atomic SQL increment.
+* **Resources:**
+  * **MUST:** [EF Core Transactions](https://learn.microsoft.com/en-us/ef/core/saving/transactions)
+  * **VIDEO:** [Nick Chapsas — Concurrency Conflicts in EF Core](https://www.youtube.com/watch?v=pM9mYcEw28Q)
+
+#### Task 4 — Pagination, Filtering, Sorting & Searching
+* Standardize query responses: `{ "items": [...], "page": 1, "pageSize": 20, "totalCount": 100, "totalPages": 5 }`.
+* Bounded page sizes: default 20, maximum 50.
+* Deterministic ordering by primary key to prevent duplicate items across pages.
+* Safe sorting whitelist: only allowed fields (`endDate`, `raisedAmount`, `createdAt`) can be sorted.
+* **Resources:**
+  * **VIDEO:** [Milan Jovanović — Adding Filtering, Sorting, and Pagination](https://www.youtube.com/watch?v=X8zRvXbirMU)
+  * **ARTICLE:** [Code Maze — Pagination in ASP.NET Core Web API](https://code-maze.com/paging-aspnet-core-webapi/)
+
+#### Task 5 — Distributed Caching with Redis (Cache-Aside Pattern)
+* Implement Cache-Aside with `IDistributedCache` backed by **Redis**:
+  * Cache public categories list, public campaign list pages, and campaign details.
+  * Cache keys include language and serialized query parameters: `campaigns:p1:s20:cat2:lang_en`.
+  * **Cache Invalidation:** Invalidate cached keys upon campaign creation, update, deletion, or donation completion.
+  * **Security Rule:** Never cache user-specific data (e.g., personal donations) under shared keys.
+* **Resources:**
+  * **MUST:** [ASP.NET Core Distributed Caching](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed)
+  * **VIDEO:** [Nick Chapsas — Distributed Caching with Redis](https://www.youtube.com/watch?v=7_E9q4hZp8w)
+  * **VIDEO:** [Milan Jovanović — Cache-Aside Pattern with Redis](https://www.youtube.com/watch?v=sW2wN1n3z6U)
+
+#### Task 6 — Bilingual Localization (Arabic & English)
+* **CMP-11:** Read `Accept-Language` header (`ar` or `en`, fallback `en`).
+* Public API responses return titles and descriptions in the requested language. Admin endpoints return both.
+* Validation messages and business error messages are localized using `.resx` resource files.
+* **Resources:**
+  * **VIDEO:** [Mohamad Lawand — Localization and Globalization in Web API](https://www.youtube.com/watch?v=aG49R_s4y_U)
+  * **ARTICLE:** [Code Maze — ASP.NET Core Web API Localization](https://code-maze.com/aspnetcore-web-api-localization/)
+
+#### Task 7 — API Versioning
+Implement URL-segment API versioning (`/api/v1/...`) using `Asp.Versioning.Mvc`.
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — API Versioning in ASP.NET Core (.NET 8)](https://www.youtube.com/watch?v=2wOCkNm1_zY)
+
+#### Task 8 — Built-in Rate Limiting Middleware
+Configure ASP.NET Core Rate Limiter with named policies:
+* `global`: 100 req/min per IP.
+* `auth`: 10 req/min per IP (login, register, refresh).
+* `donations`: 20 req/min per User ID.
+* Returns `429 Too Many Requests` with `Retry-After` header. Webhooks are explicitly excluded.
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — Built-in Rate Limiting in .NET](https://www.youtube.com/watch?v=9_p_H6c0zXQ)
+  * **VIDEO:** [Milan Jovanović — Rate Limiting in ASP.NET Core](https://www.youtube.com/watch?v=6l7Z1c2k4n8)
+
+#### Task 9 — CORS Configuration
+Named CORS policy configured from `CorsOptions` with explicit allowed origins. Credentials are never enabled with wildcard origins.
+
+#### Task 10 — Unit Tests for Donations
+Add automated tests for donation business invariants, atomic raised amount updates, and ownership rules.
+
+---
+
+### Sprint 3 Deliverables & Definition of Done
+- [ ] Resource-based authorization enforcing campaign ownership.
+- [ ] Donations module with atomic transactional completion.
+- [ ] Deterministic pagination, filtering, and safe sorting.
+- [ ] Redis distributed caching with cache invalidation.
+- [ ] Localization via `Accept-Language` header.
+- [ ] API versioning (`/api/v1/`), rate limiting, and CORS active.
+- [ ] Evaluation Rubric (100 Points): Donations Business Logic (25) + Authorization & Ownership (20) + Caching & Performance (20) + API Standards (20) + Testing & Documentation (15).
+
+---
+
+## 🟧 Sprint 4 — Notifications, Files, Hangfire & Serilog
+
+* **Timeline:** 01 Dec 2026 → 14 Dec 2026 | **Effort:** ~30 Hours | **Evaluation:** 100 Points
+* **Sprint Goal:** Offload heavy and asynchronous workloads to Hangfire background queues, generate dynamic PDF receipts with QuestPDF, send localized transactional emails with MailKit, validate file uploads by magic bytes, and configure Serilog structured logging.
+
+### Detailed Sprint Tasks
+
+#### Task 1 — Hangfire Background Job Processing
+* Configure Hangfire with SQL Server persistent storage.
+* Enable fire-and-forget, delayed, and recurring job capabilities.
+* **JOB-05:** Hangfire dashboard is enabled and secured using basic authentication from `HangfireOptions`.
+* **Resources:**
+  * **MUST:** [Hangfire — Getting started](https://docs.hangfire.io/en/latest/getting-started/) | [Using SQL Server](https://docs.hangfire.io/en/latest/configuration/using-sql-server.html)
+  * **VIDEO:** [DevCreed (محمد الهلالي) — Background Jobs Using Hangfire in .NET (Arabic)](https://www.youtube.com/watch?v=hnK1qn6ZjKo)
+  * **VIDEO:** [Milan Jovanović — Background Tasks with Hangfire](https://www.youtube.com/watch?v=m7zC_u6P12o)
+
+#### Task 2 — Transactional Email Service (MailKit & Mailpit)
+* **NTF-01:** Implement `IEmailService` in Application, backed by MailKit in Infrastructure.
+* **NTF-06:** In development, SMTP connects to local **Mailpit** container (zero external emails sent).
+* **NTF-05:** Emails formatted in donor's `PreferredLanguage` (Arabic emails support RTL directionality).
+* **Resources:**
+  * **VIDEO:** [Patrick God — Send Emails with MailKit in ASP.NET Core](https://www.youtube.com/watch?v=m53kK7Xk9_k)
+  * **ARTICLE:** [Code Maze — Send Emails with MailKit](https://code-maze.com/aspnetcore-send-email/)
+
+#### Task 3 — Dynamic PDF Receipt Generation (QuestPDF)
+* **FIL-06:** Generate certified PDF receipts containing receipt number, donor name, campaign title, amount, and date.
+* **JOB-01:** Receipt generation executes asynchronously in a **Hangfire fire-and-forget job**.
+* **FIL-07:** `GET /donations/{id}/receipt` allows donor or Admin to download the generated PDF.
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — Generate PDF Documents Easily in C# with QuestPDF](https://www.youtube.com/watch?v=Y3pU-L1Q7u0)
+  * **DOCUMENTATION:** [QuestPDF Quick Start](https://www.questpdf.com/quick-start.html)
+
+#### Task 4 — Asynchronous Notification Jobs
+* **NTF-02:** Email receipt to donor with PDF receipt attached.
+* **NTF-03:** Email campaign manager when campaign reaches its financial target.
+* **NTF-04:** All emails sent via Hangfire jobs with automatic retry (minimum 3 attempts).
+* **Idempotency Rule:** Background jobs must be idempotent — retrying a job must never generate duplicate emails or duplicate receipts.
+
+#### Task 5 — Stale Donation Timeout (Delayed Job)
+* **DON-09 & JOB-03:** When a pending donation is created, schedule a **Hangfire delayed job** (default 30-minute timeout). If the donation remains in `Pending` status after the timeout, mark it `Failed`.
+* **Resources:**
+  * **MUST:** [Hangfire — Delayed jobs](https://docs.hangfire.io/en/latest/background-methods/calling-methods-with-delay.html)
+
+#### Task 6 — Recurring Campaign Expiration Job
+* **JOB-04:** Register a **Hangfire recurring job** running hourly to transition active campaigns past their `EndDate` to `Expired`.
+* **Resources:**
+  * **MUST:** [Hangfire — Recurring jobs](https://docs.hangfire.io/en/latest/background-methods/performing-recurrent-tasks.html)
+
+#### Task 7 — Secure Campaign Banner Upload
+* **FIL-01:** Upload banner image for campaigns (Admin or campaign owner). Allowed types: JPG, PNG, WEBP. Max size 2 MB.
+* **FIL-02:** Validate file headers (**magic bytes**), rejecting disguised executable files.
+* **FIL-03:** Store files via `IFileStorage` abstraction with unique randomized GUID filenames.
+* **FIL-04:** Replacing an existing banner permanently deletes the obsolete file.
+* **FIL-05:** Static file middleware serves banners publicly via generated relative URLs.
+* **Endpoints:**
+  | Method | Path | Access |
+  |---|---|---|
+  | POST | `/campaigns/{id}/banner` | Admin, Campaign Owner (multipart/form-data) |
+  | DELETE | `/campaigns/{id}/banner` | Admin, Campaign Owner |
+* **Resources:**
+  * **VIDEO:** [Milan Jovanović — Secure File Upload in ASP.NET Core](https://www.youtube.com/watch?v=p3mO2uC2bZ8)
+
+#### Task 8 — Enterprise Structured Logging (Serilog)
+* Configure Serilog with Console and Rolling File sinks.
+* Enrich logs with correlation ID (`traceId`) and authenticated `UserId`.
+* Use message templates: `Log.Information("Donation {DonationId} succeeded for {Amount}", id, amount)`.
+* **Security Rule:** Never log passwords, tokens, full auth request bodies, or Stripe webhook secrets.
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — Structured Logging with Serilog in .NET](https://www.youtube.com/watch?v=nVAkSBpsuTk)
+  * **VIDEO:** [Milan Jovanović — Serilog in ASP.NET Core](https://www.youtube.com/watch?v=0ostnGbzMuo)
+
+#### Task 9 — Unit Tests for Asynchronous Workloads
+Write unit tests for job idempotency, magic byte validation, and expiration logic.
+
+---
+
+### Sprint 4 Deliverables & Definition of Done
+- [ ] Hangfire operational with SQL Server storage and basic auth dashboard.
+- [ ] MailKit email service with Mailpit development support.
+- [ ] QuestPDF receipt generation in background job.
+- [ ] Delayed job for donation timeouts and recurring job for campaign expiration.
+- [ ] File upload with magic bytes inspection and random storage naming.
+- [ ] Serilog structured logging with correlation IDs.
+- [ ] Evaluation Rubric (100 Points): Background Jobs & Hangfire (30) + Email & PDF Services (25) + File Upload & Validation (20) + Structured Logging (15) + Testing (10).
+
+---
+
+## 🟥 Sprint 5 — Payments (Stripe), Idempotency & Integration Testing
+
+* **Timeline:** 15 Dec 2026 → 28 Dec 2026 | **Effort:** ~30 Hours | **Evaluation:** 100 Points
+* **Sprint Goal:** Replace the temporary payment stub with production-ready Stripe Checkout Sessions, build a secure webhook receiver with HMAC signature verification, enforce client idempotency keys, and build an automated integration testing suite.
+
+### Detailed Sprint Tasks
+
+#### Task 1 — Stripe Checkout Session Creation
+* **PAY-01:** `POST /donations/{id}/checkout` creates a hosted Stripe Checkout Session (mode `payment`) and returns session URL.
+* **PAY-02:** Session payload configuration:
+  * `client_reference_id` = Donation ID
+  * Metadata containing Donation ID
+  * Single line item with campaign title, amount in **minor units (cents)**, and configured currency
+  * Success and Cancel redirect URLs from `StripeOptions`
+* **PAY-03:** Record a new `PaymentAttempt` for each created session.
+* **Endpoints:**
+  | Method | Path | Access |
+  |---|---|---|
+  | POST | `/donations/{id}/checkout` | Donation Owner |
+  | GET | `/donations/{id}/payment-status` | Owner, Admin |
+* **Resources:**
+  * **MUST:** [Stripe Checkout Sessions](https://docs.stripe.com/api/checkout/sessions) | [Accept a payment](https://docs.stripe.com/payments/accept-a-payment)
+  * **VIDEO:** [Stripe Developers — Accept Payments with Stripe Checkout in .NET](https://www.youtube.com/watch?v=mI_y_vC0g9Y)
+  * **VIDEO:** [Patrick God — Stripe Payments with ASP.NET Core Web API](https://www.youtube.com/watch?v=F3aO-4U4rK0)
+  * **ARTICLE:** [Code Maze — Stripe Payments in ASP.NET Core](https://code-maze.com/stripe-payments-aspnetcore/)
+
+#### Task 2 — Webhook Receiver Endpoint
+* **PAY-04:** `POST /payments/webhook` receives Stripe asynchronous events.
+  * Publicly accessible, reads the **raw HTTP request body**, and **verifies HMAC signature** using the webhook secret.
+  * Invalid signatures return `400 Bad Request`.
+* **PAY-08:** Webhook responds with `200 OK` immediately. Heavy background tasks (PDF, emails) are enqueued to Hangfire.
+* **Resources:**
+  * **MUST:** [Stripe Webhooks](https://docs.stripe.com/webhooks) | [Webhook signature verification](https://docs.stripe.com/webhooks/signature)
+  * **VIDEO:** [Stripe Developers — Listen for Webhooks in .NET](https://www.youtube.com/watch?v=o04A_Bsmh8s)
+  * **VIDEO:** [Milan Jovanović — Stripe Webhooks in ASP.NET Core](https://www.youtube.com/watch?v=4xR1E7aZ6Ys)
+
+#### Task 3 — Webhook Event Dispatching & Verification
+Handle essential Stripe events:
+* **PAY-05:**
+  * `checkout.session.completed` ➔ Run atomic success flow: update donation status, increment raised amount, check campaign completion, enqueue PDF & email jobs.
+  * `checkout.session.expired` ➔ Mark `PaymentAttempt` as `Expired`.
+  * `payment_intent.payment_failed` ➔ Mark `PaymentAttempt` and `Donation` as `Failed`.
+* **PAY-07:** Verify paid amount and currency match donation record exactly. Mismatches are flagged and rejected.
+* **Edge Case:** If payment succeeds for an already completed or expired campaign, accept the funds, log an administrative warning, and process the receipt.
+
+#### Task 4 — Webhook Idempotency (ProcessedStripeEvent)
+* **PAY-06:** Persist incoming Stripe `EventId` in `ProcessedStripeEvent`.
+* If a duplicate event arrives, acknowledge immediately with `200 OK` without re-executing any business actions.
+* **Resources:**
+  * **MUST:** [Stripe Webhooks Best Practices](https://docs.stripe.com/webhooks#best-practices)
+
+#### Task 5 — Idempotency-Key Header Middleware
+* **DON-10:** Require `Idempotency-Key: <unique-key>` on `POST /donations` and `POST /donations/{id}/checkout`. Missing header returns 400.
+* Store key, user ID, request body hash, and cached response for 24 hours.
+* Same key + same body ➔ Replay cached response without repeating side effects.
+* Same key + different body ➔ Return `422 Unprocessable Entity` (`Idempotency.KeyReusedWithDifferentRequest`).
+* **Resources:**
+  * **VIDEO:** [Milan Jovanović — Building Idempotent APIs with ASP.NET Core](https://www.youtube.com/watch?v=b4O6u9B2y6A)
+  * **VIDEO:** [Derek Comartin (CodeOpinion) — What is Idempotency?](https://www.youtube.com/watch?v=T_T5Z0Y2K68)
+
+#### Task 6 — Elimination of Temporary Payment Stub
+* **PAY-09:** Permanently delete `POST /admin/donations/{id}/mark-succeeded`. All donation completions now exclusively flow through verified Stripe webhooks.
+
+#### Task 7 — Stripe Test Mode & Local Forwarding
+* Use Stripe test API keys in `user-secrets`.
+* Forward local webhooks using Stripe CLI: `stripe listen --forward-to https://localhost:<port>/api/v1/payments/webhook`.
+* **Resources:**
+  * **MUST:** [Stripe Test Mode](https://docs.stripe.com/test-mode) | [Stripe CLI](https://docs.stripe.com/stripe-cli)
+
+#### Task 8 & 9 — Integration Testing Suite (WebApplicationFactory)
+Create `DonationHub.Api.IntegrationTests` covering critical end-to-end flows:
+* Registration ➔ Login ➔ Token Refresh flow.
+* Campaign creation ➔ Donation checkout initialization.
+* Webhook success flow with **locally synthesized HMAC-SHA256 signatures** (no external HTTP calls).
+* Duplicate webhook replay verifying idempotency.
+* Rejection of invalid webhook signatures.
+* Idempotency-Key caching and 422 mismatch validation.
+* **Resources:**
+  * **MUST:** [ASP.NET Core Integration Tests](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests)
+  * **VIDEO:** [Nick Chapsas — Master ASP.NET Core Integration Testing](https://www.youtube.com/watch?v=zaRM0iIhJvs)
+  * **VIDEO:** [Milan Jovanović — Integration Testing with WebApplicationFactory](https://www.youtube.com/watch?v=tj5ZCtvgLoQ)
+
+---
+
+### Sprint 5 Deliverables & Definition of Done
+- [ ] Stripe Checkout session generation with line items and minor units.
+- [ ] Webhook receiver with HMAC signature verification.
+- [ ] Webhook deduplication via `ProcessedStripeEvent`.
+- [ ] `Idempotency-Key` middleware active on write endpoints.
+- [ ] Temporary payment stub deleted.
+- [ ] Integration tests verifying auth, checkout, webhooks, and idempotency.
+- [ ] Evaluation Rubric (100 Points): Stripe Checkout & Webhook Handling (30) + Idempotency & Concurrency (25) + Integration Testing Suite (25) + Security & Secret Management (10) + Code Quality & Defense (10).
+
+---
+
+## 🟪 Sprint 6 — Reports, Admin, Docker, CI/CD & Health Checks
+
+* **Timeline:** 29 Dec 2026 → 11 Jan 2027 | **Effort:** ~30 Hours | **Evaluation:** 100 Points
+* **Sprint Goal:** Deliver executive analytics reports, staff administrative controls, comprehensive health checks, a production multi-stage Dockerfile, a multi-container Docker Compose environment, and automated GitHub Actions CI.
+
+### Detailed Sprint Tasks
+
+#### Task 1 — Analytics Dashboard & Reports
+Implement high-performance aggregation queries:
+* **RPT-01:** Dashboard overview: total raised funds, count of succeeded donations, count of distinct donors, active/completed/expired campaign breakdown.
+* **RPT-02:** Top N campaigns ranked by raised funds.
+* **RPT-03:** Daily donation trend analytics over a custom date range.
+* **RPT-04:** Cache dashboard responses in Redis (default 5-minute sliding expiration).
+* **Endpoints:**
+  | Method | Path | Access |
+  |---|---|---|
+  | GET | `/admin/dashboard/summary` | Admin |
+  | GET | `/admin/dashboard/top-campaigns?count=5` | Admin |
+  | GET | `/admin/dashboard/donations-over-time?from=&to=` | Admin |
+* **Resources:**
+  * **VIDEO:** [Milan Jovanović — High-Performance Aggregations in EF Core](https://www.youtube.com/watch?v=cM3k0ZqP4f0)
+
+#### Task 2 — Admin User & Staff Management
+* **ADM-01:** Admin lists all registered users (paged, role filtering, name/email search).
+* **ADM-02:** Admin activates or deactivates user accounts (deactivated accounts are blocked from login).
+* **ADM-03:** Admin manages staff accounts (`Admin`, `CampaignManager`). Deleting a staff account performs deactivation.
+* **Critical Safety Rules:**
+  * Admins cannot deactivate or delete their own account.
+  * The last remaining active Admin cannot be deactivated or deleted.
+* **Endpoints:**
+  | Method | Path | Access |
+  |---|---|---|
+  | GET | `/admin/users` | Admin |
+  | PATCH | `/admin/users/{id}/status` | Admin |
+  | GET | `/admin/staff` | Admin |
+  | PUT | `/admin/staff/{id}` | Admin |
+  | DELETE | `/admin/staff/{id}` | Admin |
+* **Resources:**
+  * **MUST:** [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity)
+
+#### Task 3 — System Health Checks
+Implement ASP.NET Core Health Checks:
+* `/health/live`: Liveness probe indicating the process is running.
+* `/health/ready`: Readiness probe verifying SQL Server connectivity, Redis cache availability, and file storage write permissions.
+* Structured JSON responses including component latency and status.
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — Health Checks in ASP.NET Core (.NET 8)](https://www.youtube.com/watch?v=kY8c2_J6F9Y)
+  * **VIDEO:** [Milan Jovanović — Health Checks Monitoring SQL & Redis](https://www.youtube.com/watch?v=d_Z9Q4u0n7A)
+
+#### Task 4 — Production Multi-Stage Dockerfile
+Create an optimized `Dockerfile`:
+* Build stage: restore dependencies, build release binary, publish artifacts.
+* Runtime stage: minimal `mcr.microsoft.com/dotnet/aspnet:8.0` image.
+* **Security Hardening:** Execute application under an unprivileged **non-root user** (`USER app`).
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — Dockerizing .NET Applications (Multi-Stage & Non-Root)](https://www.youtube.com/watch?v=bb_t_kY6zNo)
+  * **VIDEO:** [Milan Jovanović — Containerizing .NET 8 Applications with Docker](https://www.youtube.com/watch?v=p7_x1M4n2qA)
+
+#### Task 5 — Multi-Container Docker Compose Stack
+Create `docker-compose.yml` orchestrating the entire platform:
+* `api`: DonationHub Web API.
+* `sqlserver`: Microsoft SQL Server 2022.
+* `redis`: Redis distributed cache.
+* `mailpit`: Local SMTP testing server and web UI.
+* Named volumes for SQL data persistence and banner uploads.
+* Health check dependencies (`depends_on: condition: service_healthy`).
+* Running `docker compose up` starts the entire system with migrations applied and admin seeded automatically.
+* **Resources:**
+  * **VIDEO:** [Milan Jovanović — Docker Compose for .NET Developers](https://www.youtube.com/watch?v=9_Y_j1c8k8A)
+  * **VIDEO:** [Amichai Mantinband — Docker Compose for ASP.NET Core & Dependencies](https://www.youtube.com/watch?v=W7m_8n4_4wU)
+
+#### Task 6 — Environment Configuration & Secret Management
+* Extract all sensitive settings into environment variables for container execution.
+* Ensure no production keys, passwords, or secrets are committed to source control.
+
+#### Task 7 & 8 — GitHub Actions CI Automation
+Create `.github/workflows/ci.yml`:
+* Triggers on every push and pull request to `main`.
+* Steps: Checkout ➔ Setup .NET ➔ Restore ➔ Build (`--configuration Release`) ➔ Run Unit Tests ➔ Run Integration Tests ➔ Build Docker image.
+* **Resources:**
+  * **VIDEO:** [Nick Chapsas — GitHub Actions CI/CD for .NET Developers](https://www.youtube.com/watch?v=3g_t_N4K4hY)
+  * **VIDEO:** [Milan Jovanović — Automating .NET Builds & Tests with GitHub Actions](https://www.youtube.com/watch?v=k2Z_q6p8v3A)
+
+#### Task 9, 10 & 11 — Verification, Code Cleanup & Final Master Documentation
+* Verify containerized production stack locally.
+* Clean up dead code, eliminate unused abstractions, verify zero compiler warnings.
+* Update comprehensive repository documentation.
+
+---
+
+### Sprint 6 Deliverables & Definition of Done
+- [ ] Admin analytics dashboard with high-performance aggregations and Redis caching.
+- [ ] Admin user & staff management with self-deactivation protection.
+- [ ] `/health/live` and `/health/ready` endpoints returning structured JSON.
+- [ ] Multi-stage Dockerfile running as non-root user.
+- [ ] `docker-compose.yml` running API, SQL Server, Redis, and Mailpit with named volumes.
+- [ ] Passing GitHub Actions CI pipeline on GitHub.
+- [ ] Evaluation Rubric (100 Points): Reports & Admin Management (25) + Health Checks & Monitoring (15) + Docker & Docker Compose (25) + CI/CD Automation (20) + Production Hardening (15).
+
+---
+
+## 🏁 Final Period, Defense & Graduation Guidelines
+
+* **Timeline:** 12 Jan 2027 → 20 Jan 2027 (9 Days)
+* **Objective:** Comprehensive bug fixing, system hardening, and individual oral defense of architectural decisions.
+
+### The Oral Defense (Final Review)
+Each learner presents their live system and defends architectural decisions against technical questions:
+
+1. *"Why did you bypass the generic repository for query operations in CQRS?"*  
+   **Model Answer:** Read queries have no entity lifecycle or change-tracking needs. Bypassing repositories and querying `DbContext` directly with `.AsNoTracking()` and `.Select()` projection generates optimal SQL, avoids allocating entity objects, and dramatically improves read throughput.
+2. *"Why do we verify Stripe webhooks via raw request body signatures instead of redirecting the user to a success page?"*  
+   **Model Answer:** Client redirects can be intercepted, spoofed, or lost if the user closes their browser before returning. Stripe Webhooks are server-to-server cryptographic notifications signed by Stripe's private secret, ensuring undeniable proof of payment regardless of client state.
+3. *"Why did you select Hangfire over ASP.NET Core BackgroundService for PDF generation and emails?"*  
+   **Model Answer:** `BackgroundService` runs in-memory. If the application restarts, crashes, or scales out, in-memory queues are lost and lack retry logic. Hangfire persists jobs in SQL Server, providing guaranteed execution, exponential backoff retries, and distributed worker capabilities.
+4. *"How does your system prevent double donation records when a network timeout occurs?"*  
+   **Model Answer:** Through the `Idempotency-Key` header middleware. The client passes a unique UUID. The server caches the result of the first execution for 24 hours. If a retry with the exact same payload arrives, the cached response is replayed without executing the payment or donation logic a second time.
+
+### Graduation Criteria:
+* Total Score: **480+ / 600 Points (80%+)** across the 6 sprints.
+* Zero critical security vulnerabilities (no SQL injection, no unhashed tokens, no secrets in Git).
+* Successful containerized deployment via Docker Compose.
+* Confident defense of architectural design decisions.
+
+---
+
+## 📏 Universal Architectural Rules & Definition of Done
+
+The following rules apply universally to every commit and pull request:
+
+### Universal Definition of Done (DoD)
+- [ ] The solution compiles with **zero errors** and **zero warnings**.
+- [ ] Clean Architecture layer boundaries are strictly maintained (Domain has zero references).
+- [ ] No domain entities are exposed across API controllers (DTOs only).
+- [ ] Controllers contain zero business logic (thin MediatR dispatchers).
+- [ ] No `DateTime.UtcNow` calls in domain or handlers (injected `TimeProvider` used).
+- [ ] All async methods accept and propagate a `CancellationToken`.
+- [ ] All inputs validated via FluentValidation; expected business failures return `Result`.
+- [ ] All errors conform to RFC 9457 `ProblemDetails` with correlation IDs (`traceId`).
+- [ ] No secrets, keys, or connection strings exist in source code or Git history.
+- [ ] All automated unit and integration tests pass cleanly with `dotnet test`.
+- [ ] System boots cleanly from cold start via `docker compose up`.
+
+---
+
+## 🚫 Explicitly Out of Scope
+
+To prevent scope creep and maintain absolute focus on advanced backend engineering mastery, the following are **strictly prohibited**:
+
+* **Front-End Development:** No React, Angular, Vue, Blazor, or MVC views. Pure REST API.
+* **External Identity Providers:** No OpenIddict, Duende IdentityServer, or Keycloak (ASP.NET Core Identity + JWT is used).
+* **Distributed Microservices:** No service meshes, gRPC inter-service topologies, or multiple deployable backend services.
+* **Message Brokers:** No Kafka, RabbitMQ, or MassTransit (Hangfire handles all asynchronous background workloads).
+* **AI / LLM / Vector Databases:** No OpenAI APIs, LangChain, or vector search integrations.
+
+---
+
+## 📂 Quick Navigation & Documentation Links
+
+| Document / Specification | Link | Description |
+|---|---|---|
+| **Software Requirements Specification** | [📄 SRS-DonationHub.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/SRS-DonationHub.md) | Official functional & non-functional requirements |
+| **Architectural Decisions & Trade-offs** | [📄 TEAM-NOTES-DonationHub.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/TEAM-NOTES-DonationHub.md) | Architectural agreements and design rationales |
+| **Master General Roadmap** | [🧭 Round 2 RoadMap.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/Round-2/General%20RoadMap/Round%202%20RoadMap.md) | Detailed technical blueprint and sprint guides |
+| **Mentorship Timeline** | [⏱️ Round2 Timeline.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/Round-2/General%20RoadMap/Round2%20Timeline.md) | Official schedule, sync dates, and milestones |
+| **Sprint 1 Specification** | [🟦 Sprint-1.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/Round-2/Sprint-1.md) | Architecture, EF Core, Identity & Categories |
+| **Sprint 2 Specification** | [🟩 Sprint-2.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/Round-2/Sprint-2.md) | Campaigns, CQRS, MediatR & Unit Testing |
+| **Sprint 3 Specification** | [🟨 Sprint-3.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/Round-2/Sprint-3.md) | Donations, Authorization, Caching & API Standards |
+| **Sprint 4 Specification** | [🟧 Sprint-4.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/Round-2/Sprint-4.md) | Notifications, QuestPDF, Hangfire & Serilog |
+| **Sprint 5 Specification** | [🟥 Sprint-5.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/Round-2/Sprint-5.md) | Stripe Payments, Idempotency & Integration Tests |
+| **Sprint 6 Specification** | [🟪 Sprint-6.md](file:///c:/Users/Fares/Desktop/.NET-Level-2-RoadMap/Round-2/Sprint-6.md) | Analytics, Admin, Docker, Compose & CI/CD |
+
+---
+
+*Tawjeh .NET Mentorship Program — Level 2 Backend Engineering Roadmap.*
