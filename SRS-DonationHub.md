@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Program** | .NET Level 2, Round 2 (tawjeh.net) |
-| **Duration** | 20/10/2026 to 20/1/2027 |
+| **Duration** | 23/10/2026 to 20/01/2027 |
 | **Document version** | 0.9 (draft for team review) |
 | **Audience** | Students (this file). Mentors also have an internal notes file. |
 | **System type** | REST API only (no front end) |
