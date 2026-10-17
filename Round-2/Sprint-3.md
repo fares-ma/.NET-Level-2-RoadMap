@@ -180,3 +180,13 @@ Implement scalable querying across public campaign and donation endpoints:
 - [ ] Queries do not load entire tables into memory; pagination uses `Skip` and `Take`.
 - [ ] Header `Accept-Language: ar-EG` outputs Arabic messages, and `en-US` outputs English.
 - [ ] Exceeding request rate triggers HTTP 429 Too Many Requests.
+
+---
+
+## 💡 Post-Sprint Enrichment
+
+- [Cursor-Based Pagination in .NET](https://youtu.be/U3LcKY19z_4)
+- [Distributed Caching with Redis — Mohamad Lawand](https://youtu.be/6HZVu3kGOrg)
+- [Minimal APIs vs Controllers in ASP.NET Core — Milan Jovanović](https://youtu.be/gsAuFIhXz3g)
+- [Minimal API Versioning in ASP.NET Core](https://youtu.be/F9j3X6KuIpw)
+- [Building High-Performance APIs with FastEndpoints — Nick Chapsas](https://youtu.be/oqNu0xavAyc)

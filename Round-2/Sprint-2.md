@@ -203,6 +203,7 @@ Create `DonationHub.Application.UnitTests` and `DonationHub.Domain.UnitTests`. W
 - **🔄 Alternative / Deep Dive:**
   - [NSubstitute Mocking Framework — Nick Chapsas](https://youtu.be/LcQYv0cBWk0)
   - [FluentAssertions v7 vs Shouldly — Nick Chapsas](https://youtu.be/ZFc6jcaM6Ms)
+  - [.NET Unit Testing Tutorial — Julio Casal](https://youtu.be/dsD0CMgPjUk)
 
 ---
 
@@ -233,8 +234,10 @@ Create `DonationHub.Application.UnitTests` and `DonationHub.Domain.UnitTests`. W
 
 ## 💡 Post-Sprint Enrichment
 
+- [#001 Intro to Unit Testing in C# — Essam Abdelnabi [Arabic]](https://youtu.be/HzjMcd1jEio)
 - [In-Memory DbContext Testing Pitfalls — Nick Chapsas](https://youtu.be/VM6PIKkEg4s)
 - [Code Coverage Metrics in .NET — Essam Abdelnabi](https://youtu.be/W5w-5EK94wc)
 - [TDD with xUnit — Mohamad Lawand](https://youtu.be/7YghGdGE7d0)
 - [MediatR Commercial Licensing Context — Nick Chapsas](https://youtu.be/bNuQ9xOG9eQ)
 - [CQRS Architectural Trade-offs — Mohamad Lawand](https://youtu.be/sUjNZAYTZwI)
+- [FluentValidation Deep Dive — Nick Chapsas](https://youtu.be/Ut6mRRFT2vM)

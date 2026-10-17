@@ -181,3 +181,4 @@ Implement image uploads for campaigns according to SRS §3.3:
 - [Automatic Logging via MediatR Pipeline Behaviors](https://youtu.be/JVX9MMpO6pE)
 - [TickerQ: Modern Background Job Queue in .NET](https://youtu.be/x0dfj95Cj0U)
 - [Zero-Allocation File Streaming in ASP.NET Core — Raw Coding](https://youtu.be/l69kUe1fNSc)
+- [Logging Crash Course in .NET](https://youtu.be/XrCxy0SNRqM)

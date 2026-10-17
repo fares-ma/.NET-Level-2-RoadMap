@@ -209,6 +209,7 @@ Implement identity and authentication requirements from SRS §3.1:
   - ⭐2 JWT & Endpoints: [05 Add JWT Configuration — El-Helaly (06:35)](https://youtu.be/B7hQY1YckR0) + [06 Prepare Registration EndPoint (12:48)](https://youtu.be/FqQjESC4Gvs) + [07 Registration EndPoint Part 2 (06:26)](https://youtu.be/PXKrGK4zjuM).
   - ⭐3 Refresh Token Rotation: [4. Generate Refresh Token — El-Helaly (10:18)](https://youtu.be/5g0aq4g17yg) + [7. Generate New JWT Using Refresh Token (05:55)](https://youtu.be/jefxQ2xFM8I).
 - **🔄 Alternative / Deep Dive:**
+  - [Microsoft Learn — Identity API Endpoints (MapIdentityApi)](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization)
   - [JWT Authentication with .NET 9 Full Course — Patrick God (1:13:38)](https://youtu.be/6EEltKS8AwA) (PasswordHasher at 10:01, Scalar at 12:55, Token creation at 19:55, RefreshToken at 59:07).
   - [Master Refresh Tokens in ASP.NET Core — Milan Jovanović (17:19)](https://youtu.be/kR_9gRBeRMQ)
   - [ASP.NET Web API 8 Identity — Fullstack Dev (2:23:36)](https://youtu.be/tXUtSGvHMeg)
@@ -291,7 +292,11 @@ Create an initial `README.md` in the project root documenting:
 
 - [Clean Architecture vs. Vertical Slice — Derek Comartin](https://youtu.be/Az4Z0HJYl-U)
 - [Simplest Vertical Slice Architecture — Milan Jovanović](https://youtu.be/dQdXHRkePr8)
-- [DDD Strategic Design: Bounded Contexts — Mohamed El-Mehdi](https://youtu.be/AV3yzj6Ck7k)
+- [Project Setup & Clean Architecture Solution Layout](https://youtu.be/tLk4pZZtiDY)
+- [DDD Strategic Design 01 — Mohamed El-Mehdi [Arabic]](https://youtu.be/AV3yzj6Ck7k)
+- [DDD Bounded Contexts Explained](https://youtu.be/kLLsVT_53bw)
 - [Specification Pattern in EF Core — Milan Jovanović](https://youtu.be/bEyBtpnCqVY)
 - [High-Performance Data Access with Dapper — Nick Chapsas](https://youtu.be/C763K-VGkfc)
+- [Validate Options with FluentValidation — Nick Chapsas](https://youtu.be/I0YPTeCYvrE)
+- [What Is JWT and How Does It Work?](https://youtu.be/7Q17ubqLfaM)
 - [OAuth 2.0 and OpenID Connect in Plain English](https://youtu.be/t18YB3xDfXI)

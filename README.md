@@ -204,30 +204,61 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 > **Period:** 23/10/2026 → 06/11/2026 | **Evaluation:** 100 Points
 
 ### 📌 Prerequisites:
-1. **Git & GitHub PR Workflow:** [freeCodeCamp (1:08:29)](https://youtu.be/RGOj5yH7evk) | [Ahmed Sami [Arabic] (PR at 05:56:20)](https://youtu.be/Q6G-J54vgKc)
-2. **Async/Await & ThreadPool:** [#038 Asynchronous Programming — Essam Abdelnabi [Arabic]](https://youtu.be/kDUDX3VJFEc) | [Microsoft Learn](https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/)
-3. **SOLID & DI Lifetimes:** [DIP — Mohamed El-Mehdi [Arabic]](https://youtu.be/xuoT_p4WJKo) | [DI Lifetimes — Julio Casal (at 05:35)](https://youtu.be/KAHxOLmvGZo)
-4. **Extension Methods & LINQ IQueryable:** [Extension Methods — El-Mehdi](https://youtu.be/g5lx0l7ikaQ) | [IQueryable vs IEnumerable — Gavin Lon (at 03:02:35)](https://youtu.be/5l2qA3Pc83M)
+1. **Git & GitHub PR Workflow:**
+   - ⭐ [Git and GitHub for Beginners — freeCodeCamp (1:08:29)](https://youtu.be/RGOj5yH7evk)
+   - 🔄 [Git and GitHub | Ahmed Sami [Arabic] (PR from 05:56:20)](https://youtu.be/Q6G-J54vgKc)
+2. **Async/Await & ThreadPool:**
+   - ⭐ Asynchronous programming & ThreadPool mechanics.
+   - 🔄 [#038 Asynchronous Programming — Essam Abdelnabi [Arabic] (43:48)](https://youtu.be/kDUDX3VJFEc) | [Microsoft Learn — Async in C#](https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/) | [ASP.NET Core Performance Best Practices](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/best-practices)
+3. **SOLID & DI Lifetimes:**
+   - ⭐1 [SOLID 5: Dependency Inversion Principle — Mohamed El-Mehdi [Arabic] (22:32)](https://youtu.be/xuoT_p4WJKo)
+   - ⭐2 [Dependency Injection Tutorial — Julio Casal (Lifetimes at 05:35)](https://youtu.be/KAHxOLmvGZo)
+   - 🔄 [Solid In Practice Workshop — Essam Abdelnabi [Arabic] (54:21)](https://youtu.be/c_UnR7F900s)
+4. **Extension Methods & LINQ IQueryable:**
+   - ⭐ [C# Advanced: Extension Methods — Mohamed El-Mehdi [Arabic] (17:58)](https://youtu.be/g5lx0l7ikaQ)
+   - 🔄 [#001 Pure Vs. Impure Function #linq — Essam Abdelnabi [Arabic] (27:19)](https://youtu.be/XLIqOBr7Cm0) | [Advanced C# LINQ Tutorial — Gavin Lon (IEnumerable vs IQueryable at 03:02:35)](https://youtu.be/5l2qA3Pc83M)
 
 ### 🛠️ Tasks:
-- **Task 1 (Solution Setup):** Create 4 projects (`Domain`, `Application`, `Infrastructure`, `Api`) with `.slnx`. Setup vertical slices.
-  - ⭐ [Clean Architecture 10,000ft View — Essam Abdelnabi [Arabic]](https://youtu.be/DRSZ6V-eKUY) | 🔄 [Milan Jovanović](https://youtu.be/TQdLgzVk2T8)
-- **Task 2 (Domain Modeling):** Model Entities (`ApplicationUser`, `RefreshToken`, `Category`, `Campaign`, `Donation`, `PaymentAttempt`, `IdempotencyRecord`) and Value Objects.
-  - ⭐ [Tactical DDD — Mohamed El-Mehdi [Arabic]](https://youtu.be/bHEDV62ATNM) | 🔄 [Value Objects — Milan Jovanović](https://youtu.be/P5CRea21R2E)
-- **Task 3 (EF Core Persistence):** `AppDbContext`, Fluent API configs, relationships, and initial migration.
-  - ⭐ [#010 EF Migration in Arabic — Essam Abdelnabi](https://youtu.be/WqiGu_MQ-xw) | 🔄 [Migrations — Nick Chapsas](https://youtu.be/StBf3-M5WdM)
-- **Task 4 (Generic Repo & UoW):** `IGenericRepository<T>` and `IUnitOfWork`. Direct reads bypass repo with `AsNoTracking`.
-  - ⭐1 [Generic Repository — Mohamed El-Helaly [Arabic]](https://youtu.be/7Lc9NRaPMr0) | ⭐2 [UnitOfWork — El-Helaly](https://youtu.be/-72HfsPv9Xs)
-- **Task 5 (Soft Delete):** `ISoftDeletable` + `SoftDeleteInterceptor` + `HasQueryFilter`.
-  - ⭐ [#019 Interceptors — Essam Abdelnabi](https://youtu.be/hEMCDxqURr8) | 🔄 [Soft Delete — Milan Jovanović](https://youtu.be/zwBaWiu-rF4)
-- **Task 6 (Options Pattern):** `JwtOptions`, `DonationOptions`, and `ValidateOnStart()`.
-  - ⭐ [#11 Options Pattern — CodingClass [Arabic]](https://youtu.be/S3ygXq94dLo) | 🔄 [Milan Jovanović](https://youtu.be/wxYt0motww0)
-- **Task 7 (Identity & JWT):** Register, Login, hashed Refresh Tokens with rotation, and Admin seed.
-  - ⭐1 [Identity Tables — El-Helaly](https://youtu.be/zshypyVIVFU) (or [.NET 10 Identity — Remigiusz Zalewski](https://youtu.be/g9YSB4bXhes)) | ⭐2 [JWT Endpoints — El-Helaly](https://youtu.be/B7hQY1YckR0) | ⭐3 [Refresh Tokens — El-Helaly](https://youtu.be/5g0aq4g17yg) | 🔄 [Full Course .NET 9 — Patrick God](https://youtu.be/6EEltKS8AwA)
+- **Task 1 (Clean Architecture Solution Setup):** Create 4 projects (`Domain`, `Application`, `Infrastructure`, `Api`) with `.slnx`. Setup vertical feature slices.
+  - ⭐ [Clean Architecture 10,000ft View — Essam Abdelnabi [Arabic] (19:37)](https://youtu.be/DRSZ6V-eKUY) (Layers at 09:18, request journey at 14:30)
+  - 🔄 [Beginner's Guide to Clean Architecture — Milan Jovanović](https://youtu.be/TQdLgzVk2T8) | [Clean Architecture & CQRS in Action (.NET 10) — Essam Abdelnabi (09:18 to 20:25)](https://youtu.be/v9fRFyg414k) | [Microsoft Learn — Common Web Application Architectures](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures)
+- **Task 2 (Domain Modeling & Invariants):** Model Entities (`ApplicationUser`, `RefreshToken`, `Category`, `Campaign`, `Donation`, `PaymentAttempt`, `IdempotencyRecord`) and Value Objects.
+  - ⭐ [Tactical DDD — Mohamed El-Mehdi [Arabic] (33:40)](https://youtu.be/bHEDV62ATNM) (Entity at 09:00, ValueObject at 19:10, Aggregate Root at 24:55)
+  - 🔄 [Value Objects in C# — Milan Jovanović (13:54)](https://youtu.be/P5CRea21R2E) | [What Is An Entity — Milan Jovanović](https://youtu.be/00tCda35Bvk) | [#003 Immutable Vs. Mutable — Essam Abdelnabi](https://youtu.be/bbdmknnwcP8)
+- **Task 3 (EF Core Persistence & Migrations):** `AppDbContext`, Fluent API configs (`IEntityTypeConfiguration<T>`), relationships, and initial migration.
+  - ⭐ [#010 EF Migration in Arabic — Essam Abdelnabi (46:32)](https://youtu.be/WqiGu_MQ-xw) (AppDbContext at 11:45, Configurations at 20:10, ApplyConfigurations at 30:55, Migrations at 34:45)
+  - 🔄 [Correct Way to Run Database Migrations — Nick Chapsas](https://youtu.be/StBf3-M5WdM)
+- **Task 4 (Generic Repository & Unit of Work):** `IGenericRepository<T>` and `IUnitOfWork`. Direct reads bypass repo with `AsNoTracking`.
+  - ⭐1 [Generic Repository — Mohamed El-Helaly [Arabic] (11:57)](https://youtu.be/7Lc9NRaPMr0)
+  - ⭐2 [UnitOfWork — Mohamed El-Helaly [Arabic] (03:37)](https://youtu.be/-72HfsPv9Xs)
+  - 🔄 [Transactions & Unit of Work — Milan Jovanović](https://youtu.be/25H84BXcr9M)
+- **Task 5 (Soft Delete & Global Query Filter):** `ISoftDeletable` + `SoftDeleteInterceptor` + `HasQueryFilter`.
+  - ⭐ [#019 Interceptors EF Core — Essam Abdelnabi [Arabic] (22:02)](https://youtu.be/hEMCDxqURr8) (ISoftDeletable at 05:05, Interceptor at 10:40, HasQueryFilter at 20:10)
+  - 🔄 [Soft Deletes With EF Core — Milan Jovanović (12:39)](https://youtu.be/zwBaWiu-rF4) | [Global Query Filters — Milan Jovanović](https://youtu.be/q09fw5OCa_w)
+- **Task 6 (Options Pattern & Startup Validation):** `JwtOptions`, `DonationOptions`, and `ValidateOnStart()`.
+  - ⭐ [#11 Options Pattern in ASP.NET Core 9 — CodingClass [Arabic] (13:55)](https://youtu.be/S3ygXq94dLo)
+  - 🔄 [Options Pattern in ASP.NET Core — Milan Jovanović](https://youtu.be/wxYt0motww0)
+- **Task 7 (Identity & Authentication):** Register, Login, hashed Refresh Tokens with rotation, and Admin seed.
+  - ⭐1 [Identity Tables — Mohamed El-Helaly [Arabic] (07:13)](https://youtu.be/zshypyVIVFU) (or [.NET 10 Identity — Remigiusz Zalewski (14:50)](https://youtu.be/g9YSB4bXhes))
+  - ⭐2 [JWT Endpoints — El-Helaly](https://youtu.be/B7hQY1YckR0) + [Registration Part 1 (12:48)](https://youtu.be/FqQjESC4Gvs) + [Registration Part 2 (06:26)](https://youtu.be/PXKrGK4zjuM)
+  - ⭐3 [Refresh Tokens — El-Helaly (10:18)](https://youtu.be/5g0aq4g17yg) + [New JWT with Refresh Token (05:55)](https://youtu.be/jefxQ2xFM8I)
+  - 🔄 [Microsoft Learn — Identity API Endpoints](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization) | [JWT Full Course .NET 9 — Patrick God (1:13:38)](https://youtu.be/6EEltKS8AwA) | [Master Refresh Tokens — Milan Jovanović (17:19)](https://youtu.be/kR_9gRBeRMQ) | [ASP.NET Web API 8 Identity — Fullstack Dev (2:23:36)](https://youtu.be/tXUtSGvHMeg)
 - **Task 8 (Categories Module):** Bilingual Categories CRUD (Admin manage, public view, restrict delete on linked campaigns).
-- **Task 9 (API Docs):** Scalar OpenAPI with JWT Bearer scheme on .NET 10 (or Swashbuckle on .NET 8).
-  - ⭐ [No Swagger? Replace with SCALAR! — Israel Quiroz](https://youtu.be/J8i1RWowjwc) | 🔄 [Nick Chapsas](https://youtu.be/8yI4gD1HruY)
-- **Task 10 (Project Documentation):** Initial setup guide in `README.md`.
+- **Task 9 (API Documentation & Bearer Security):** Scalar OpenAPI with JWT Bearer scheme on .NET 10 (or Swashbuckle on .NET 8).
+  - ⭐ [No Swagger? Replace with SCALAR! — Israel Quiroz (12:15)](https://youtu.be/J8i1RWowjwc) (Bearer transformer at 09:50) | [Swagger is Gone! — Nick Chapsas (09:34)](https://youtu.be/8yI4gD1HruY) | [Swagger JWT — El-Helaly (10:44)](https://youtu.be/LGPiZcacG5g)
+- **Task 10 (Repository Documentation):** Initial setup guide in `README.md`.
+
+### 💡 Post-Sprint 1 Enrichment:
+- [Clean Architecture vs. Vertical Slice — Derek Comartin](https://youtu.be/Az4Z0HJYl-U)
+- [Simplest Vertical Slice Architecture — Milan Jovanović](https://youtu.be/dQdXHRkePr8)
+- [Project Setup & Clean Architecture Solution Layout](https://youtu.be/tLk4pZZtiDY)
+- [DDD Strategic Design 01 — Mohamed El-Mehdi [Arabic]](https://youtu.be/AV3yzj6Ck7k)
+- [DDD Bounded Contexts Explained](https://youtu.be/kLLsVT_53bw)
+- [Specification Pattern in EF Core — Milan Jovanović](https://youtu.be/bEyBtpnCqVY)
+- [High-Performance Data Access with Dapper — Nick Chapsas](https://youtu.be/C763K-VGkfc)
+- [Validate Options with FluentValidation — Nick Chapsas](https://youtu.be/I0YPTeCYvrE)
+- [What Is JWT and How Does It Work?](https://youtu.be/7Q17ubqLfaM)
+- [OAuth 2.0 and OpenID Connect in Plain English](https://youtu.be/t18YB3xDfXI)
 
 ---
 
@@ -241,20 +272,39 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 
 ### 🛠️ Tasks:
 - **Task 1 (CQRS with MediatR [12.5.0]):** Refactor all use cases into commands/queries and thin controllers.
-  - ⭐ [23 Add mediator pattern with CQRS — Ahmed Mohamady [Arabic]](https://youtu.be/W7_zEf3eRQA) | 🔄 [Patrick God](https://youtu.be/BewUyKLZjtc)
+  - ⭐ [23 Add mediator pattern with CQRS — Ahmed Mohamady [Arabic] (14:05)](https://youtu.be/W7_zEf3eRQA)
+  - 🔄 [CQRS & MediatR in ASP.NET Core — Patrick God](https://youtu.be/BewUyKLZjtc) | [Clean Architecture & CQRS in Action (.NET 10) — Essam Abdelnabi (26:25 to 43:20)](https://youtu.be/v9fRFyg414k)
 - **Task 2 (CancellationToken & TimeProvider):** Forward cancellation token to EF Core and inject `TimeProvider`.
-  - ⭐1 [Cancellation Token — Rahul Nath](https://youtu.be/39gIPekzpjs) | ⭐2 [TimeProvider in .NET 8+ — Nick Chapsas](https://youtu.be/xa6YusjCFF0)
-- **Task 3 (Optimistic Concurrency):** `byte[] RowVersion` on `Campaign` to prevent lost updates (409 Conflict).
-  - ⭐ [Optimistic Concurrency in .NET — Islam Helmy [Arabic]](https://youtu.be/VhuFcGP6H0E) | 🔄 [Milan Jovanović](https://youtu.be/lLDBVMj5He8)
-- **Task 4 (Result Pattern):** Standardize `Result<T>` and `Error` catalogue, eliminating business exceptions.
-  - ⭐ [Error & Result Pattern — Loai Saber [Arabic]](https://youtu.be/hfnWW2trOlY) | 🔄 [Milan Jovanović](https://youtu.be/WCCkEe_Hy2Y)
+  - ⭐1 [Cancellation Token in .NET — Rahul Nath (18:42)](https://youtu.be/39gIPekzpjs) (Forwarding RequestAborted at 10:40–18:00)
+  - ⭐2 [TimeProvider in .NET 8+ — Nick Chapsas (09:47)](https://youtu.be/xa6YusjCFF0) (DI registration at 04:55, mocking time at 05:25)
+  - 🔄 [CancellationTokenSource in C# — Study DotNet [Arabic]](https://youtu.be/2xf6n0SpkNo) | [FakeTimeProvider in .NET — Nick Chapsas](https://youtu.be/acjCxNlWpJQ)
+- **Task 3 (Optimistic Concurrency Control):** `byte[] RowVersion` on `Campaign` to prevent lost updates (409 Conflict).
+  - ⭐ [Optimistic Concurrency in .NET [Arabic] — Islam Helmy (12:24)](https://youtu.be/VhuFcGP6H0E)
+  - 🔄 [Optimistic vs Pessimistic Locking — Milan Jovanović](https://youtu.be/lLDBVMj5He8)
+- **Task 4 (Result Pattern & Error Catalogue):** Standardize `Result<T>` and `Error` catalogue, eliminating business exceptions.
+  - ⭐ [Handle Errors in C# using Exception and Result Pattern — Loai Saber [Arabic] (18:08)](https://youtu.be/hfnWW2trOlY)
+  - 🔄 [Result Pattern in C# — Milan Jovanović](https://youtu.be/WCCkEe_Hy2Y)
 - **Task 5 (Validation Behavior):** MediatR `ValidationBehavior` executing FluentValidation automatically.
-  - ⭐ [Clean Arch & CQRS in Action — Essam Abdelnabi](https://youtu.be/v9fRFyg414k) | 🔄 [Milan Jovanović](https://youtu.be/85dxwd8HzEk)
+  - ⭐ [Clean Architecture & CQRS in Action — Essam Abdelnabi (Pipeline at 05:50, Behavior at 21:40, Validator at 43:25)](https://youtu.be/v9fRFyg414k)
+  - 🔄 [Validation with MediatR and FluentValidation — Milan Jovanović](https://youtu.be/85dxwd8HzEk)
 - **Task 6 (Global Exception Handling):** `IExceptionHandler` + RFC 9457 `ProblemDetails`.
-  - ⭐ [#9 Exception Handling — CodingClass [Arabic]](https://youtu.be/Efmvo90NuiA) | 🔄 [Milan Jovanović](https://youtu.be/uOEDM0c9BNI)
+  - ⭐ [#9 Exception Handling in ASP.NET Core 9 — CodingClass [Arabic] (21:35)](https://youtu.be/Efmvo90NuiA)
+  - 🔄 [Global Error Handling in .NET 8 — Milan Jovanović](https://youtu.be/uOEDM0c9BNI) | [Exception Handling in ASP.NET Core — Julio Casal](https://youtu.be/HTCb1zXQ6E4)
 - **Task 7 (Campaigns Module):** CMP-01 to CMP-06, CMP-10, CMP-11 (Create, update, soft delete, details with `progressPercent` and `daysLeft`).
 - **Task 8 (Unit Testing):** At least 15 passing unit tests using xUnit, Moq `[4.18.4]`, and FluentAssertions `[7.0.0]`.
-  - ⭐1 [Unit Testing — Essam Abdelnabi](https://youtu.be/cAyROJ84tBs) | ⭐2 [Moq Mocking — Essam](https://youtu.be/JaIeeGqsO9M) | ⭐3 [Fluent Assertions — Coding-Future](https://youtu.be/rr9z92lm2no)
+  - ⭐1 [#003 Unit Testing Your Code — Essam Abdelnabi [Arabic] (26:10)](https://youtu.be/cAyROJ84tBs)
+  - ⭐2 [#004 Mocking Dependencies (Moq) — Essam Abdelnabi [Arabic] (26:11)](https://youtu.be/JaIeeGqsO9M)
+  - ⭐3 [2. Fluent Assertions in xUnit — Coding-Future (38:38)](https://youtu.be/rr9z92lm2no)
+  - 🔄 [NSubstitute Mocking Framework — Nick Chapsas](https://youtu.be/LcQYv0cBWk0) | [FluentAssertions v7 vs Shouldly — Nick Chapsas](https://youtu.be/ZFc6jcaM6Ms) | [.NET Unit Testing Tutorial — Julio Casal](https://youtu.be/dsD0CMgPjUk)
+
+### 💡 Post-Sprint 2 Enrichment:
+- [#001 Intro to Unit Testing in C# — Essam Abdelnabi [Arabic]](https://youtu.be/HzjMcd1jEio)
+- [In-Memory DbContext Testing Pitfalls — Nick Chapsas](https://youtu.be/VM6PIKkEg4s)
+- [Code Coverage Metrics in .NET — Essam Abdelnabi](https://youtu.be/W5w-5EK94wc)
+- [TDD with xUnit — Mohamad Lawand](https://youtu.be/7YghGdGE7d0)
+- [MediatR Commercial Licensing Context — Nick Chapsas](https://youtu.be/bNuQ9xOG9eQ)
+- [CQRS Architectural Trade-offs — Mohamad Lawand](https://youtu.be/sUjNZAYTZwI)
+- [FluentValidation Deep Dive — Nick Chapsas](https://youtu.be/Ut6mRRFT2vM)
 
 ---
 
@@ -263,24 +313,44 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 > **Period:** 22/11/2026 → 06/12/2026 | **Evaluation:** 100 Points
 
 ### 📌 Prerequisites:
-1. **Docker Container Basics:** `docker run -d -p`, `docker ps`, `docker logs`, `docker stop`. Spin up Redis locally.
-  - ⭐1 [Docker Basics Part 5 — Codographia](https://youtu.be/cB7Qx13YOFM) | ⭐2 [Part 6 — Codographia](https://youtu.be/w_fnmXy9ZEk) | 🔄 [Yehia Tech [Arabic]](https://youtu.be/yRkE-1Lq0qo)
+1. **Docker Container Basics (Mandatory for running Redis):** `docker run -d -p`, `docker ps`, `docker logs`, `docker stop`. Launch `docker run -d --name redis -p 6379:6379 redis:alpine`.
+   - ⭐1 [Basic Commands in Docker Part 5 — Codographia (15:20)](https://youtu.be/cB7Qx13YOFM)
+   - ⭐2 [Basic Commands Part 6 — Codographia (20:29)](https://youtu.be/w_fnmXy9ZEk)
+   - 🔄 [Docker in 5 Minutes — Yehia Tech [Arabic]](https://youtu.be/yRkE-1Lq0qo) | [Docker For Developers Ep 1 — Ramy Hakam [Arabic]](https://youtu.be/dTZZ-4PibHg)
 
 ### 🛠️ Tasks:
 - **Task 1 (Resource-Based Authorization):** CampaignManager manages own campaigns only; 404 returned for unowned private resources.
-  - ⭐1 [Microsoft Learn — Resource Authorization](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/resourcebased) | ⭐2 [Who Owns This Order? — Code Story](https://youtu.be/29x5WmcUNtM)
+  - ⭐1 [Resource-based authorization — Microsoft Learn](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/resourcebased)
+  - ⭐2 [Who Owns This Order? — Code Story (01:46)](https://youtu.be/29x5WmcUNtM)
+  - 🔄 [ASP.NET Web API 8 Identity — Fullstack Dev (at 02:19:44)](https://youtu.be/tXUtSGvHMeg) | [14- Create Policy Part 1 — Mahmoud Hamza [Arabic]](https://youtu.be/tdMrNKPO39U) | [Custom Authorization Handler — Milan Jovanović](https://youtu.be/SZtZuvcMBA0)
 - **Task 2 (Donations Core & Transactions):** DON-01 to DON-06. Atomic EF Core transactions for donation settlement.
-  - ⭐ [#020 DB Transaction EF Core — Essam Abdelnabi [Arabic]](https://youtu.be/m2RDSxGPuhs) | 🔄 [Milan Jovanović](https://youtu.be/25H84BXcr9M)
+  - ⭐ [#020 DB Transaction EF Core — Essam Abdelnabi [Arabic] (32:57)](https://youtu.be/m2RDSxGPuhs) (BeginTransaction at 19:15, Rollback at 24:40, Savepoints at 28:50)
+  - 🔄 [Transactions in EF Core — Milan Jovanović](https://youtu.be/25H84BXcr9M) | [Avoid EF Core Transaction Mistakes — Milan](https://youtu.be/cUszBUYSFzw)
 - **Task 3 (Pagination, Filtering, Sorting):** `PagedList<T>` with database-level `Skip` and `Take` via `IQueryable`.
-  - ⭐1 [Pagination in Web API — Coding-Future](https://youtu.be/XDkUliEyPms) | ⭐2 [Filtering & Sorting — Milan Jovanović](https://youtu.be/X8zRvXbirMU)
+  - ⭐1 [15. Pagination in Web Api Part 1 — Coding-Future (27:51)](https://youtu.be/XDkUliEyPms)
+  - ⭐2 [Filtering, Sorting And Pagination — Milan Jovanović (24:02)](https://youtu.be/X8zRvXbirMU)
+  - 🔄 [16. Pagination Part 2 — Coding-Future](https://youtu.be/8vum4WH8PVs) | [Paging Math and Implementation — Essam Abdelnabi (at 56:35)](https://youtu.be/fb8j6CjyWWw)
 - **Task 4 (Distributed Caching with Redis):** `IDistributedCache` for active campaigns, with immediate invalidation on updates.
-  - ⭐ [Caching: In-Memory vs Redis — Amr Mohamed [Arabic]](https://youtu.be/AIBOcH_dAX8) | 🔄 [Milan Jovanović](https://youtu.be/Tt5zIKVMMbs)
+  - ⭐ [Caching Explained: In-Memory vs Redis — Amr Mohamed [Arabic] (21:11)](https://youtu.be/AIBOcH_dAX8)
+  - 🔄 [Distributed Caching With Redis in ASP.NET Core — Milan Jovanović](https://youtu.be/Tt5zIKVMMbs)
 - **Task 5 (Localization ar-EG / en-US):** `IStringLocalizer` and `.resx` handling client `Accept-Language` headers.
-  - ⭐1 [Localization Part 1 — El-Helaly](https://youtu.be/PyCGEO4b6F0) | ⭐2 [Part 2 — El-Helaly](https://youtu.be/YzOarEJDdrY)
+  - ⭐1 [Globalization and Localization Part 1 — Mohamed El-Helaly [Arabic] (08:38)](https://youtu.be/PyCGEO4b6F0)
+  - ⭐2 [16. Use Localization In APIs — Mohamed El-Helaly [Arabic] (04:37)](https://youtu.be/YzOarEJDdrY)
+  - 🔄 [Microsoft Learn — Localization in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/localization)
 - **Task 6 (Versioning & Rate Limiting):** `Asp.Versioning.Mvc` and built-in Rate Limiting returning 429 Too Many Requests.
-  - ⭐1 [API Versioning — Mohamad Lawand](https://youtu.be/DkZd-5z0CeI) | ⭐2 [Rate Limiting — Milan Jovanović](https://youtu.be/1tPVVDEDGtE)
+  - ⭐1 [.NET 9: ASP.NET Core Web API Versioning — Mohamad Lawand (12:55)](https://youtu.be/DkZd-5z0CeI)
+  - ⭐2 [How To Implement Rate Limiting In .NET — Milan Jovanović (09:42)](https://youtu.be/1tPVVDEDGtE)
+  - 🔄 [Rate Limiting Algorithms — Mohamad Lawand](https://youtu.be/bOfOo3Zsfx0)
 - **Task 7 (CORS Policies):** Configured allowed origins, headers, and methods.
-  - ⭐ [Enable CORS — Mohamed El-Helaly [Arabic]](https://youtu.be/_YXcxm-O06I)
+  - ⭐ [6. Enable CORS (Updated) — Mohamed El-Helaly [Arabic] (05:39)](https://youtu.be/_YXcxm-O06I)
+  - 🔄 [Microsoft Learn — Enable CORS](https://learn.microsoft.com/en-us/aspnet/core/security/cors)
+
+### 💡 Post-Sprint 3 Enrichment:
+- [Cursor-Based Pagination in .NET](https://youtu.be/U3LcKY19z_4)
+- [Distributed Caching with Redis — Mohamad Lawand](https://youtu.be/6HZVu3kGOrg)
+- [Minimal APIs vs Controllers in ASP.NET Core — Milan Jovanović](https://youtu.be/gsAuFIhXz3g)
+- [Minimal API Versioning in ASP.NET Core](https://youtu.be/F9j3X6KuIpw)
+- [Building High-Performance APIs with FastEndpoints — Nick Chapsas](https://youtu.be/oqNu0xavAyc)
 
 ---
 
@@ -289,20 +359,39 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 > **Period:** 07/12/2026 → 21/12/2026 | **Evaluation:** 100 Points
 
 ### 📌 Prerequisites:
-1. **Local SMTP Container via Mailpit:** `docker run -d --name mailpit -p 8025:8025 -p 1025:1025 axllent/mailpit`.
+1. **Local SMTP Container via Mailpit:** `docker run -d --name mailpit -p 8025:8025 -p 1025:1025 axllent/mailpit` (Web UI at http://localhost:8025).
 
 ### 🛠️ Tasks:
-- **Task 1 (Hangfire Infrastructure):** SQL Server job storage, background worker setup, and protected `/hangfire` dashboard.
-  - ⭐1-4 [Hangfire Series — Mohamed El-Helaly [Arabic]](https://youtu.be/hnK1qn6ZjKo) | ⭐5 [Dashboard Security Docs](https://docs.hangfire.io/en/latest/configuration/using-dashboard.html) | 🔄 [Coding Droplets](https://youtu.be/lsP5ZjcFtMM)
-- **Task 2 (MailKit Email Service):** Transactional email sending directed to local Mailpit container.
-  - ⭐1 [Sending Emails in .NET — El-Helaly](https://youtu.be/J23_c3uSyD0) | ⭐2 [Mailpit Docker Docs](https://mailpit.axllent.org/docs/install/docker/) | 🔄 [Milan Jovanović](https://youtu.be/KtCjH-1iCIk)
+- **Task 1 (Hangfire Infrastructure & Dashboard):** SQL Server job storage, background worker setup, and protected `/hangfire` dashboard.
+  - ⭐1 [1. Prepare Your Project — Mohamed El-Helaly [Arabic] (10:42)](https://youtu.be/hnK1qn6ZjKo)
+  - ⭐2 [2. Enqueue Jobs — El-Helaly (06:07)](https://youtu.be/uqWRHmPm30E)
+  - ⭐3 [3. Scheduled Jobs — El-Helaly (04:28)](https://youtu.be/_3C9BVwwM80)
+  - ⭐4 [4. Recurring Jobs — El-Helaly (06:19)](https://youtu.be/GjsJrMtNES0)
+  - ⭐5 [Hangfire Dashboard Authorization Documentation](https://docs.hangfire.io/en/latest/configuration/using-dashboard.html)
+  - 🔄 [Hangfire in .NET Core (Complete Guide) — Coding Droplets (16:17)](https://youtu.be/lsP5ZjcFtMM)
+- **Task 2 (MailKit Email Service & Mailpit):** Transactional email sending directed to local Mailpit container.
+  - ⭐1 [Sending Emails With .NET Core Part 1 — Mohamed El-Helaly [Arabic] (10:33)](https://youtu.be/J23_c3uSyD0)
+  - ⭐2 [Mailpit Docker Documentation](https://mailpit.axllent.org/docs/install/docker/)
+  - 🔄 [Send Emails with MailKit — tutorialsEU](https://youtu.be/lCHKwyekbT4) | [Easy Email Verification in .NET with Papercut/Mailpit — Milan Jovanović (04:50)](https://youtu.be/KtCjH-1iCIk)
 - **Task 3 (QuestPDF Receipt Generation):** Dynamic PDF receipt layout with Community License.
-  - ⭐ [QuestPDF Generator — Claudio Bernasconi](https://youtu.be/T89A_7dz1P8) | 🔄 [M Alvin Maulana](https://youtu.be/eiry9Zli5Rc)
+  - ⭐ [QuestPDF - The BEST PDF Generator for .NET — Claudio Bernasconi (12:07)](https://youtu.be/T89A_7dz1P8)
+  - 🔄 [Generate PDF Invoice in ASP.NET Core — M Alvin Maulana](https://youtu.be/eiry9Zli5Rc) | [QuestPDF Official Invoice Tutorial](https://www.questpdf.com/quick-start.html)
 - **Task 4 (File Upload Security & Magic Bytes):** Campaign cover uploads with raw binary file signature validation.
-  - ⭐1-2 [Upload Files With Fake Extensions — El-Helaly](https://youtu.be/mh0ZTXfSdBI) | ⭐3 [Microsoft Learn — Magic Bytes](https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads)
+  - ⭐1 [Upload Files With Fake Extensions Part 1 — Mohamed El-Helaly [Arabic] (09:38)](https://youtu.be/mh0ZTXfSdBI)
+  - ⭐2 [Upload Files Part 2 — Mohamed El-Helaly [Arabic] (11:10)](https://youtu.be/08Ke6nhNWK8)
+  - ⭐3 [Microsoft Learn — File signature validation (Magic Bytes)](https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads)
+  - 🔄 [Design a File Upload Service — Milan Jovanović](https://youtu.be/ka_WCmNdybE)
 - **Task 5 (Background Workflows):** Fire-and-forget job for receipt/email upon donation, and recurring daily job for expired campaigns.
 - **Task 6 (Structured Logging with Serilog & Seq):** Enrich logs with `TraceId`, `Environment`, and request logging.
-  - ⭐ [.NET Logging Using Seq — Bishoy Youssef [Arabic]](https://youtu.be/BwcsVcLgFLw) | 🔄 [Milan Jovanović](https://youtu.be/nVAkSBpsuTk)
+  - ⭐ [.NET Logging Using Seq — Bishoy Youssef [Arabic] (20:26)](https://youtu.be/BwcsVcLgFLw)
+  - 🔄 [Structured Logging With Serilog — Milan Jovanović](https://youtu.be/nVAkSBpsuTk) | [63. Serilog in Clean Architecture — Coding-Future](https://youtu.be/4Sf156KA4N0)
+
+### 💡 Post-Sprint 4 Enrichment:
+- [Transactional Outbox Pattern with Hangfire — Milan Jovanović](https://youtu.be/gytZxzT2IWY)
+- [Automatic Logging via MediatR Pipeline Behaviors](https://youtu.be/JVX9MMpO6pE)
+- [TickerQ: Modern Background Job Queue in .NET](https://youtu.be/x0dfj95Cj0U)
+- [Zero-Allocation File Streaming in ASP.NET Core — Raw Coding](https://youtu.be/l69kUe1fNSc)
+- [Logging Crash Course in .NET](https://youtu.be/XrCxy0SNRqM)
 
 ---
 
@@ -316,14 +405,21 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 
 ### 🛠️ Tasks:
 - **Task 1 (Stripe Checkout Session):** PAY-01 to PAY-03. Create session with `client_reference_id`, metadata, and minor units (cents).
-  - ⭐ [Stripe API Integration in .NET — Israel Quiroz](https://youtu.be/2sZXrUFvZ3E) | 🔄 [Stripe Official Docs](https://docs.stripe.com/api/checkout/sessions)
+  - ⭐1 [How To Easily Integrate STRIPE Into Your .NET API — Israel Quiroz (38:45)](https://youtu.be/2sZXrUFvZ3E)
+  - ⭐2 [Stripe Official Checkout Sessions Documentation](https://docs.stripe.com/api/checkout/sessions)
 - **Task 2 (Webhook HMAC Verification):** PAY-04. Validate `Stripe-Signature` via `EventUtility.ConstructEvent`.
-  - ⭐ [Creating Stripe Webhook Endpoint — Mohamed Awadallah [Arabic]](https://youtu.be/WZu0lHvNYjI) | 🔄 [Stripe Docs](https://docs.stripe.com/webhooks)
+  - ⭐1 [159- Creating Stripe Web Hook Endpoint — Mohamed Awadallah [Arabic] (10:58)](https://youtu.be/WZu0lHvNYjI)
+  - ⭐2 [Stripe Official Webhooks Guide](https://docs.stripe.com/webhooks)
 - **Task 3 (Stripe CLI Testing):** Test local webhooks with `stripe listen` and signing secret verification.
-- **Task 4 (Idempotency Safeguards):** Handle `Idempotency-Key` headers and deduplicate duplicate webhook event IDs in database.
-  - ⭐ [How To Make Your API Idempotent — Milan Jovanović](https://youtu.be/smXAgcdJzLc)
+- **Task 4 (API & Webhook Idempotency):** Handle `Idempotency-Key` headers and deduplicate duplicate webhook event IDs in database.
+  - ⭐1 [How To Make Your API Idempotent — Milan Jovanović (14:26)](https://youtu.be/smXAgcdJzLc)
+  - ⭐2 [Stripe Documentation — Handle duplicate webhook events](https://docs.stripe.com/webhooks#handle-duplicate-events)
 - **Task 5 (Integration Testing with Testcontainers):** End-to-end user workflows against real SQL Server in Docker via `WebApplicationFactory`.
-  - ⭐ [Testcontainers in .NET — Milan Jovanović](https://youtu.be/ssRE0pBNvpE) | 🔄 [Julio Casal](https://youtu.be/RXSPCIrrjHc)
+  - ⭐ [Stop Mocking Your Database! Use Testcontainers in .NET — Milan Jovanović (15:59)](https://youtu.be/ssRE0pBNvpE)
+  - 🔄 [Integration Testing in ASP.NET Core — Julio Casal](https://youtu.be/RXSPCIrrjHc)
+
+### 💡 Post-Sprint 5 Enrichment:
+- [Building Resilient Cloud Microservices with Polly (.NET Foundation)](https://youtu.be/L9_fGJOqzbM)
 
 ---
 
@@ -335,19 +431,25 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 1. **Docker Compose & Multi-Container Networking:** Service discovery and environment variables.
 
 ### 🛠️ Tasks:
-- **Task 1 (Admin Analytics & Aggregations):** High-performance reporting (`Sum`, `Count`, `GroupBy`) with `AsNoTracking` and Redis caching.
-  - ⭐ [EF Core Query Data Part 2 — Essam Abdelnabi [Arabic]](https://youtu.be/fb8j6CjyWWw) | 🔄 [Microsoft Learn](https://learn.microsoft.com/en-us/ef/core/querying/complex-query-operators)
-- **Task 2 (Admin Overrides):** Administrative status controls and campaign cancellations.
-- **Task 3 (Multi-Stage Dockerfile):** Lean production runtime image running under non-root user.
-  - ⭐ [Dockerize ASP.NET Core — Codographia](https://youtu.be/nINTOS2fhVY) | 🔄 [Julio Casal](https://youtu.be/cWMztQwIQNs)
-- **Task 4 (Docker Compose Orchestration):** Spin up API, SQL Server, Redis, and Mailpit together.
-  - ⭐ [Complete .NET 10 Dev Environment with Docker Compose — Milan Jovanović](https://youtu.be/svfxvsGfLlU) | 🔄 [Mosh](https://youtu.be/HG6yIjZapSA)
-- **Task 5 (Health Checks):** Expose `/health`, `/health/ready`, and `/health/live` validating SQL and Redis connectivity.
-  - ⭐ [How to Add Health Checks — Milan Jovanović](https://youtu.be/4abSfjdzqms) | 🔄 [Nick Chapsas](https://youtu.be/p2faw9DCSsY)
-- **Task 6 (CI/CD via GitHub Actions):** Automated build, unit tests, and integration tests pipeline on every PR.
-  - ⭐ [CI/CD Pipeline with GitHub Actions — Coding-Future](https://youtu.be/Zv-NJBRmoVU) | 🔄 [TechWorld with Nana](https://youtu.be/R8_veQiYBjI)
-- **Task 7 (Final Documentation):** Production architecture and setup guide in `README.md`.
-  - ⭐ [Professional README.md — Fekra w Code [Arabic]](https://youtu.be/ATVJiw4JrUA)
+- **Task 1 (Admin Analytics Dashboard & Aggregations):** High-performance reporting (`Sum`, `Count`, `GroupBy`) with `AsNoTracking` and Redis caching.
+  - ⭐1 [EF Core Query Data: Projections & Aggregations — Essam Abdelnabi [Arabic] (1:11:58)](https://youtu.be/fb8j6CjyWWw)
+  - ⭐2 [Microsoft Learn — Complex Query Operators (GroupBy in EF Core)](https://learn.microsoft.com/en-us/ef/core/querying/complex-query-operators)
+- **Task 2 (Admin Campaign Management & Overrides):** Administrative status controls and campaign cancellations.
+- **Task 3 (Production Multi-Stage Dockerfile):** Lean production runtime image running under non-root user.
+  - ⭐ [Dockerize ASP.NET Core Application Part 12 — Codographia (27:04)](https://youtu.be/nINTOS2fhVY)
+  - 🔄 [Docker Full Course For .NET — Julio Casal](https://youtu.be/cWMztQwIQNs)
+- **Task 4 (Full Stack Orchestration via Docker Compose):** Spin up API, SQL Server, Redis, and Mailpit together.
+  - ⭐ [Build a Complete .NET 10 Dev Environment with Docker Compose — Milan Jovanović (16:00)](https://youtu.be/svfxvsGfLlU)
+  - 🔄 [Docker Compose Tutorial — Mosh Hamedani](https://youtu.be/HG6yIjZapSA)
+- **Task 5 (ASP.NET Core Health Checks):** Expose `/health`, `/health/ready`, and `/health/live` validating SQL and Redis connectivity.
+  - ⭐ [How to Add Health Checks in ASP.NET Core — Milan Jovanović (11:51)](https://youtu.be/4abSfjdzqms)
+  - 🔄 [Best Way to Add Health Checks in .NET — Nick Chapsas](https://youtu.be/p2faw9DCSsY)
+- **Task 6 (Automated CI/CD Pipeline via GitHub Actions):** Automated build, unit tests, and integration tests pipeline on every PR.
+  - ⭐ [1. CI/CD Pipeline Using GitHub Actions — Coding-Future (23:29)](https://youtu.be/Zv-NJBRmoVU)
+  - 🔄 [GitHub Actions Full Tutorial — TechWorld with Nana](https://youtu.be/R8_veQiYBjI) | [GitHub Actions Complete Course — Ahmed El-Fakharany [Arabic]](https://youtu.be/7gJFHjXscr8)
+- **Task 7 (Final Documentation & Architecture Guide):** Production architecture and setup guide in `README.md`.
+  - ⭐ [How to Write a Professional README.md — Fekra w Code [Arabic] (14:27)](https://youtu.be/ATVJiw4JrUA)
+  - 🔄 [Write an Awesome GitHub README — Learn Fast Make Things](https://youtu.be/E6NO0rgFub4)
 
 ---
 
@@ -379,10 +481,20 @@ During defense, the learner must not only explain **what** was built, but **why*
 
 ## 📖 Post-Course Reading & Continuous Learning
 
-- **Real-Time Web Apps:** [SignalR Full Course — tutorialsEU](https://youtu.be/LEImpa77irI) | [Mohamad Lawand](https://youtu.be/pvi_ZS_PrSc)
-- **Cloud-Native .NET Aspire & Microservices:** [.NET Aspire — Julio Casal](https://youtu.be/pk6FJfHhfq8) | [Microservices — Les Jackson](https://youtu.be/DgVjEo3OGBI)
-- **Essential Books:**
-  - *Clean Architecture* — Robert C. Martin
-  - *Domain-Driven Design* — Eric Evans
-  - *Dependency Injection Principles, Practices, and Patterns* — Steven van Deursen & Mark Seemann
-  - *Designing Data-Intensive Applications* — Martin Kleppmann
+### 1. Real-Time Communication with SignalR
+- [SignalR Full Course — tutorialsEU](https://youtu.be/LEImpa77irI)
+- [Real-Time Web Apps with SignalR — Mohamad Lawand](https://youtu.be/pvi_ZS_PrSc)
+- [SignalR in ASP.NET Core Playlist — Ahmed Mohamady [Arabic]](https://youtube.com/playlist?list=PL62tSREI9C-e6nQ47brLj00iSGddiee73)
+
+### 2. Cloud Native .NET Aspire & Microservices
+- [.NET Aspire Crash Course — Julio Casal](https://youtu.be/pk6FJfHhfq8)
+- [.NET Microservices Full Course — Les Jackson](https://youtu.be/DgVjEo3OGBI)
+- [Microservices Architecture with .NET — Julio Casal](https://youtu.be/ByYyk8eMG6c)
+- [Microservices with .NET — DotNetMastery](https://youtu.be/Nw4AZs1kLAs)
+
+### 3. Recommended Books
+- *Clean Architecture: A Craftsman's Guide to Software Structure and Design* — Robert C. Martin
+- *Dependency Injection Principles, Practices, and Patterns* — Steven van Deursen & Mark Seemann
+- *Domain-Driven Design: Tackling Complexity in the Heart of Software* — Eric Evans
+- *Software Architecture with C# 12 and .NET 8* — Gabriel Baptista & Francesco Abbruzzese
+- *Designing Data-Intensive Applications* — Martin Kleppmann
