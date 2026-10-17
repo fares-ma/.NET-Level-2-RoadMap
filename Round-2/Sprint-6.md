@@ -1,289 +1,207 @@
-# Sprint 6 — Reports, Admin, Docker, CI/CD & Health Checks
+# Sprint 6 — EF Core Aggregations, Docker, Health Checks, CI/CD & Final Delivery
 
-> Project: **DonationHub — Donation Management Platform**
-> Duration: **2 weeks (~15 hours/week)**
-> Evaluation: **100 points**
+> **Project:** DonationHub — Donation Management & Crowdfunding Platform  
+> **Duration:** 15 Days (06/01/2027 to 20/01/2027)  
+> **Meeting Schedule:**  
+> - **Stand-up 1 (Day 5):** 10/01/2027 — Session Leader: **Kareem Zein**  
+> - **Stand-up 2 (Day 10):** 15/01/2027 — Session Leader: **Mohamed Atef**  
+> - **Closing & Deadline (Day 15):** 20/01/2027 — Session Leader: **Asma ELhadidy**  
+> - **Code Review & Final Corrections (Days 16–18):** 21/01/2027 to 23/01/2027  
+> **Evaluation:** 100 Points  
+> **Target Framework:** .NET 10 (fully compatible with .NET 8 / .NET 9)
 
-## Sprint Goal
+---
 
-Take DonationHub from "it works on my machine" to a system that can be built, tested, containerized, and deployed consistently. Implement the Reports and Admin modules, add health checks, and finalize the project.
+## 🎯 Sprint Goal
 
-## How to use this sprint plan
+Take DonationHub from "it works on my machine" to an automated, containerized, and production-ready system. Implement the **Admin Analytics & Reports** dashboard using optimized **EF Core Aggregations and Projections**, containerize the application using an efficient **Multi-stage Dockerfile**, orchestrate the entire environment (API, SQL Server, Redis, Mailpit) using **Docker Compose**, configure **Health Checks**, build a continuous integration pipeline via **GitHub Actions**, and craft comprehensive engineering documentation for final defense.
 
-For every task:
+```text
+Admin Dashboard Analytics (Optimized GroupBy & Projections)
+                    ↓
+Multi-Stage Containerization (Build SDK → Lean Runtime)
+                    ↓
+Docker Compose Orchestration (API + SQL + Redis + Mailpit)
+                    ↓
+Liveness & Readiness Health Checks (/health)
+                    ↓
+GitHub Actions CI Pipeline (Automated Build & Unit/Integration Tests)
+                    ↓
+Production Architecture Documentation & Final Project Defense
+```
 
-1. Read the **MUST** resources before implementation.
-2. Read **DEEP DIVE** only when the concept is unclear or the learner wants deeper understanding.
-3. Implement the requested DonationHub change.
-4. Verify the behavior manually.
-5. Add/update tests when the task naturally requires them.
-6. Commit the work in small, meaningful commits.
-7. Be able to explain the architectural decision during review.
+---
 
-**Important:** This document does not change the original Sprint scope. It expands the original tasks into an executable checklist.
+## 📌 Sprint Prerequisites
 
-## Sprint Tasks
+### Multi-Container Orchestration & CI Basics
+*Learners must be familiar with Docker networking concepts and YAML syntax:*
+- Understand how Docker networks allow containers to communicate by service name (e.g., `Server=sql-server` instead of `localhost`).
+- Basic familiarity with GitHub repository settings (Repository Secrets, GitHub Actions runners).
 
-### Task 1 — Dashboard & Reports
+---
 
-Implement the Admin dashboard:
+## 🛠️ Sprint Tasks
 
-- **RPT-01:** Dashboard summary: total raised, number of succeeded donations, number of distinct donors, active/completed/expired campaign counts.
-- **RPT-02:** Top N campaigns by raised amount.
-- **RPT-03:** Donations over time (per day) for a date range.
-- **RPT-04:** Dashboard responses are **cached** (default 5 minutes) and the numbers must match the database.
+### Task 1 — Admin Analytics Dashboard & EF Core Aggregations
+
+Implement reporting and aggregate queries according to SRS §3.8:
+- **RPT-01 (Summary Metrics):**
+  - Total funds raised across all successful donations (`Sum`).
+  - Total count of successful donations (`Count`).
+  - Total count of distinct donors.
+  - Campaign counts grouped by status (`Active`, `Completed`, `Expired`).
+- **RPT-02 (Top Performing Campaigns):**
+  - Top N campaigns ranked by `RaisedAmount` (`OrderByDescending` + `Take`).
+- **RPT-03 (Donations Over Time):**
+  - Daily aggregated totals within a date range (`GroupBy(d => d.CreatedAtUtc.Date)` translated directly to SQL `GROUP BY`).
+- **Performance Rules:**
+  - Enforce `AsNoTracking()` on all reporting queries.
+  - Project directly into response DTOs via `.Select()` to fetch only required columns.
+  - Use `.AsSplitQuery()` where appropriate to avoid Cartesian product explosion on joined collections.
+  - **RPT-04:** Cache the summary dashboard response in Redis with a 5-minute expiration window.
 
 | Method | Path | Access |
-|--------|------|--------|
-| GET | `/admin/dashboard/summary` | Admin |
-| GET | `/admin/dashboard/top-campaigns?count=5` | Admin |
-| GET | `/admin/dashboard/donations-over-time?from=&to=` | Admin |
+|---|---|---|
+| `GET` | `/admin/dashboard/summary` | Admin Only |
+| `GET` | `/admin/dashboard/top-campaigns?count=5` | Admin Only |
+| `GET` | `/admin/dashboard/donations-over-time?from=&to=` | Admin Only |
 
-### Resources
-- **MUST** — [EF Core — Efficient querying](https://learn.microsoft.com/en-us/ef/core/performance/efficient-querying)
-- **MUST** — [ASP.NET Core — Distributed caching](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed)
-- **VIDEO** — [Milan Jovanović — High-Performance Aggregations in EF Core](https://www.youtube.com/watch?v=cM3k0ZqP4f0)
-
----
-
-### Task 2 — Admin User Management
-
-Implement:
-
-- **ADM-01:** Admin lists all users (paged, filter by role, search by name or email).
-- **ADM-02:** Admin activates or deactivates a user. A deactivated user cannot log in.
-- **ADM-03:** Admin lists, updates, and deletes staff users. Delete means deactivate. An Admin cannot deactivate themselves, and the last active Admin cannot be removed.
-
-| Method | Path | Access |
-|--------|------|--------|
-| GET | `/admin/users` | Admin |
-| PATCH | `/admin/users/{id}/status` | Admin |
-| GET | `/admin/staff` | Admin |
-| PUT | `/admin/staff/{id}` | Admin |
-| DELETE | `/admin/staff/{id}` | Admin |
-
-### Resources
-- **MUST** — [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity)
+**Resources:**
+- **⭐ Required Primary:**
+  - ⭐1 [EF Core Query Data: Projections & Aggregations — Essam Abdelnabi [Arabic] (1:11:58)](https://youtu.be/fb8j6CjyWWw) (Projections & AsNoTracking at 08:13, AsSplitQuery at 13:38, GroupBy in SQL at 44:17).
+  - ⭐2 [Microsoft Learn — Complex Query Operators (GroupBy in EF Core)](https://learn.microsoft.com/en-us/ef/core/querying/complex-query-operators).
 
 ---
 
-### Task 3 — Health Checks
+### Task 2 — Admin Campaign Management & Status Overrides
 
-Implement:
-
-- `/health/live` — the process is up (no dependency checks)
-- `/health/ready` — SQL Server, Redis, and write access to the file storage folder
-- Responses are JSON with each check's status
-
-### Resources
-- **MUST** — [ASP.NET Core — Health checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks)
-- **VIDEO** — [Nick Chapsas — Health Checks in ASP.NET Core (.NET 8)](https://www.youtube.com/watch?v=kY8c2_J6F9Y)
-- **VIDEO** — [Milan Jovanović — Health Checks Monitoring SQL & Redis](https://www.youtube.com/watch?v=d_Z9Q4u0n7A)
+Implement administrative campaign controls according to SRS §3.8:
+- **ADM-01:** Admin can manually change campaign status (e.g., cancel a fraudulent campaign, mark as completed early).
+- **ADM-02:** When an Admin closes a campaign, validate that pending payment attempts are handled appropriately.
 
 ---
 
-### Task 4 — Dockerfile
+### Task 3 — Production Multi-Stage Dockerfile
 
-Create a production-oriented, multi-stage Dockerfile:
+Create an optimized `Dockerfile` in the repository root:
+- **Stage 1 (Build):** Use the official .NET 10 SDK image (`mcr.microsoft.com/dotnet/sdk:10.0`), copy project files, restore dependencies (`dotnet restore`), copy source code, and publish optimized binaries (`dotnet publish -c Release -o /app/publish`).
+- **Stage 2 (Runtime):** Use the lean ASP.NET runtime image (`mcr.microsoft.com/dotnet/aspnet:10.0`), copy only the published artifacts from Stage 1, expose port 8080, and run under a secure non-root user.
+- Add a `.dockerignore` file excluding `bin/`, `obj/`, `.git/`, and local test results.
 
-- Build stage: restore, build, publish
-- Runtime stage: minimal image, **non-root user**
-- Understand: build context, layers, build vs runtime image, ports, environment configuration
-
-### Resources
-- **MUST** — [Docker — Get Started](https://docs.docker.com/get-started/)
-- **MUST** — [Docker — Build best practices](https://docs.docker.com/build/building/best-practices/)
-- **VIDEO** — [Nick Chapsas — Dockerizing .NET Applications (Multi-Stage & Non-Root)](https://www.youtube.com/watch?v=bb_t_kY6zNo)
-- **VIDEO** — [Milan Jovanović — Containerizing .NET 8 Applications with Docker](https://www.youtube.com/watch?v=p7_x1M4n2qA)
+**Resources:**
+- **⭐ Required Primary:** [Dockerize ASP.NET Core Application Part 12 — Codographia (27:04)](https://youtu.be/nINTOS2fhVY).
+- **🔄 Alternative / Deep Dive:** [Docker Full Course For .NET — Julio Casal](https://youtu.be/cWMztQwIQNs)
 
 ---
 
-### Task 5 — Docker Compose
+### Task 4 — Full Stack Orchestration via Docker Compose
 
-Create `docker-compose.yml` with services:
+Create `docker-compose.yml` to launch the complete DonationHub ecosystem with a single command (`docker compose up -d`):
+1. **`donationhub-api`:** Builds from the local `Dockerfile`, mounts secrets via environment variables, depends on database and cache.
+2. **`sql-server`:** Containerized Microsoft SQL Server (`mcr.microsoft.com/mssql/server`) with health check and volume persistence.
+3. **`redis`:** Containerized Redis cache (`redis:alpine`).
+4. **`mailpit`:** Containerized local SMTP server (`axllent/mailpit`) exposing port 8025 for web UI and 1025 for SMTP.
 
-```text
-api          (DonationHub API)
-sqlserver    (SQL Server)
-redis        (Redis)
-mailpit      (Mailpit for development emails)
-```
-
-- Use **named volumes** for SQL data and uploaded files
-- All settings through **environment variables**
-- `docker compose up` must produce a working API with migrations applied and admin seeded
-- Health checks and `depends_on` conditions for startup order
-
-### Resources
-- **MUST** — [Docker Compose — Getting started](https://docs.docker.com/compose/gettingstarted/)
-- **MUST** — [Docker Compose — File reference](https://docs.docker.com/reference/compose-file/)
-- **MUST** — [Docker Compose — Environment variables](https://docs.docker.com/compose/how-tos/environment-variables/)
-- **VIDEO** — [Milan Jovanović — Docker Compose for .NET Developers](https://www.youtube.com/watch?v=9_Y_j1c8k8A)
-- **VIDEO** — [Amichai Mantinband — Docker Compose for ASP.NET Core & Dependencies](https://www.youtube.com/watch?v=W7m_8n4_4wU)
+**Resources:**
+- **⭐ Required Primary:** [Build a Complete .NET 10 Dev Environment with Docker Compose — Milan Jovanović (16:00)](https://youtu.be/svfxvsGfLlU).
+- **🔄 Alternative / Deep Dive:** [Docker Compose Tutorial — Mosh Hamedani](https://youtu.be/HG6yIjZapSA)
 
 ---
 
-### Task 6 — Environment Configuration & Secrets
+### Task 5 — ASP.NET Core Health Checks
 
-- Move all environment-specific configuration outside source code:
-  - Connection strings, JWT configuration, Redis, Stripe keys, email settings, file storage path
-- Secrets are NOT committed to Git
-- Use `user-secrets` for local development, environment variables for Docker
-- `appsettings.json` contains only placeholders
+Implement health monitoring endpoints according to production standards:
+- Install `AspNetCore.HealthChecks.SqlServer` and `AspNetCore.HealthChecks.Redis`.
+- Expose `/health` returning overall system status:
+  - Checks database connectivity.
+  - Checks Redis connectivity.
+  - Checks local storage availability.
+- Configure dedicated endpoints for container orchestrators:
+  - `/health/ready` (Readiness probe verifying all dependencies are ready).
+  - `/health/live` (Liveness probe verifying API process is responsive).
 
-### Resources
-- **MUST** — [ASP.NET Core — Configuration](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/)
-- **MUST** — [GitHub Actions — Secrets](https://docs.github.com/en/actions/concepts/security/secrets)
-
----
-
-### Task 7 — GitHub Actions CI
-
-Create a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs on every push and pull request:
-
-```text
-Restore
-  ↓
-Build
-  ↓
-Unit Tests
-  ↓
-Integration Tests
-```
-
-The CI badge appears at the top of the README.
-
-### Resources
-- **MUST** — [GitHub Actions — Building and testing .NET](https://docs.github.com/en/actions/tutorials/build-and-test-code/net)
-- **MUST** — [GitHub Actions](https://docs.github.com/en/actions)
-- **VIDEO** — [Nick Chapsas — GitHub Actions CI/CD for .NET Developers](https://www.youtube.com/watch?v=3g_t_N4K4hY)
-- **VIDEO** — [Milan Jovanović — Automating .NET Builds & Tests with GitHub Actions](https://www.youtube.com/watch?v=k2Z_q6p8v3A)
+**Resources:**
+- **⭐ Required Primary:** [How to Add Health Checks in ASP.NET Core — Milan Jovanović (11:51)](https://youtu.be/4abSfjdzqms).
+- **🔄 Alternative / Deep Dive:** [Best Way to Add Health Checks in .NET — Nick Chapsas](https://youtu.be/p2faw9DCSsY)
 
 ---
 
-### Task 8 — Docker Build in CI
+### Task 6 — Automated CI/CD Pipeline via GitHub Actions
 
-Extend the CI workflow to build the Docker image:
+Create `.github/workflows/ci.yml`:
+- Trigger on every `push` and `pull_request` targeting `main` or `develop`.
+- Job Steps:
+  1. Check out repository code.
+  2. Setup .NET 10 SDK.
+  3. Restore NuGet dependencies (`dotnet restore`).
+  4. Build solution in Release configuration (`dotnet build --no-restore -c Release`).
+  5. Run all Unit Tests (`dotnet test --no-build -c Release`).
+  6. Launch Docker service containers and run Integration Tests.
+  7. Fail the pipeline if any test fails or compilation warnings violate quality gates.
 
-```text
-Build
-  ↓
-Test
-  ↓
-Docker Build
-  ↓
-Image
-```
-
-### Resources
-- **MUST** — [Docker — Build documentation](https://docs.docker.com/build/)
-
----
-
-### Task 9 — Local Production Verification
-
-Run DonationHub through Docker Compose and verify:
-
-- API starts and responds
-- SQL Server is reachable, migrations applied
-- Redis is reachable
-- Mailpit receives emails
-- Hangfire dashboard accessible
-- Configuration injected correctly
-- Authentication works
-- Important endpoints work
-
-### Resources
-- **MUST** — [Docker Compose — Getting started](https://docs.docker.com/compose/gettingstarted/)
+**Resources:**
+- **⭐ Required Primary:** [1. CI/CD Pipeline Using GitHub Actions — Coding-Future (23:29)](https://youtu.be/Zv-NJBRmoVU).
+- **🔄 Alternative / Deep Dive:**
+  - [GitHub Actions Full Tutorial — TechWorld with Nana](https://youtu.be/R8_veQiYBjI)
+  - [GitHub Actions Complete Course — Ahmed El-Fakharany [Arabic]](https://youtu.be/7gJFHjXscr8)
 
 ---
 
-### Task 10 — Final Refactoring
+### Task 7 — Professional Architecture Documentation & Final README.md
 
-Review the entire codebase:
+Write a comprehensive, publication-ready `README.md` for DonationHub documenting:
+- Architectural diagram and layer responsibilities.
+- Technology stack, libraries, and design patterns used.
+- One-line quickstart command with Docker Compose.
+- Environment variables and options configuration table.
+- API endpoint summary and authentication guide.
+- Testing and CI pipeline badges.
 
-- Architecture consistency
-- Naming conventions
-- Dead code removal
-- Unnecessary abstractions
-- Error handling completeness
-- Business rules enforcement
-- Configuration correctness
-- Logging quality
-- API consistency
-- Test coverage of important flows
-
-### Resources
-- **DEEP DIVE** — Robert C. Martin — `Book: Clean Architecture`
+**Resources:**
+- **⭐ Required Primary:** [How to Write a Professional README.md — Fekra w Code [Arabic] (14:27)](https://youtu.be/ATVJiw4JrUA).
+- **🔄 Alternative / Deep Dive:** [Write an Awesome GitHub README — Learn Fast Make Things](https://youtu.be/E6NO0rgFub4)
 
 ---
 
-### Task 11 — Final README
+## 📦 Sprint Deliverables
 
-Write a comprehensive README documenting:
-
-- Project overview
-- Architecture explanation (why this structure)
-- Domain model
-- Authentication and authorization
-- Data access strategy (repository for writes, DbContext for reads)
-- Background processing (Hangfire jobs)
-- Caching strategy and invalidation
-- Payment flow (Stripe)
-- Email notifications
-- File handling
-- Testing strategy
-- How to run locally (with and without Docker)
-- How to test Stripe locally (Stripe CLI)
-- Docker and Docker Compose
-- CI/CD
-- List of design decisions and trade-offs
-
-### Resources
-- **MUST** — [GitHub — README documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes)
+- [ ] Admin reporting endpoints executing optimized aggregate queries (`Sum`, `Count`, `GroupBy`).
+- [ ] Caching layer for dashboard metrics in Redis with 5-minute invalidation.
+- [ ] Multi-stage `Dockerfile` generating a lean, non-root runtime image.
+- [ ] `docker-compose.yml` orchestrating API, SQL Server, Redis, and Mailpit.
+- [ ] Health checks endpoint `/health` validating SQL Server and Redis connectivity.
+- [ ] Working GitHub Actions CI workflow running automated builds and tests on every PR.
+- [ ] Professional, complete `README.md` documenting the entire project.
 
 ---
 
-## Sprint Deliverables
+## ✅ Definition of Done
 
-- [ ] Dashboard summary, top campaigns, donations over time
-- [ ] Dashboard cached
-- [ ] Admin user management (list, activate/deactivate)
-- [ ] Admin staff management (list, update, delete/deactivate)
-- [ ] Self-deactivation and last-admin protection
-- [ ] Health checks (liveness + readiness)
-- [ ] Production Dockerfile (multi-stage, non-root)
-- [ ] Docker Compose (api, sqlserver, redis, mailpit)
-- [ ] Named volumes for data persistence
-- [ ] Environment configuration (no secrets in repo)
-- [ ] GitHub Actions CI workflow (restore, build, test)
-- [ ] Docker image built in CI
-- [ ] Local production verification through Docker Compose
-- [ ] Final refactoring
-- [ ] Final comprehensive README
+- [ ] Running `docker compose up --build` spins up all 4 services without errors.
+- [ ] Opening `http://localhost:8080/health` returns `Healthy` status in JSON.
+- [ ] Reporting endpoints translate to efficient SQL `GROUP BY` without client-side evaluation.
+- [ ] Pull requests trigger the GitHub Actions workflow and pass all test suites.
+- [ ] The learner is prepared for the Final Graduation Defense to walk through the architecture, design patterns, and justify technical trade-offs.
 
-## Definition of Done
+---
 
-- [ ] Dashboard returns correct numbers
-- [ ] Dashboard responses cached
-- [ ] Admin can list, search, and filter users
-- [ ] Admin can activate/deactivate users
-- [ ] Admin cannot deactivate themselves
-- [ ] Last active Admin cannot be removed
-- [ ] Health checks respond correctly
-- [ ] Dockerfile builds successfully
-- [ ] Docker Compose runs all services
-- [ ] `docker compose up` produces a working API
-- [ ] Migrations applied automatically
-- [ ] Admin seeded automatically
-- [ ] Configuration environment-based
-- [ ] No secrets in repository
-- [ ] GitHub Actions CI passes on tagged commit
-- [ ] Docker image built in CI
-- [ ] All tests pass with `dotnet test`
-- [ ] README is complete and accurate
-- [ ] Learner can explain architecture and trade-offs
+## 📖 Post-Course Reading (Continuous Learning)
 
-## Review Rule
+### 1. Real-Time Communication with SignalR
+- [SignalR Full Course — tutorialsEU](https://youtu.be/LEImpa77irI)
+- [Real-Time Web Apps with SignalR — Mohamad Lawand](https://youtu.be/pvi_ZS_PrSc)
+- [SignalR in ASP.NET Core Playlist — Ahmed Mohamady [Arabic]](https://youtube.com/playlist?list=PL62tSREI9C-e6nQ47brLj00iSGddiee73)
 
-The learner should be able to explain not only **what** was implemented, but **why it belongs there, what alternatives existed, and what trade-off was accepted**.
+### 2. Cloud Native .NET Aspire & Microservices
+- [.NET Aspire Crash Course — Julio Casal](https://youtu.be/pk6FJfHhfq8)
+- [.NET Microservices Full Course — Les Jackson](https://youtu.be/DgVjEo3OGBI)
+- [Microservices Architecture with .NET — Julio Casal](https://youtu.be/ByYyk8eMG6c)
+- [Microservices with .NET — DotNetMastery](https://youtu.be/Nw4AZs1kLAs)
+
+### 3. Recommended Books
+- *Clean Architecture: A Craftsman's Guide to Software Structure and Design* — Robert C. Martin
+- *Dependency Injection Principles, Practices, and Patterns* — Steven van Deursen & Mark Seemann
+- *Domain-Driven Design: Tackling Complexity in the Heart of Software* — Eric Evans
+- *Software Architecture with C# 12 and .NET 8* — Gabriel Baptista & Francesco Abbruzzese
+- *Designing Data-Intensive Applications* — Martin Kleppmann

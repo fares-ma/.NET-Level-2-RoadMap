@@ -1,214 +1,180 @@
-# Sprint 5 — Payments (Stripe), Idempotency & Integration Testing
+# Sprint 5 — Stripe Checkout, Webhooks, Idempotency & Integration Testing
 
-> Project: **DonationHub — Donation Management Platform**
-> Duration: **2 weeks (~15 hours/week)**
-> Evaluation: **100 points**
-
-## Sprint Goal
-
-Replace the temporary payment stub with real Stripe Checkout integration, implement idempotency for safe retries, and verify important application flows with integration tests.
-
-## How to use this sprint plan
-
-For every task:
-
-1. Read the **MUST** resources before implementation.
-2. Read **DEEP DIVE** only when the concept is unclear or the learner wants deeper understanding.
-3. Implement the requested DonationHub change.
-4. Verify the behavior manually through Swagger and Stripe test mode.
-5. Add/update tests when the task naturally requires them.
-6. Commit the work in small, meaningful commits.
-7. Be able to explain the architectural decision during review.
-
-**Important:** This document does not change the original Sprint scope. It expands the original tasks into an executable checklist.
-
-## Sprint Tasks
-
-### Task 1 — Stripe Checkout Session
-
-Implement the payment flow using Stripe Checkout:
-
-- **PAY-01:** `POST /donations/{id}/checkout` creates a Stripe **Checkout Session** (mode `payment`) for a `Pending` donation and returns the checkout URL.
-- **PAY-02:** The session carries:
-  - `client_reference_id` = donation id
-  - Metadata with donation id
-  - A single line item (campaign title, amount in **minor units/cents**, configured currency)
-  - Success and cancel URLs from `StripeOptions`
-- **PAY-03:** A `PaymentAttempt` is stored for each created session. A donor may start a new attempt for the same pending donation.
-
-| Method | Path | Access |
-|--------|------|--------|
-| POST | `/donations/{id}/checkout` | Owner |
-| GET | `/donations/{id}/payment-status` | Owner, Admin |
-
-### Resources
-- **MUST** — [Stripe — Checkout Sessions](https://docs.stripe.com/api/checkout/sessions)
-- **MUST** — [Stripe — Accept a payment](https://docs.stripe.com/payments/accept-a-payment)
-- **MUST** — [Stripe.net — GitHub](https://github.com/stripe/stripe-dotnet)
-- **VIDEO** — [Stripe Developers — Accept Payments with Stripe Checkout in .NET](https://www.youtube.com/watch?v=mI_y_vC0g9Y)
-- **VIDEO** — [Patrick God — Stripe Payments with ASP.NET Core Web API](https://www.youtube.com/watch?v=F3aO-4U4rK0)
-- **ARTICLE** — [Code Maze — Stripe Payments in ASP.NET Core](https://code-maze.com/stripe-payments-aspnetcore/)
+> **Project:** DonationHub — Donation Management & Crowdfunding Platform  
+> **Duration:** 15 Days (22/12/2026 to 05/01/2027)  
+> **Meeting Schedule:**  
+> - **Stand-up 1 (Day 5):** 26/12/2026 — Session Leader: **Asma ELhadidy**  
+> - **Stand-up 2 (Day 10):** 31/12/2026 — Session Leader: **Kareem Zein**  
+> - **Closing & Deadline (Day 15):** 05/01/2027 — Session Leader: **Mohamed Atef**  
+> - **Code Review & Corrections (Days 16–18):** 06/01/2027 to 08/01/2027  
+> **Evaluation:** 100 Points  
+> **Target Framework:** .NET 10 (fully compatible with .NET 8 / .NET 9)
 
 ---
 
-### Task 2 — Webhook Endpoint
+## 🎯 Sprint Goal
 
-Implement the Stripe webhook receiver:
+Replace the development payment stub with a production-ready **Stripe Checkout** payment gateway. Safely process asynchronous payment notifications using **Stripe Webhooks** with cryptographic HMAC signature verification. Guarantee financial safety against network retries and duplicate webhooks via **API Idempotency** (`Idempotency-Key` header and event deduplication). Validate complete, critical application workflows using real **Integration Tests** powered by `WebApplicationFactory` and **Testcontainers**.
 
-- **PAY-04:** `POST /payments/webhook` receives Stripe events. It is **anonymous**, reads the **raw body**, and **verifies the signature** with the webhook secret from `StripeOptions`. Invalid signature returns 400.
-- **PAY-08:** The webhook returns 200 quickly. Heavy work (PDF, email) is **enqueued** via Hangfire, not done inside the webhook.
-
-| Method | Path | Access |
-|--------|------|--------|
-| POST | `/payments/webhook` | Anonymous (signature required) |
-
-### Resources
-- **MUST** — [Stripe — Webhooks](https://docs.stripe.com/webhooks)
-- **MUST** — [Stripe — Webhook signature verification](https://docs.stripe.com/webhooks/signature)
-- **VIDEO** — [Stripe Developers — Listen for Webhooks in .NET](https://www.youtube.com/watch?v=o04A_Bsmh8s)
-- **VIDEO** — [Milan Jovanović — Stripe Webhooks in ASP.NET Core](https://www.youtube.com/watch?v=4xR1E7aZ6Ys)
-
----
-
-### Task 3 — Webhook Event Handling
-
-Handle the following Stripe events:
-
-- **PAY-05:**
-  - `checkout.session.completed` → Run the success flow (§5.5 in SRS): update donation status, raised amount, campaign completion, enqueue PDF + email jobs
-  - `checkout.session.expired` → Mark the PaymentAttempt as `Expired`
-  - `payment_intent.payment_failed` → Mark PaymentAttempt as `Failed`; mark Donation as `Failed` when no other attempt can still succeed
-- **PAY-07:** Verify that the paid amount and currency **match** the donation. A mismatch is logged as an error and does not complete the donation.
-
-Edge case: if a payment succeeds after the campaign already expired or completed, **accept the money** (the donor was charged already). Log a warning.
-
-### Resources
-- **MUST** — [Stripe — Checkout events](https://docs.stripe.com/api/events/types)
+```text
+Donor clicks Donate
+        ↓
+POST /donations/{id}/checkout
+        ↓
+Stripe Checkout Session Created (Minor Units / Cents)
+        ↓
+Donor Pays on Hosted Stripe Page
+        ↓
+Stripe Webhook (checkout.session.completed)
+        ↓
+Verify Stripe-Signature Header (EventUtility.ConstructEvent)
+        ↓
+Deduplicate Webhook Event (Idempotency Check)
+        ↓
+Settle Donation & Trigger Background Receipt (Hangfire)
+```
 
 ---
 
-### Task 4 — Webhook Idempotency
+## 📌 Sprint Prerequisites
 
-Implement duplicate event protection:
+### 1. Docker Runtime for Testcontainers
+*Integration tests will spin up real, disposable SQL Server database containers dynamically:*
+- Ensure Docker Desktop or Docker Engine is running locally.
 
-- **PAY-06:** Store each processed `EventId` in `ProcessedStripeEvent`. Ignore duplicates, answering 200.
-- Webhooks are **idempotent**: processing the same event twice must not create duplicate donations, send duplicate emails, or change state twice.
-
-### Resources
-- **MUST** — [Stripe — Webhooks best practices](https://docs.stripe.com/webhooks#best-practices)
-
----
-
-### Task 5 — Idempotency Key
-
-Implement the `Idempotency-Key` header:
-
-- **DON-10:** Applies to `POST /donations` and `POST /donations/{id}/checkout`.
-- The client sends `Idempotency-Key: <unique string>`. The key is **required** on these endpoints (400 if missing).
-- First request: process and store the key, user id, hash of request body, and response.
-- Same key, same user, same body: return the stored response without repeating the action.
-- Same key, different body: return 422 `Idempotency.KeyReusedWithDifferentRequest`.
-- Keys expire after 24 hours.
-- Two simultaneous requests with the same key must not create two donations.
-
-### Resources
-- **MUST** — [Stripe — Idempotent requests](https://docs.stripe.com/api/idempotent_requests)
-- **DEEP DIVE** — [RFC 9110 — HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110)
-- **VIDEO** — [Milan Jovanović — Building Idempotent APIs with ASP.NET Core](https://www.youtube.com/watch?v=b4O6u9B2y6A)
-- **VIDEO** — [Derek Comartin (CodeOpinion) — What is Idempotency?](https://www.youtube.com/watch?v=T_T5Z0Y2K68)
+### 2. Stripe CLI & Test Account Setup
+*To receive Stripe webhooks on your local development machine:*
+- Sign up for a free Stripe developer account and obtain test API keys (`pk_test_...`, `sk_test_...`).
+- Download and install the [Stripe CLI](https://docs.stripe.com/stripe-cli).
+- Authenticate via `stripe login`.
+- Forward webhooks to your local API:  
+  `stripe listen --forward-to https://localhost:7001/api/v1/payments/webhook`
 
 ---
 
-### Task 6 — Remove Temporary Stub
+## 📋 Engineering Decisions & Financial Invariants
 
-- **PAY-09:** Remove the `POST /admin/donations/{id}/mark-succeeded` endpoint. All donation completion now goes through Stripe webhooks only.
-
----
-
-### Task 7 — Stripe Test Mode Setup
-
-- **PAY-10:** Use Stripe **test mode** keys only.
-- Test locally with Stripe CLI: `stripe listen --forward-to https://localhost:<port>/api/v1/payments/webhook`
-- Use Stripe's test card numbers on the hosted Checkout page.
-- Stripe keys go in **user-secrets**, never committed to the repository.
-
-### Resources
-- **MUST** — [Stripe — Test mode](https://docs.stripe.com/test-mode)
-- **MUST** — [Stripe CLI](https://docs.stripe.com/stripe-cli)
+1. **Currency in Minor Units:** Stripe requires amounts in the smallest currency unit (e.g., USD cents: `$10.50` = `1050`). Never pass floating-point numbers directly; calculate integer minor units explicitly.
+2. **Never Trust the Client:** The payment amount and campaign association are determined by server state, not client input. The Stripe Checkout session must lock the amount derived from the database record.
+3. **At-Least-Once Delivery & Idempotency:** Webhooks may be redelivered multiple times by Stripe during network retries. Every webhook event ID must be recorded and processed exactly once.
 
 ---
 
-### Task 8 — Integration Test Infrastructure
+## 🛠️ Sprint Tasks
 
-Create the infrastructure required to run integration tests:
+### Task 1 — Stripe Checkout Session Integration
 
-- Use `WebApplicationFactory<Program>` to create a test server
-- Configure a **test database** (SQL Server from Docker Compose or another strategy)
-- Set up test authentication (generate tokens for test users)
-- Ensure test isolation (clean database between test runs)
+Implement the checkout initiation workflow according to SRS §3.6:
+- **PAY-01:** `POST /donations/{id}/checkout` creates a Stripe **Checkout Session** (mode: `payment`) for any `Pending` donation and returns the session checkout URL.
+- **PAY-02:** The created session must carry:
+  - `client_reference_id` = `donation.Id.ToString()`.
+  - Metadata dictionary containing `donationId` and `campaignId`.
+  - Single line item: Campaign Title as name, amount converted to **minor units** (cents), and currency from configuration.
+  - Success and Cancel callback URLs defined in `StripeOptions`.
+- **PAY-03:** Create and persist a `PaymentAttempt` entity linking the `DonationId` and `StripeSessionId`. A donor may retry and initiate a new attempt if a prior session was abandoned.
 
-### Resources
-- **MUST** — [ASP.NET Core — Integration tests](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests)
-- **RECOMMENDED** — [Testcontainers for .NET](https://dotnet.testcontainers.org/)
-- **VIDEO** — [Nick Chapsas — Master ASP.NET Core Integration Testing](https://www.youtube.com/watch?v=zaRM0iIhJvs)
-- **VIDEO** — [Milan Jovanović — Integration Testing with WebApplicationFactory](https://www.youtube.com/watch?v=tj5ZCtvgLoQ)
-
----
-
-### Task 9 — Critical Integration Tests
-
-Write integration tests covering at least:
-
-- Register → Login (full auth flow)
-- Create campaign → Create donation
-- Webhook success flow with a **locally signed payload** (do not call real Stripe)
-- Duplicate webhook event (verify idempotency)
-- Invalid webhook signature (verify rejection)
-- Idempotency key replay (same key, same body → same response)
-- Idempotency key reuse with different body (→ 422)
-
-Do not call real Stripe or real SMTP in tests.
-
-### Resources
-- **MUST** — [ASP.NET Core — Integration tests](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests)
+**Resources:**
+- **⭐ Required Primary:** [How To Easily Integrate STRIPE Into Your .NET API — Israel Quiroz (38:45)](https://youtu.be/2sZXrUFvZ3E).
+- **🔄 Alternative / Deep Dive:** [Stripe Official Checkout Sessions Documentation](https://docs.stripe.com/api/checkout/sessions)
 
 ---
 
-## Sprint Deliverables
+### Task 2 — Stripe Webhook Handling & Signature Verification
 
-- [ ] Stripe Checkout Session creation
-- [ ] PaymentAttempt tracking
-- [ ] Webhook endpoint with raw body and signature verification
-- [ ] Handle `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`
-- [ ] Amount/currency verification
-- [ ] Webhook idempotency (ProcessedStripeEvent)
-- [ ] Idempotency-Key on donation creation and checkout
-- [ ] Temporary stub removed
-- [ ] Stripe test mode configured
-- [ ] Integration test infrastructure (WebApplicationFactory)
-- [ ] At least 7 integration tests covering critical flows
-- [ ] No real Stripe or SMTP calls in tests
+Implement the secure webhook handler according to SRS §3.6:
+- **PAY-04:** Provide `POST /api/v1/payments/webhook` accepting raw payload from Stripe.
+- **Cryptographic Verification:** Read the raw request body stream and the `Stripe-Signature` request header. Validate the HMAC signature using the webhook secret:
+  ```csharp
+  var stripeEvent = EventUtility.ConstructEvent(
+      jsonPayload,
+      Request.Headers["Stripe-Signature"],
+      stripeOptions.WebhookSecret
+  );
+  ```
+  If verification fails, return **400 Bad Request** immediately.
+- **Event Handling:** On `checkout.session.completed`, extract the `client_reference_id`, retrieve the donation, and transition it to `Succeeded` within an atomic transaction.
 
-## Definition of Done
+**Resources:**
+- **⭐ Required Primary:**
+  - ⭐1 [159- Creating Stripe Web Hook Endpoint — Mohamed Awadallah [Arabic] (10:58)](https://youtu.be/WZu0lHvNYjI) (stripe login at 00:15, stripe listen at 01:05, ConstructEvent at 03:05, --forward-to at 05:35).
+  - ⭐2 [Stripe Official Webhooks Guide](https://docs.stripe.com/webhooks).
 
-- [ ] Checkout creates a Stripe session and returns the URL
-- [ ] PaymentAttempt created for each session
-- [ ] Webhook verifies signature (invalid → 400)
-- [ ] Successful payment triggers the full success flow
-- [ ] Duplicate webhook ignored (200 returned)
-- [ ] Amount mismatch logged and donation not completed
-- [ ] Late payment on expired campaign accepted with warning
-- [ ] Stub endpoint removed
-- [ ] Idempotency-Key required on donation and checkout endpoints
-- [ ] Same key + same body → stored response replayed
-- [ ] Same key + different body → 422
-- [ ] Integration tests pass with `dotnet test`
-- [ ] Auth flow tested end-to-end
-- [ ] Webhook flow tested with local signature
-- [ ] Idempotency tested
-- [ ] No secrets in repository
-- [ ] Learner can explain: "Why webhook, not success URL?"
+---
 
-## Review Rule
+### Task 3 — Local Webhook Testing via Stripe CLI
 
-The learner should be able to explain not only **what** was implemented, but **why it belongs there, what alternatives existed, and what trade-off was accepted**.
+- Run your application locally (e.g., `https://localhost:7001`).
+- Execute `stripe listen --forward-to https://localhost:7001/api/v1/payments/webhook`.
+- Capture the temporary webhook signing secret displayed by the CLI (`whsec_...`) and update your local `appsettings.Development.json`.
+- Trigger test events using `stripe trigger checkout.session.completed` and confirm your API successfully parses and settles the payment.
+
+---
+
+### Task 4 — API & Webhook Idempotency
+
+Implement idempotency safeguards according to SRS §3.7:
+- **IDEM-01 (API Request Idempotency):**
+  - Support the `Idempotency-Key` header on mutation endpoints (e.g., `POST /campaigns/{id}/donations`).
+  - Store incoming keys in an `IdempotentRequests` table (`Key`, `RequestHash`, `ResponseStatusCode`, `ResponseBody`, `CreatedAtUtc`).
+  - If a duplicate key is received with the same payload, return the cached response without re-executing business logic.
+- **IDEM-02 (Webhook Deduplication):**
+  - Store incoming Stripe `event.Id` in a `ProcessedStripeEvents` table.
+  - If an incoming event ID already exists in the table, acknowledge receipt immediately with **HTTP 200 OK** and ignore the duplicate event to prevent double-crediting campaign funds.
+
+**Resources:**
+- **⭐ Required Primary:** [How To Make Your API Idempotent — Milan Jovanović (14:26)](https://youtu.be/smXAgcdJzLc) (Idempotency-Key header at 01:50, Pipeline behavior at 03:13, database schema at 07:45).
+- **🔄 Alternative / Deep Dive:** [Stripe Documentation — Handle duplicate webhook events](https://docs.stripe.com/webhooks#handle-duplicate-events)
+
+---
+
+### Task 5 — Integration Testing with WebApplicationFactory & Testcontainers
+
+Create `DonationHub.Api.IntegrationTests`:
+- Configure `WebApplicationFactory<Program>` to bootstrap the API in-memory.
+- Use **Testcontainers for .NET** to spin up a genuine Microsoft SQL Server Docker container for the test suite.
+- Write automated integration tests covering the critical user journey:
+  ```text
+  Register Donor
+       ↓
+  Authenticate & Receive JWT
+       ↓
+  Create Campaign as Admin
+       ↓
+  Create Donation as Donor (Pending)
+       ↓
+  Simulate Valid Stripe Webhook Delivery
+       ↓
+  Assert Donation is Succeeded & Campaign RaisedAmount is Updated
+  ```
+
+**Resources:**
+- **⭐ Required Primary:** [Stop Mocking Your Database! Use Testcontainers in .NET — Milan Jovanović (15:59)](https://youtu.be/ssRE0pBNvpE).
+- **🔄 Alternative / Deep Dive:** [Integration Testing in ASP.NET Core — Julio Casal](https://youtu.be/RXSPCIrrjHc)
+
+---
+
+## 📦 Sprint Deliverables
+
+- [ ] Stripe Checkout session generation endpoint returning valid Stripe redirect URL.
+- [ ] Cryptographically verified Stripe webhook endpoint using `EventUtility.ConstructEvent`.
+- [ ] Webhook event deduplication via `ProcessedStripeEvents` database tracking.
+- [ ] API Idempotency pipeline behavior checking `Idempotency-Key` header.
+- [ ] Local testing workflow documented using Stripe CLI.
+- [ ] Testcontainers integration test suite validating the complete donation and settlement lifecycle against real SQL Server.
+
+---
+
+## ✅ Definition of Done
+
+- [ ] Creating a checkout session produces a valid URL and stores a `PaymentAttempt`.
+- [ ] Tampered or unsigned webhook requests are rejected with HTTP 400.
+- [ ] Sending the exact same webhook payload twice does not increment campaign funds a second time.
+- [ ] Repeating a request with the same `Idempotency-Key` returns the cached response without creating duplicate entities.
+- [ ] `dotnet test` executes all integration tests successfully using Testcontainers without requiring a pre-existing local database.
+
+---
+
+## 💡 Post-Sprint Enrichment
+
+- [Building Resilient Cloud Microservices with Polly (.NET Foundation)](https://youtu.be/L9_fGJOqzbM)
+- [Distributed Locks with Redis and MediatR](https://youtu.be/Tt5zIKVMMbs)

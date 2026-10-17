@@ -1,273 +1,240 @@
 # Sprint 2 — Campaigns, CQRS, MediatR & Unit Testing
 
-> Project: **DonationHub — Donation Management Platform**
-> Duration: **2 weeks (~15 hours/week)**
-> Evaluation: **100 points**
+> **Project:** DonationHub — Donation Management & Crowdfunding Platform  
+> **Duration:** 15 Days (07/11/2026 to 21/11/2026)  
+> **Meeting Schedule:**  
+> - **Stand-up 1 (Day 5):** 11/11/2026 — Session Leader: **Asma ELhadidy**  
+> - **Stand-up 2 (Day 10):** 16/11/2026 — Session Leader: **Kareem Zein**  
+> - **Closing & Deadline (Day 15):** 21/11/2026 — Session Leader: **Mohamed Atef**  
+> - **Code Review & Corrections (Days 16–18):** 22/11/2026 to 24/11/2026  
+> **Evaluation:** 100 Points  
+> **Target Framework:** .NET 10 (fully compatible with .NET 8 / .NET 9)
 
-## Sprint Goal
+---
 
-Transform DonationHub from a basic API into a **use-case-oriented application** by introducing CQRS with MediatR, and implement the Campaigns module with proper validation, error handling, and unit tests.
+## 🎯 Sprint Goal
 
-The learner should understand:
+Transform DonationHub into a use-case-driven system by migrating all endpoints to the **CQRS** pattern using **MediatR**. Implement the **Campaigns** module with optimistic concurrency control, replace exception-driven business flow with the **Result Pattern**, enforce automatic validation via MediatR Pipeline Behaviors, format all API errors using **RFC 9457 ProblemDetails** with `IExceptionHandler`, and establish a robust test suite of at least **15 Unit Tests** using xUnit, Moq, and FluentAssertions.
 
 ```text
 HTTP Request
-    ↓
-Controller (thin)
-    ↓
-MediatR
-    ↓
-Command / Query
-    ↓
-Handler
-    ↓
-Result (success or expected failure)
-    ↓
-Domain / Infrastructure
+     ↓
+Thin Controller (Maps incoming HTTP request to Command or Query)
+     ↓
+MediatR Send
+     ↓
+Pipeline Behaviors (ValidationBehavior via FluentValidation)
+     ↓
+Command / Query Handler
+     ↓
+Domain Invariants & Concurrency Check (RowVersion)
+     ↓
+Result<T> (Success or Expected Domain Error from Catalogue)
+     ↓
+HTTP Response (or ProblemDetails on Failure)
 ```
 
-## How to use this sprint plan
+---
 
-For every task:
+## 📌 Sprint Prerequisites
 
-1. Read the **MUST** resources before implementation.
-2. Read **DEEP DIVE** only when the concept is unclear or the learner wants deeper understanding.
-3. Implement the requested DonationHub change.
-4. Verify the behavior manually through Swagger.
-5. Add/update tests when the task naturally requires them.
-6. Commit the work in small, meaningful commits.
-7. Be able to explain the architectural decision during review.
+Before starting this sprint, learners must solidify their understanding of:
 
-**Important:** This document does not change the original Sprint scope. It expands the original tasks into an executable checklist.
+### 1. The CQRS Architectural Mindset & Vertical Slices
+*Understand the fundamental difference between Commands (state mutations with side effects) and Queries (pure reads without side effects). Understand why grouping related artifacts (Command + Handler + DTO + Validator) inside a single feature slice is superior to bloated monolithic service classes.*
 
-## Sprint Tasks
-
-### Task 1 — CQRS Conversion
-
-Convert **all existing Sprint 1 use cases** (Identity and Categories) to the CQRS pattern:
-
-```text
-Command   (write operations)
-Query     (read operations)
-Handler   (business logic)
-DTO       (response models)
-Validator (input validation)
-```
-
-Each use case becomes one **slice** (a folder with its command/query, handler, validator, and DTOs).
-
-Keep CQRS as an organizational pattern. Do not introduce distributed CQRS complexity.
-
-### Resources
-- **MUST** — [Microsoft — DDD/CQRS architecture guidance](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/)
-- **DEEP DIVE** — [Martin Fowler — CQRS](https://martinfowler.com/bliki/CQRS.html)
-- **VIDEO** — [Nick Chapsas — CQRS in .NET](https://www.youtube.com/watch?v=2JzQuIvxIqk)
-- **ARTICLE** — [CodeWithMukesh — CQRS and MediatR in ASP.NET Core](https://codewithmukesh.com/blog/cqrs-and-mediatr-in-aspnet-core/)
+### 2. Cooperative Cancellation via CancellationToken
+*Understand how ASP.NET Core signals client disconnection (`HttpContext.RequestAborted`) and how passing this token down to database calls prevents orphaned background query execution.*
 
 ---
 
-### Task 2 — MediatR
+## 📋 Engineering Decisions & Pinned Package Versions
 
-Introduce MediatR for all application use cases.
+To ensure reproducibility, prevent commercial licensing pitfalls, and avoid breaking changes, all teams must adhere to the following pinned versions:
 
-Required:
-- `IRequest<T>` / `IRequestHandler<TRequest, TResponse>` for every use case
-- Clear dependency flow (controllers → MediatR → handlers)
-- Pipeline behaviors registered in DI
-
-Controllers become **thin**: map HTTP to a command/query, send through MediatR, map the `Result` to an HTTP response. No business logic in controllers.
-
-### Resources
-- **MUST** — [MediatR — GitHub](https://github.com/jbogard/MediatR)
-- **DEEP DIVE** — [Martin Fowler — Mediator](https://martinfowler.com/eaaDev/Mediator.html)
-- **VIDEO** — [Derek Comartin (CodeOpinion) — Why Use MediatR?](https://codeopinion.com/why-use-mediatr-3-reasons-why-and-1-reason-not/)
-- **VIDEO** — [Nick Chapsas — MediatR Pipeline Behaviors](https://www.youtube.com/watch?v=2JzQuIvxIqk)
+| Package / Tool | Pinned Version | Rationale & Guidance |
+|---|---|---|
+| **MediatR** | `[12.5.0]` | `<PackageReference Include="MediatR" Version="[12.5.0]" />` — Brackets prevent automatic upgrade to commercial v13+. |
+| **FluentAssertions** | `[7.0.0]` | Apache 2.0 license. v8+ is commercial. (Acceptable alternative: Shouldly). |
+| **Moq** | `[4.18.4]` | Avoids SponsorLink controversy present in 4.20. (Acceptable alternative: NSubstitute). |
+| **RFC 9457 ProblemDetails** | Built-in | `builder.Services.AddProblemDetails();` paired with `IExceptionHandler`. |
+| **Time Provider** | `TimeProvider` | Disallow direct `DateTime.UtcNow` in Handlers and Domain to enable deterministic unit testing. |
 
 ---
 
-### Task 3 — Validation Pipeline
+## 🛠️ Sprint Tasks
 
-Implement automatic validation through a MediatR pipeline behavior using FluentValidation.
+### Task 1 — CQRS Migration with MediatR ([12.5.0])
 
-- Create validators for every command and query with input
-- Validation runs **automatically** in the pipeline behavior — handlers never repeat basic validation
-- Separate **input validation** (FluentValidation) from **business rules** (domain/handler)
+Migrate all previous endpoints (Identity and Categories) and implement upcoming Campaign endpoints using CQRS:
+- Create `IRequest<Result<T>>` definitions for all commands and queries.
+- Implement isolated `IRequestHandler<TRequest, TResponse>` classes for each individual use case.
+- Keep all controllers extremely thin: their sole responsibility is binding HTTP inputs, dispatching through `_mediator.Send()`, and mapping `Result<T>` to HTTP status codes (`Ok`, `Created`, `NotFound`, `Conflict`, `BadRequest`).
 
-### Resources
-- **MUST** — [FluentValidation documentation](https://docs.fluentvalidation.net/)
-- **MUST** — [MediatR — GitHub](https://github.com/jbogard/MediatR)
-- **VIDEO** — [Milan Jovanović — Validation with FluentValidation & MediatR](https://www.youtube.com/watch?v=rQ46aI0y9z0)
-
----
-
-### Task 4 — Result Pattern
-
-Introduce a consistent application result model:
-
-- Success results
-- Validation failures (400)
-- Business failures (NotFound 404, Conflict 409, UnprocessableEntity 422)
-- Error codes from the error catalogue (see SRS §6.1)
-
-Expected failures are returned as a `Result` with an `Error` (`Code`, `Message`, `Type`). **Do not throw exceptions** for expected failures.
-
-Minimum error codes for this sprint:
-| Code | HTTP |
-|------|------|
-| `Validation.Failed` | 400 |
-| `Auth.InvalidCredentials` | 401 |
-| `Auth.EmailAlreadyExists` | 409 |
-| `Auth.RefreshTokenInvalid` | 401 |
-| `Auth.AccountDeactivated` | 403 |
-| `Category.NotFound` | 404 |
-| `Category.HasCampaigns` | 409 |
-| `Campaign.NotFound` | 404 |
-| `Campaign.NotActive` | 409 |
-| `Campaign.GoalBelowRaised` | 422 |
-| `Campaign.EndDateInPast` | 422 |
-| `Campaign.ConcurrencyConflict` | 409 |
-
-### Resources
-- **MUST** — [ASP.NET Core — Handle errors in APIs](https://learn.microsoft.com/en-us/aspnet/core/web-api/handle-errors)
-- **DEEP DIVE** — [Vladimir Khorikov — Functional C# Error Handling](https://enterprisecraftsmanship.com/)
-- **VIDEO** — [Milan Jovanović — Functional Error Handling with Result Pattern](https://www.youtube.com/watch?v=WCCkyeekmDo)
-- **VIDEO** — [Amichai Mantinband — Clean Architecture Error Handling](https://www.youtube.com/watch?v=4n_sW4hH0Zk)
+**Resources:**
+- **⭐ Required Primary:** [23 Add mediator pattern with CQRS — Ahmed Mohamady [Arabic] (14:05)](https://youtu.be/W7_zEf3eRQA).
+- **🔄 Alternative / Deep Dive:**
+  - [CQRS & MediatR in ASP.NET Core — Patrick God](https://youtu.be/BewUyKLZjtc)
+  - [Clean Architecture & CQRS in Action (.NET 10) — Essam Abdelnabi (26:25 to 43:20)](https://youtu.be/v9fRFyg414k)
 
 ---
 
-### Task 5 — Global Exception Handling & ProblemDetails
+### Task 2 — CancellationToken Propagation & TimeProvider Abstraction
 
-Implement:
+- **CancellationToken:** Accept `CancellationToken` in every controller action and forward it through `_mediator.Send()` into handlers, repositories, and EF Core asynchronous methods (`ToListAsync`, `SaveChangesAsync`).
+- **TimeProvider:** Inject `TimeProvider` into domain services and handlers. Replace all instances of `DateTime.UtcNow` with `timeProvider.GetUtcNow()` to allow testing date-dependent logic (such as campaign expiry) deterministically.
 
-- One global handler (`IExceptionHandler`) that catches unexpected exceptions
-- Log the exception, return a generic 500 **without leaking details**
-- All errors returned as **ProblemDetails** (RFC 9457) with extra fields: `code`, `traceId`, and for validation: `errors` (field → messages)
-
-### Resources
-- **MUST** — [ASP.NET Core — Handle errors](https://learn.microsoft.com/en-us/aspnet/core/web-api/handle-errors)
-- **VIDEO** — [Nick Chapsas — New Exception Handling in .NET 8 (IExceptionHandler)](https://www.youtube.com/watch?v=4V_X7b9dFMo)
-- **VIDEO** — [Milan Jovanović — Global Error Handling in ASP.NET Core](https://www.youtube.com/watch?v=x_u09X_X74s)
+**Resources:**
+- **⭐ Required Primary:**
+  - ⭐1 [Cancellation Token in .NET — Rahul Nath (18:42)](https://youtu.be/39gIPekzpjs) (Forwarding RequestAborted to EF Core at 10:40–18:00).
+  - ⭐2 [TimeProvider in .NET 8+ — Nick Chapsas (09:47)](https://youtu.be/xa6YusjCFF0) (DI registration at 04:55, mocking time in unit tests at 05:25).
+- **🔄 Alternative / Deep Dive:**
+  - [CancellationTokenSource in C# — Study DotNet [Arabic]](https://youtu.be/2xf6n0SpkNo)
+  - [FakeTimeProvider in .NET — Nick Chapsas](https://youtu.be/acjCxNlWpJQ)
 
 ---
 
-### Task 6 — Campaigns Module
+### Task 3 — Optimistic Concurrency Control (RowVersion on Campaign)
 
-Implement the Campaigns feature using CQRS + MediatR:
+Implement SRS requirement **CMP-10**:
+- Prevent lost updates during concurrent edits on the same campaign.
+- Add `byte[] RowVersion` on `Campaign` and configure it as a concurrency token via Fluent API:  
+  `builder.Property(c => c.RowVersion).IsRowVersion();`
+- When concurrent edits occur, EF Core throws `DbUpdateConcurrencyException`. Catch this conflict and return `Campaign.ConcurrencyConflict` (HTTP 409 Conflict) from the error catalogue.
 
-- **CMP-01:** Create campaign (Arabic/English title and description, goal amount, end date, category). Status starts `Active`, `RaisedAmount` starts 0.
-- **CMP-02:** Update campaign (titles, descriptions, category, end date, goal), subject to invariants 2, 7, 8.
-- **CMP-03:** Soft-delete a campaign. Soft-deleted campaigns never appear in any query (global query filter).
-- **CMP-04:** Public list returns active campaigns. Public "success stories" returns completed campaigns.
-- **CMP-05:** Campaign details return all fields plus `progressPercent` (raised/goal, capped at 100) and `daysLeft`.
-- **CMP-06:** In Sprint 2, only Admin can create and manage campaigns.
-- **CMP-10:** Concurrent edits detected using `RowVersion`. Second writer receives a conflict error.
-- **CMP-11:** Public responses use both Arabic and English fields (localization comes in Sprint 3).
+**Resources:**
+- **⭐ Required Primary:** [Optimistic Concurrency in .NET [Arabic] — Islam Helmy (12:24)](https://youtu.be/VhuFcGP6H0E).
+- **🔄 Alternative / Deep Dive:** [Optimistic vs Pessimistic Locking — Milan Jovanović](https://youtu.be/lLDBVMj5He8)
+
+---
+
+### Task 4 — Result Pattern & Error Catalogue
+
+Eliminate exception throwing for expected business and validation failures:
+- Implement:
+  - `Error` record (`Code`, `Description`, `ErrorType`).
+  - `Result` and `Result<T>` with factory methods (`Success`, `Failure`).
+- Align all errors with the DonationHub Error Catalogue (SRS §6.1):
+
+| Error Code | HTTP Status | Context |
+|---|---|---|
+| `Validation.Failed` | 400 Bad Request | Input validation failure |
+| `Auth.InvalidCredentials` | 401 Unauthorized | Incorrect login credentials |
+| `Category.NotFound` | 404 Not Found | Specified category does not exist |
+| `Category.HasCampaigns` | 409 Conflict | Cannot delete category with linked campaigns |
+| `Campaign.NotFound` | 404 Not Found | Campaign ID not found |
+| `Campaign.NotActive` | 409 Conflict | Campaign is completed or expired |
+| `Campaign.GoalBelowRaised` | 422 Unprocessable | Goal amount cannot be lower than raised amount |
+| `Campaign.EndDateInPast` | 422 Unprocessable | End date must be in the future |
+| `Campaign.ConcurrencyConflict` | 409 Conflict | Concurrent update conflict detected |
+
+**Resources:**
+- **⭐ Required Primary:** [Handle Errors in C# using Exception and Result Pattern — Loai Saber [Arabic] (18:08)](https://youtu.be/hfnWW2trOlY).
+- **🔄 Alternative / Deep Dive:** [Result Pattern in C# — Milan Jovanović](https://youtu.be/WCCkEe_Hy2Y)
+
+---
+
+### Task 5 — Automatic Validation via MediatR Pipeline Behavior
+
+- Implement `ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>`.
+- Collect all `IValidator<TRequest>` registered for the command/query and execute them before reaching the handler.
+- If validation fails, short-circuit the pipeline immediately and return `Result.Failure` with code `Validation.Failed` and a dictionary of property-level errors.
+
+**Resources:**
+- **⭐ Required Primary:** [Clean Architecture & CQRS in Action — Essam Abdelnabi (Timestamps: Pipeline concept at 05:50, ValidationBehavior at 21:40, Validator at 43:25)](https://youtu.be/v9fRFyg414k).
+- **🔄 Alternative / Deep Dive:** [Validation with MediatR and FluentValidation — Milan Jovanović](https://youtu.be/85dxwd8HzEk)
+
+---
+
+### Task 6 — Global Exception Handling & RFC 9457 ProblemDetails
+
+- Implement `IExceptionHandler` (.NET 8+) to catch unhandled server crashes (500 Internal Server Error).
+- Log the exception with full stack trace securely while returning a sanitized RFC 9457 `ProblemDetails` response containing `traceId`, `title`, and generic message to prevent leaking internal infrastructure details.
+
+**Resources:**
+- **⭐ Required Primary:** [#9 Exception Handling in ASP.NET Core 9 — CodingClass [Arabic] (21:35)](https://youtu.be/Efmvo90NuiA).
+- **🔄 Alternative / Deep Dive:**
+  - [Global Error Handling in .NET 8 (IExceptionHandler) — Milan Jovanović](https://youtu.be/uOEDM0c9BNI)
+  - [Exception Handling in ASP.NET Core — Julio Casal](https://youtu.be/HTCb1zXQ6E4)
+
+---
+
+### Task 7 — Campaigns Module Implementation
+
+Implement campaign features according to SRS §3.3:
+- **CMP-01:** Create Campaign `POST /campaigns` (Bilingual title & description, `GoalAmount`, `EndDate`, `CategoryId`). Initial status is `Active` and `RaisedAmount = 0`.
+- **CMP-02:** Update Campaign `PUT /campaigns/{id}` enforcing invariant checks: cannot reduce goal below raised amount, end date must be future.
+- **CMP-03:** Soft-delete Campaign `DELETE /campaigns/{id}`.
+- **CMP-04:** Public list of active campaigns `GET /campaigns`, and public success stories `GET /campaigns/success-stories` (status `Completed`).
+- **CMP-05:** Campaign details `GET /campaigns/{id}` including computed fields: `progressPercent` (min(100, (Raised/Goal)*100)) and `daysLeft`.
+- **CMP-06:** In Sprint 2, campaign creation and management is restricted to `Admin` (CampaignManager authorization comes in Sprint 3).
+- **CMP-11:** Return bilingual fields in response DTOs.
 
 | Method | Path | Access |
-|--------|------|--------|
-| GET | `/campaigns` | Anonymous |
-| GET | `/campaigns/success-stories` | Anonymous |
-| GET | `/campaigns/{id}` | Anonymous |
-| POST | `/campaigns` | Admin |
-| PUT | `/campaigns/{id}` | Admin |
-| DELETE | `/campaigns/{id}` | Admin |
-
-### Resources
-- **MUST** — [EF Core — Change tracking](https://learn.microsoft.com/en-us/ef/core/change-tracking/)
-- **MUST** — [EF Core — Concurrency](https://learn.microsoft.com/en-us/ef/core/saving/concurrency)
-- **VIDEO** — [Milan Jovanović — Optimistic Concurrency in EF Core](https://www.youtube.com/watch?v=bF9EwE0_2H4)
-- **VIDEO** — [Nick Chapsas — Concurrency Conflicts in EF Core](https://www.youtube.com/watch?v=pM9mYcEw28Q)
+|---|---|---|
+| `GET` | `/campaigns` | Anonymous |
+| `GET` | `/campaigns/success-stories` | Anonymous |
+| `GET` | `/campaigns/{id}` | Anonymous |
+| `POST` | `/campaigns` | Admin |
+| `PUT` | `/campaigns/{id}` | Admin |
+| `DELETE` | `/campaigns/{id}` | Admin |
 
 ---
 
-### Task 7 — CancellationToken Propagation
+### Task 8 — Unit Testing (xUnit, Moq [4.18.4] & FluentAssertions [7.0.0])
 
-Propagate `CancellationToken` through the entire pipeline:
+Create `DonationHub.Application.UnitTests` and `DonationHub.Domain.UnitTests`. Write **at least 15 comprehensive unit tests** following the **Arrange-Act-Assert (AAA)** pattern:
+1. Domain invariant: Goal amount must be greater than zero.
+2. Domain invariant: End date cannot be in the past (verified using mocked `TimeProvider`).
+3. Domain invariant: Goal cannot be updated below raised amount.
+4. Calculation: `progressPercent` capped at 100%.
+5. Calculation: `daysLeft` computed accurately relative to `TimeProvider`.
+6. State transition: Campaign automatically transitions to `Completed` when goal is reached.
+7. Category rule: Deleting a category with active campaigns returns conflict.
+8. FluentValidation tests for invalid command inputs.
+9. Handler unit tests mocking repositories via Moq `[4.18.4]`.
+10. FluentAssertions `[7.0.0]` assertion validation for readable test failures.
 
-```text
-HTTP Request
- ↓
-Controller
- ↓
-MediatR Handler
- ↓
-Repository / EF Core
-```
-
-All async operations must accept and pass `CancellationToken`.
-
-### Resources
-- **MUST** — [Microsoft — Cancellation in managed threads](https://learn.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads)
-- **MUST** — [EF Core async APIs](https://learn.microsoft.com/en-us/ef/core/querying/async)
-- **VIDEO** — [Nick Chapsas — How to Cancel Tasks with CancellationToken in .NET](https://www.youtube.com/watch?v=8V-w6Gj9w-A)
-
----
-
-### Task 8 — TimeProvider Abstraction
-
-Inject `TimeProvider` instead of using `DateTime.UtcNow` directly in domain or handlers, so tests are deterministic.
-
-### Resources
-- **MUST** — [Microsoft — TimeProvider](https://learn.microsoft.com/en-us/dotnet/api/system.timeprovider)
-- **VIDEO** — [Nick Chapsas — Stop Using DateTime.UtcNow in .NET 8 (TimeProvider)](https://www.youtube.com/watch?v=S8L3kK_s7hA)
+**Resources:**
+- **⭐ Required Primary:**
+  - ⭐1 [#003 Unit Testing Your Code — Essam Abdelnabi [Arabic] (26:10)](https://youtu.be/cAyROJ84tBs).
+  - ⭐2 [#004 Mocking Dependencies (Moq) — Essam Abdelnabi [Arabic] (26:11)](https://youtu.be/JaIeeGqsO9M).
+  - ⭐3 [2. Fluent Assertions in xUnit — Coding-Future (38:38)](https://youtu.be/rr9z92lm2no).
+- **🔄 Alternative / Deep Dive:**
+  - [NSubstitute Mocking Framework — Nick Chapsas](https://youtu.be/LcQYv0cBWk0)
+  - [FluentAssertions v7 vs Shouldly — Nick Chapsas](https://youtu.be/ZFc6jcaM6Ms)
 
 ---
 
-### Task 9 — Unit Tests
+## 📦 Sprint Deliverables
 
-Write **at least 15 unit tests** covering:
-
-- Campaign domain invariants (GoalAmount > 0, EndDate in future, goal cannot go below raised, state transitions)
-- Category deletion rule (cannot delete if has campaigns)
-- Handlers (with repository and clock faked)
-- Validators
-
-Do not chase arbitrary coverage percentages. Focus on behavior and edge cases.
-
-### Resources
-- **MUST** — [xUnit](https://xunit.net/)
-- **MUST** — [Microsoft — Testing in .NET](https://learn.microsoft.com/en-us/dotnet/core/testing/)
-- **DEEP DIVE** — [Vladimir Khorikov — Unit Testing Principles, Practices, and Patterns](Book)
-- **VIDEO** — [Teddy Smith — xUnit Full Course for Beginners](https://www.youtube.com/watch?v=fVVNOkbLcPw)
-- **VIDEO** — [Mohamed El-Mehdi — Unit Testing in C# (Arabic)](https://www.youtube.com/watch?v=lY4Q8fZYSN8)
-- **VIDEO** — [Nick Chapsas — Effective Testing Workshop](https://www.youtube.com/watch?v=kJFB8o78FBs)
+- [ ] All use cases refactored to CQRS with MediatR `[12.5.0]`.
+- [ ] Automatic validation pipeline via `ValidationBehavior` and FluentValidation.
+- [ ] Result Pattern implemented with zero business exceptions thrown.
+- [ ] Centralized exception handling via `IExceptionHandler` returning RFC 9457 ProblemDetails.
+- [ ] Campaigns module fully implemented according to SRS specifications.
+- [ ] `CancellationToken` forwarded across all async boundaries.
+- [ ] `TimeProvider` injected and used for all date calculations.
+- [ ] Optimistic concurrency control working on `Campaign` via `RowVersion`.
+- [ ] At least 15 passing unit tests covering domain rules, validators, and handlers.
 
 ---
 
-## Sprint Deliverables
+## ✅ Definition of Done
 
-- [ ] All Sprint 1 use cases rewritten as commands and queries
-- [ ] MediatR integrated with pipeline behaviors
-- [ ] FluentValidation pipeline behavior
-- [ ] Result Pattern with error catalogue
-- [ ] Global exception handler with ProblemDetails
-- [ ] Campaigns module (CMP-01 to CMP-06, CMP-10, CMP-11)
-- [ ] CancellationToken propagated
-- [ ] TimeProvider abstraction (no `DateTime.UtcNow` in domain/handlers)
-- [ ] At least 15 unit tests
-- [ ] Request-flow explanation (Controller → MediatR → Handler → Domain → Infrastructure)
+- [ ] Solution builds cleanly and all unit tests pass (`dotnet test`).
+- [ ] Controllers contain zero business logic or validation code.
+- [ ] No domain entities are exposed through API endpoints (DTOs only).
+- [ ] Concurrency conflict triggers HTTP 409 with ProblemDetails error.
+- [ ] Validation failures return HTTP 400 with detailed field-level errors.
+- [ ] Learner can explain CQRS, MediatR pipeline behaviors, and Result Pattern trade-offs during review.
 
-## Definition of Done
+---
 
-- [ ] Every use case uses CQRS (command or query + handler)
-- [ ] MediatR correctly integrated
-- [ ] Validation pipeline works automatically
-- [ ] Result Pattern is consistent across all use cases
-- [ ] ProblemDetails returned for all errors
-- [ ] Global exception handler catches unexpected errors
-- [ ] Campaign creation works
-- [ ] Campaign update works with invariant checks
-- [ ] Campaign soft-delete works
-- [ ] Public campaign list and success stories work
-- [ ] Campaign details include progressPercent and daysLeft
-- [ ] Concurrency conflict detected on Campaign
-- [ ] CancellationToken propagated
-- [ ] No `DateTime.UtcNow` in domain or handlers
-- [ ] At least 15 unit tests pass
-- [ ] Controllers are thin
-- [ ] No entities returned from API (DTOs only)
-- [ ] Learner can explain CQRS and Mediator decisions
+## 💡 Post-Sprint Enrichment
 
-## Review Rule
-
-The learner should be able to explain not only **what** was implemented, but **why it belongs there, what alternatives existed, and what trade-off was accepted**.
+- [In-Memory DbContext Testing Pitfalls — Nick Chapsas](https://youtu.be/VM6PIKkEg4s)
+- [Code Coverage Metrics in .NET — Essam Abdelnabi](https://youtu.be/W5w-5EK94wc)
+- [TDD with xUnit — Mohamad Lawand](https://youtu.be/7YghGdGE7d0)
+- [MediatR Commercial Licensing Context — Nick Chapsas](https://youtu.be/bNuQ9xOG9eQ)
+- [CQRS Architectural Trade-offs — Mohamad Lawand](https://youtu.be/sUjNZAYTZwI)
