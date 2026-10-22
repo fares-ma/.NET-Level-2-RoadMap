@@ -1,0 +1,1100 @@
+{
+ "title": "Sprint 5 — Stripe، الـ Webhooks، منع التكرار واختبارات التكامل",
+ "summary": "استبدل الدفع التجريبي بـ Stripe Checkout، وتحقّق من توقيع الـ Webhooks، وامنع التكرار، واختبر التدفق كاملًا.",
+ "isGraded": true,
+ "basePoints": 100,
+ "lateMultiplier": 0.4,
+ "allowedSubmissionTypes": [
+  "Link"
+ ],
+ "allowResubmission": true,
+ "briefBlocks": [
+  {
+   "type": "Heading",
+   "text": "Sprint 5 — Stripe، الـ Webhooks، منع التكرار واختبارات التكامل",
+   "level": 1
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**DonationHub** منصّة لإدارة التبرعات والحملات الخيرية. حتى نهاية Sprint 4 كان التبرع يُكمَّل عبر endpoint تجريبي مؤقت (`mark-succeeded`) حتى تتمكن من بناء مسار النجاح والإيصالات والرسائل دون بوابة دفع. في هذا السبرنت تستبدل هذا الـ stub ببوابة دفع حقيقية: **Stripe Checkout**، وتستقبل نتيجة الدفع عبر **Webhooks** موقَّعة تشفيريًا، وتحمي النظام من الطلبات المكررة بـ **Idempotency**، ثم تُثبت أن الرحلة كاملة تعمل عبر **اختبارات تكامل** على قاعدة SQL Server حقيقية."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "هذا السبرنت يتعامل مع **المال**: أي خطأ فيه يعني متبرعًا خُصم منه مرتين، أو حملة احتُسب لها مبلغ لم يُدفع أصلًا. لذلك الأولوية هنا للصحة والأمان قبل السرعة.\n\n- **المدة:** 15 يومًا (من 22/12/2026 إلى 05/01/2027)\n- **Stand-up 1 (اليوم 5):** 26/12/2026 — تقودها **Asma ELhadidy**\n- **Stand-up 2 (اليوم 10):** 31/12/2026 — يقودها **Kareem Zein**\n- **الختام وآخر موعد للتسليم (اليوم 15):** 05/01/2027 — يقودها **Mohamed Atef**\n- **المراجعة والتصحيح (الأيام 16–18):** من 06/01/2027 إلى 08/01/2027\n- **التقييم:** 100 نقطة"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**الإطار المستهدف:** .NET 10 (`net10.0`) — متوافق بالكامل مع .NET 8 و .NET 9. نستمر بنفس قرارات المشروع: حل `.slnx`، و SQL Server مع EF Core، و **Controllers رفيعة**، و Clean Architecture مع Vertical Slices، و MediatR `[12.5.0]`."
+  },
+  {
+   "type": "Heading",
+   "text": "🎯 هدف السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "استبدال الـ stub التجريبي ببوابة دفع جاهزة للإنتاج عبر **Stripe Checkout**. معالجة إشعارات الدفع غير المتزامنة بأمان عبر **Stripe Webhooks** مع التحقق من توقيع HMAC التشفيري. ضمان السلامة المالية أمام إعادة المحاولات الشبكية والـ webhooks المكررة عبر **API Idempotency** (الـ header `Idempotency-Key` وإزالة تكرار الأحداث). ثم التحقق من مسارات التطبيق الحرجة كاملة عبر **اختبارات تكامل (Integration Tests)** حقيقية مبنية على `WebApplicationFactory` ضد قاعدة بيانات اختبار SQL Server حقيقية (**Testcontainers** خيار إضافي BONUS).\n\nهذا هو المسار الذي ستبنيه من ضغطة «تبرّع» حتى الإيصال:"
+  },
+  {
+   "type": "Code",
+   "language": "text",
+   "code": "Donor clicks Donate\n        ↓\nPOST /donations/{id}/checkout\n        ↓\nStripe Checkout Session Created (Minor Units / Cents)\n        ↓\nDonor Pays on Hosted Stripe Page\n        ↓\nStripe Webhook (checkout.session.completed)\n        ↓\nVerify Stripe-Signature Header (EventUtility.ConstructEvent)\n        ↓\nDeduplicate Webhook Event (Idempotency Check)\n        ↓\nVerify Amount & Currency → Settle Donation (one transaction)\n        ↓\nReturn 200 quickly → Enqueue Receipt PDF & Email After Commit (Hangfire)",
+   "filename": "payment-flow.txt"
+  },
+  {
+   "type": "Heading",
+   "text": "📌 المتطلبات المسبقة",
+   "level": 2
+  },
+  {
+   "type": "Heading",
+   "text": "1. قاعدة بيانات SQL Server للاختبارات",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "اختبارات التكامل تعمل على قاعدة بيانات SQL Server **حقيقية** للاختبار (وليس مزوّد EF Core InMemory أبدًا):"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "استخدم خدمة SQL Server من Docker Compose أو SQL Server LocalDB، مع **قاعدة بيانات مخصّصة للاختبارات** منفصلة عن قاعدة التطوير.",
+    "**BONUS:** تشغّل Testcontainers حاوية SQL Server مؤقتة بدلًا من ذلك؛ وهذا يتطلب Docker Desktop أو Docker Engine يعمل محليًا."
+   ]
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "# الخيار A: خدمة SQL Server من ملف Docker Compose الخاص بك\ndocker compose up -d sqlserver\n\n# الخيار B: SQL Server LocalDB على Windows\nsqllocaldb start MSSQLLocalDB\nsqllocaldb info MSSQLLocalDB",
+   "filename": "test-database.sh"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**لماذا ليس InMemory؟** مزوّد EF Core InMemory لا يدعم المعاملات (transactions)، ولا القيود الفريدة (unique indexes)، ولا `RowVersion` — وهي بالضبط ما تختبره في هذا السبرنت: منع إدخال حدث مرتين، ومنع تبرعين بنفس المفتاح، وتحديث `RaisedAmount` بأمان تحت التزامن. اختبار ينجح على InMemory قد يفشل على SQL Server الحقيقي."
+  },
+  {
+   "type": "Heading",
+   "text": "2. إعداد Stripe CLI وحساب الاختبار",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "لاستقبال Stripe webhooks على جهازك المحلي أثناء التطوير:"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "سجّل حساب مطوّر مجانيًا على Stripe، واحصل على مفاتيح **test mode** فقط (`pk_test_...` و `sk_test_...`).",
+    "خزّن المفتاح السري وسر الـ webhook باستخدام `dotnet user-secrets` (أو متغيرات البيئة). **لا تضعهما أبدًا** في `appsettings*.json`.",
+    "إذا لم تتمكن من إنشاء حساب Stripe تجريبي في بلدك، أخبر المنتور **قبل Stand-up 1 (26/12/2026)**.",
+    "حمّل وثبّت [Stripe CLI](https://docs.stripe.com/stripe-cli).",
+    "سجّل الدخول عبر `stripe login`.",
+    "وجّه الـ webhooks إلى الـ API المحلي: `stripe listen --forward-to https://localhost:7001/api/v1/payments/webhook`"
+   ]
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "stripe login\nstripe listen --forward-to https://localhost:7001/api/v1/payments/webhook",
+   "filename": "stripe-cli-setup.sh"
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "cd src/DonationHub.Api\ndotnet user-secrets init\ndotnet user-secrets set \"Stripe:SecretKey\" \"sk_test_...\"\ndotnet user-secrets set \"Stripe:WebhookSecret\" \"whsec_...\"\ndotnet user-secrets list",
+   "filename": "stripe-user-secrets.sh"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**الأسرار خارج المستودع دائمًا:** `Stripe:SecretKey` و `Stripe:WebhookSecret` تأتي من `dotnet user-secrets` في التطوير أو من متغيرات البيئة (`Stripe__SecretKey`). ملف `appsettings.json` في Git يحتوي placeholders فارغة فقط. مفتاح سري تسرّب إلى تاريخ Git يُعتبر مكشوفًا حتى لو حذفته في commit لاحق — ألغِه من لوحة Stripe فورًا."
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "إذا كانت Stripe غير متاحة في بلدك ولا تستطيع إنشاء حساب اختبار، فأبلغ المنتور **قبل Stand-up 1 (26/12/2026)** حتى يُتفق معك على بديل — لا تنتظر حتى آخر السبرنت."
+  },
+  {
+   "type": "Resource",
+   "title": "Stripe CLI",
+   "url": "https://docs.stripe.com/stripe-cli",
+   "kind": "doc",
+   "description": "التوثيق الرسمي لتثبيت Stripe CLI واستخدام أوامر login و listen و trigger."
+  },
+  {
+   "type": "Heading",
+   "text": "📋 القرارات الهندسية والثوابت المالية",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "هذه أربع قواعد غير قابلة للتفاوض، وكل كود الدفع سيُراجَع على أساسها:\n\n1. **العملة بالوحدات الصغرى (Minor Units):** يشترط Stripe أن تكون المبالغ بأصغر وحدة للعملة (مثلًا سنتات الدولار: `$10.50` = `1050`). لا تمرّر أرقامًا عشرية من نوع floating-point مباشرة؛ احسب الوحدات الصغرى كعدد صحيح بشكل صريح.\n2. **لا تثق بالعميل (Never Trust the Client):** مبلغ الدفع والحملة المرتبطة يحدّدهما **الخادم** من قاعدة البيانات، لا مُدخلات العميل. جلسة Stripe Checkout يجب أن تثبّت المبلغ المأخوذ من سجل التبرع في قاعدة البيانات.\n3. **تسليم «مرة على الأقل» و Idempotency:** قد يعيد Stripe إرسال نفس الـ webhook عدة مرات أثناء إعادة المحاولات الشبكية. يجب تسجيل معرّف كل حدث (event ID) ومعالجته **مرة واحدة بالضبط**.\n4. **الـ Webhook هو مصدر الحقيقة الوحيد:** التبرع يصبح `Succeeded` فقط من حدث webhook تم التحقق من توقيعه، وليس أبدًا من إعادة التوجيه إلى رابط النجاح (success URL) — فالعميل يستطيع فتح هذا الرابط دون أن يدفع."
+  },
+  {
+   "type": "Code",
+   "language": "text",
+   "code": "Amount in DB (decimal)      Stripe unit_amount (long)\n$10.50                  →   1050\n$25.00                  →   2500\n$9,999.99               →   999999\n\n✔  decimal.Round(amount * 100m, 0) → checked((long)...)\n✘  (long)(10.50 * 100)  with double  → rounding surprises\n✘  amount sent by the client in the checkout request",
+   "filename": "minor-units.txt"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**رابط النجاح ليس دليلًا على الدفع.** صفحة `SuccessUrl` مجرد تجربة مستخدم تقول «شكرًا». أي شخص يستطيع كتابة الرابط في المتصفح. لا تغيّر حالة أي تبرع داخل endpoint يخدم رابط النجاح — الحالة تتغير **فقط** داخل معالج الـ webhook بعد التحقق من التوقيع."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "فكّر في الـ webhook كرسالة قد تصل **مرتين أو أكثر، أو متأخرة، أو بغير ترتيب** (مثلًا `checkout.session.expired` بعد `completed`). صمّم كل معالج بحيث يكون تنفيذه مرتين مساويًا لتنفيذه مرة واحدة."
+  },
+  {
+   "type": "Heading",
+   "text": "🛠️ مهام السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "كل المهام التالية **أساسية (CORE)** ما لم يُذكر أنها **BONUS**."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| المهمة | الموضوع | المتطلبات |\n|---|---|---|\n| 1 | جلسة Stripe Checkout وحالة الدفع وحذف الـ stub | PAY-01, PAY-02, PAY-03, PAY-09, PAY-10 |\n| 2 | معالج الـ Webhook والتحقق من التوقيع | PAY-04, PAY-05, PAY-07, PAY-08 |\n| 3 | اختبار الـ Webhooks محليًا عبر Stripe CLI | PAY-10 + README |\n| 4 | Idempotency للـ API والـ Webhook | DON-10, §6.5, PAY-06 |\n| 5 | اختبارات التكامل بـ WebApplicationFactory | §6.13 |"
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 1 — دمج Stripe Checkout Session",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "نفّذ مسار بدء الدفع وفق SRS §5.9. التبرع يُنشأ مسبقًا بحالة `Pending` عبر `POST /campaigns/{campaignId}/donations` (من Sprint 3)، ثم يطلب صاحبه جلسة دفع. الخادم يقرأ المبلغ والحملة من قاعدة البيانات، وينشئ جلسة Checkout على Stripe، ويحفظ محاولة دفع (`PaymentAttempt`) مرتبطة بها، ويُرجع رابط صفحة الدفع المستضافة لدى Stripe."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**PAY-01:** `POST /donations/{id}/checkout` (للمالك فقط) ينشئ Stripe **Checkout Session** (بوضع `mode: payment`) لتبرع حالته `Pending`، ويُرجع رابط الدفع (checkout URL) الخاص بالجلسة.",
+    "**PAY-02:** الجلسة تحمل `client_reference_id` = `donation.Id.ToString()`.",
+    "**PAY-02:** قاموس Metadata يحتوي `donationId` و `campaignId`.",
+    "**PAY-02:** بند واحد (single line item): اسمه عنوان الحملة، ومبلغه محوَّل إلى **الوحدات الصغرى** (cents)، وعملته من الإعدادات.",
+    "**PAY-02:** رابطا النجاح والإلغاء (Success / Cancel) معرَّفان في `StripeOptions`.",
+    "**PAY-03:** أنشئ واحفظ `PaymentAttempt` لكل جلسة: `DonationId`, `StripeCheckoutSessionId`, `StripePaymentIntentId?`, `Amount`, `Status`, `CreatedAt`, `UpdatedAt`, `FailureCode?`.",
+    "**PAY-03:** قيم الحالة: `Created`, `Succeeded`, `Failed`, `Expired`. يمكن للمتبرع بدء محاولة جديدة لنفس التبرع المعلّق إذا ترك جلسة سابقة دون إكمال.",
+    "**حالة الدفع:** `GET /donations/{id}/payment-status` (المالك و Admin) يُرجع حالة التبرع وحالة آخر محاولة دفع له. تبرع مستخدم آخر يُرجع **404**.",
+    "**PAY-10:** مفاتيح Stripe **test mode** فقط. `StripeOptions` (المفتاح السري، سر الـ webhook، العملة، رابطا النجاح والإلغاء) تُتحقق بـ `ValidateOnStart()`، والقيم السرية تأتي من `dotnet user-secrets` أو متغيرات البيئة، وليس من `appsettings*.json` أبدًا.",
+    "**PAY-09:** احذف الـ endpoint المؤقت `POST /admin/donations/{id}/mark-succeeded` (DON-06) والـ handler الخاص به. من الآن، **الـ webhook وحده** يستطيع إكمال تبرع."
+   ]
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الـ Endpoints في هذه المهمة** (المسار الأساسي `/api/v1`):\n\n| Method | Path | الصلاحية | الغرض |\n|---|---|---|---|\n| POST | `/campaigns/{campaignId}/donations` | D, M, Adm | إنشاء تبرع `Pending` (موجود من Sprint 3، ويحتاج الآن `Idempotency-Key`) |\n| POST | `/donations/{id}/checkout` | المالك | إنشاء جلسة Checkout وإرجاع رابط الدفع |\n| GET | `/donations/{id}/payment-status` | المالك، Adm | حالة التبرع + حالة آخر `PaymentAttempt` |\n| ~~POST~~ | ~~`/admin/donations/{id}/mark-succeeded`~~ | — | **يُحذف في هذا السبرنت (PAY-09)** |"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**محتوى جلسة Checkout المطلوب (PAY-02):**\n\n| الحقل في Stripe | القيمة | المصدر |\n|---|---|---|\n| `mode` | `payment` | ثابت |\n| `client_reference_id` | `donation.Id.ToString()` | قاعدة البيانات |\n| `metadata` | `donationId`, `campaignId` | قاعدة البيانات |\n| `line_items[0].price_data.product_data.name` | عنوان الحملة | قاعدة البيانات |\n| `line_items[0].price_data.unit_amount` | المبلغ بالوحدات الصغرى (`long`) | `donation.Amount` |\n| `line_items[0].price_data.currency` | مثل `usd` | `StripeOptions` |\n| `line_items[0].quantity` | `1` | ثابت |\n| `success_url` / `cancel_url` | روابط الواجهة | `StripeOptions` |"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "مثال على الطلب والاستجابة (الشكل الدقيق للاستجابة قرارك، لكن يجب أن تحتوي رابط الدفع):"
+  },
+  {
+   "type": "Code",
+   "language": "text",
+   "code": "POST /api/v1/donations/3f6c2a8e-.../checkout\nAuthorization: Bearer <access-token>\nIdempotency-Key: 0b8f6a52-2f0e-4d7c-9a41-6a1d2c7e9b10\n\n200 OK\n{\n  \"donationId\": \"3f6c2a8e-...\",\n  \"paymentAttemptId\": \"a91e77d0-...\",\n  \"sessionId\": \"cs_test_a1B2c3...\",\n  \"checkoutUrl\": \"https://checkout.stripe.com/c/pay/cs_test_a1B2c3...\"\n}",
+   "filename": "checkout-request-response.txt"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**المبلغ بالوحدات الصغرى ومن الخادم فقط:** الـ endpoint لا يستقبل أي مبلغ في الـ body. المبلغ يُقرأ من `donation.Amount` في قاعدة البيانات ويُحوَّل إلى `long` بالسنتات (`25.00` → `2500`) قبل إرساله إلى Stripe. إرسال `25` بدل `2500` يعني أن المتبرع يدفع 25 سنتًا!"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**محاولات متعددة لنفس التبرع:** لو فتح المتبرع صفحة الدفع ثم أغلقها، يستطيع طلب `checkout` مرة أخرى؛ تُنشأ جلسة جديدة و `PaymentAttempt` جديد بحالة `Created`. التبرع نفسه يبقى `Pending` حتى يصل webhook ناجح. لكن تبرعًا حالته `Succeeded` أو `Failed` لا يقبل جلسة جديدة (`Donation.InvalidState` — 409)."
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**PAY-09 — حذف الـ stub ليس اختياريًا:** احذف الـ action والـ command/handler والاختبارات المرتبطة بـ `mark-succeeded`. أبقِ **منطق مسار النجاح نفسه** (DON-07: معاملة واحدة، `ReceiptNumber`، `RaisedAmount`، إكمال الحملة) لأن الـ webhook سيعيد استخدامه. المراجع سيبحث في الكود عن أي أثر للـ endpoint."
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "# بعد الحذف يجب ألا يُرجع هذا الأمر أي نتيجة\ngit grep -n -i \"mark-succeeded\"",
+   "filename": "check-stub-removed.sh"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الموارد:**"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/2sZXrUFvZ3E",
+   "title": "⭐ How To Easily Integrate STRIPE Into Your .NET API — Israel Quiroz (38:45)"
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Stripe Official Checkout Sessions Documentation",
+   "url": "https://docs.stripe.com/api/checkout/sessions",
+   "kind": "doc",
+   "description": "مرجع API الرسمي لكائن Checkout Session: الحقول mode و client_reference_id و metadata و line_items و success_url."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 2 — معالجة Stripe Webhooks والتحقق من التوقيع",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "نفّذ معالج الـ webhook الآمن وفق SRS §5.9. هذا الـ endpoint هو **المكان الوحيد** الذي يتحول فيه التبرع إلى `Succeeded`، لذلك يجب أن يرفض أي طلب لم يوقّعه Stripe، وأن يتحقق من المبلغ، وأن يُنهي عمله بسرعة."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**PAY-04:** وفّر `POST /api/v1/payments/webhook` يستقبل الـ payload الخام من Stripe. الـ endpoint مجهول الهوية (anonymous) — التوقيع هو المصادقة — و**مستثنى من الـ rate limiting** (SRS §6.4).",
+    "**التحقق التشفيري:** اقرأ جسم الطلب الخام (raw body stream) والـ header `Stripe-Signature`، وتحقق من توقيع HMAC باستخدام سر الـ webhook (انظر الكود أدناه).",
+    "إذا فشل التحقق، أرجِع **400 Bad Request** فورًا.",
+    "**PAY-05 — `checkout.session.completed`:** استخرج `client_reference_id`، واجلب التبرع ومحاولة الدفع، ونفّذ مسار النجاح في SRS §5.5 داخل **معاملة واحدة**: التبرع `Succeeded` + `CompletedAt` + `ReceiptNumber`، والمحاولة `Succeeded`، وإضافة المبلغ إلى `RaisedAmount`، والحملة `Completed` عند بلوغ الهدف.",
+    "**PAY-05:** الدفعة التي تصل بعد انتهاء الحملة أو اكتمالها تُقبل رغم ذلك، وتُسجَّل في الـ log كتحذير (warning).",
+    "**PAY-05 — `checkout.session.expired`:** حوّل المحاولة إلى `Expired`.",
+    "**PAY-05 — `payment_intent.payment_failed`:** حوّل المحاولة إلى `Failed` (مع حفظ `FailureCode`)، وحوّل التبرع إلى `Failed` عندما لا تبقى محاولة أخرى يمكن أن تنجح.",
+    "**PAY-05:** الجلسات غير المعروفة أو أنواع الأحداث غير المعالَجة تُسجَّل في الـ log ويُرد عليها بـ **200**.",
+    "**PAY-07 (التحقق من المبلغ):** تأكد أن المبلغ المدفوع (بالوحدات الصغرى) والعملة يطابقان التبرع. عدم التطابق يُسجَّل كـ **error** و**لا** يُكمل التبرع.",
+    "**PAY-08 (استجابة سريعة):** الـ webhook يُرجع 200 بسرعة. العمل الثقيل (PDF الإيصال، الرسائل) **يُضاف إلى طابور Hangfire بعد الـ commit**، ولا يُنفَّذ أبدًا داخل طلب الـ webhook."
+   ]
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "التحقق من التوقيع يتم بسطر واحد من مكتبة Stripe.net:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "var stripeEvent = EventUtility.ConstructEvent(\n    jsonPayload,\n    Request.Headers[\"Stripe-Signature\"],\n    stripeOptions.WebhookSecret\n);",
+   "filename": "WebhookSignature.Snippet.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "إذا فشل التحقق ترمي الدالة `StripeException` — التقطها وأرجِع **400 Bad Request** فورًا، قبل أي قراءة أو تعديل في قاعدة البيانات (رمز الخطأ `Payment.InvalidSignature`)."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الأحداث المطلوبة وما يجب أن يحدث:**\n\n| الحدث | الإجراء | الاستجابة |\n|---|---|---|\n| `checkout.session.completed` | تحقق المبلغ والعملة ← مسار النجاح §5.5 في معاملة واحدة ← jobs بعد الـ commit | 200 |\n| `checkout.session.expired` | المحاولة `Expired` | 200 |\n| `payment_intent.payment_failed` | المحاولة `Failed` + `FailureCode`؛ التبرع `Failed` إن لم تبقَ محاولة مفتوحة | 200 |\n| جلسة غير معروفة / حدث غير معالَج | log فقط | 200 |\n| حدث مكرر (نفس `event.id`) | تجاهل (المهمة 4) | 200 |\n| توقيع غير صالح أو مفقود | لا شيء يتغير | **400** |\n| عدم تطابق المبلغ أو العملة | log بمستوى error، التبرع يبقى `Pending` | 200 |"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**لا تثق أبدًا بإعادة التوجيه إلى رابط النجاح؛ ثِق فقط بالـ webhook الموقَّع.** إعادة التوجيه تحدث في متصفح المستخدم ويمكن تزويرها أو قد لا تحدث أصلًا (المستخدم أغلق المتصفح بعد الدفع). الـ webhook يأتي من خوادم Stripe مباشرة وموقَّع بسر لا يعرفه غيرك وغير Stripe."
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**اقرأ الجسم الخام كما هو:** لا تستخدم `[FromBody]` بنموذج مخصص ولا تعيد تسلسل JSON قبل التحقق؛ التوقيع محسوب على البايتات الأصلية، وأي تغيير في المسافات أو ترتيب الحقول يكسره. اقرأ `Request.Body` كنص، ومرّره كما هو إلى `ConstructEvent`. وتأكد أن أي middleware لتسجيل الطلبات لا يستهلك الـ body قبلك."
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**الدفع المتأخر (SRS §5.5):** إذا وصل `checkout.session.completed` بعد أن أصبحت الحملة `Expired` أو `Completed`، فالمتبرع خُصم منه المال فعلًا. **اقبل الدفعة** وسجّل التبرع `Succeeded` وأضف المبلغ إلى `RaisedAmount` دون تغيير حالة الحملة، واكتب warning في الـ log. الاسترجاع (Refund) مهمة إضافية."
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**PAY-07 — المبلغ في الحدث ليس موثوقًا تلقائيًا:** قارن `amount_total` و `currency` القادمين في الجلسة مع المبلغ المحسوب من `donation.Amount` والعملة المضبوطة. عند أي اختلاف: سجّل **error** بقالب منظَّم يحتوي المبلغين، ولا تُكمل التبرع، وأرجِع 200 (إعادة الإرسال لن تصلح البيانات)."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**PAY-08:** لدى Stripe مهلة قصيرة لانتظار الرد، ويعيد الإرسال إذا تأخرت أو أرجعت خطأ. لذلك داخل الطلب: تحقق ← غيّر الحالة ← `SaveChanges` ← `Enqueue` ثم 200. توليد PDF وإرسال البريد يحدثان في jobs الـ Sprint 4 (JOB-01 و JOB-02) بعد الـ commit — لا قبله، حتى لا يُرسَل إيصال لتبرع تراجعت معاملته."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الموارد:**"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/WZu0lHvNYjI",
+   "title": "⭐1 159- Creating Stripe Web Hook Endpoint — Mohamed Awadallah [Arabic] (10:58)"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "نقاط مهمة في الفيديو: `stripe login` عند **00:15**، و `stripe listen` عند **01:05**، و `ConstructEvent` عند **03:05**، و `--forward-to` عند **05:35**."
+  },
+  {
+   "type": "Resource",
+   "title": "⭐2 Stripe Official Webhooks Guide",
+   "url": "https://docs.stripe.com/webhooks",
+   "kind": "doc",
+   "description": "الدليل الرسمي للـ webhooks: التحقق من التوقيع، إعادة المحاولة، الاستجابة السريعة، وأفضل الممارسات."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 3 — اختبار الـ Webhooks محليًا عبر Stripe CLI",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "Stripe لا يستطيع الوصول إلى `localhost` على جهازك. الـ Stripe CLI يحل هذا: يستقبل الأحداث من حسابك التجريبي ويعيد توجيهها إلى الـ API المحلي، موقَّعة بسر خاص به."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "شغّل التطبيق محليًا (مثلًا على `https://localhost:7001`).",
+    "نفّذ `stripe listen --forward-to https://localhost:7001/api/v1/payments/webhook`.",
+    "التقط سر توقيع الـ webhook المؤقت الذي يعرضه الـ CLI (`whsec_...`) وخزّنه عبر `dotnet user-secrets set \"Stripe:WebhookSecret\" \"whsec_...\"` (أو متغير بيئة). **لا** تضعه أبدًا في `appsettings.Development.json` أو أي ملف متتبَّع في Git.",
+    "أطلق أحداثًا تجريبية: `stripe trigger checkout.session.completed` و `stripe trigger checkout.session.expired` و `stripe trigger payment_intent.payment_failed`، وتأكد أن الـ API يعالج كلًّا منها.",
+    "وثّق هذه الخطوات في قسم README بعنوان **\"How to test Stripe locally\"**."
+   ]
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "# 1) شغّل الـ API\ndotnet run --project src/DonationHub.Api --launch-profile https\n\n# 2) في نافذة ثانية: وجّه الأحداث إلى الـ API\nstripe listen --forward-to https://localhost:7001/api/v1/payments/webhook\n#    > Ready! Your webhook signing secret is whsec_xxxxxxxx (^C to quit)\n\n# 3) خزّن السر الذي ظهر ثم أعد تشغيل الـ API\ndotnet user-secrets set \"Stripe:WebhookSecret\" \"whsec_xxxxxxxx\" --project src/DonationHub.Api\n\n# 4) في نافذة ثالثة: أطلق الأحداث\nstripe trigger checkout.session.completed\nstripe trigger checkout.session.expired\nstripe trigger payment_intent.payment_failed",
+   "filename": "stripe-local-testing.sh"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| الأمر | ما يجب أن تراه |\n|---|---|\n| `stripe trigger checkout.session.completed` | `200` في نافذة `stripe listen`، و log بأن الجلسة غير معروفة (لأن الـ CLI أنشأها بنفسه) |\n| `stripe trigger checkout.session.expired` | `200`، ومحاولة الدفع تصبح `Expired` إن كانت الجلسة معروفة |\n| `stripe trigger payment_intent.payment_failed` | `200`، و log بالحدث ورمز الفشل |\n| تعديل السر في user-secrets إلى قيمة خاطئة ثم trigger | `400` في نافذة `stripe listen` |"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**`stripe trigger` ينشئ كائنات تجريبية خاصة به** لا علاقة لها بتبرعاتك، لذلك التصرف الصحيح هو log بمستوى warning ثم 200. لتجربة المسار الكامل فعلًا: أنشئ تبرعًا، واطلب `checkout`، وافتح الـ `checkoutUrl`، وادفع ببطاقة Stripe التجريبية `4242 4242 4242 4242` (أي تاريخ مستقبلي وأي CVC)، ثم راقب `payment-status` وهو يتحول إلى `Succeeded`."
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "سر `whsec_...` الذي يطبعه `stripe listen` خاص بجهازك وحسابك؛ إذا وصل إلى Git فاعتبره مكشوفًا. لا تضعه في `appsettings.Development.json` حتى لو كان الملف «للتطوير فقط»."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الـ README يجب أن يحتوي قسم **How to test Stripe locally** يشرح: إنشاء حساب test mode، وتخزين المفاتيح بـ user-secrets، وتشغيل `stripe listen`، ونسخ الـ `whsec`، وأوامر `stripe trigger` الثلاثة، وتجربة الدفع الكامل ببطاقة الاختبار. سيُستخدم هذا القسم في التقييم."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 4 — Idempotency للـ API والـ Webhook",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "نفّذ ضمانات منع التكرار وفق SRS §6.5. الشبكات غير موثوقة: تطبيق الموبايل قد يرسل نفس طلب «تبرّع» مرتين لأن الرد تأخر، و Stripe قد يرسل نفس الحدث مرتين. في الحالتين يجب أن تكون النتيجة **كأن الطلب وصل مرة واحدة**."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**أولًا: Idempotency لطلبات الـ API (DON-10 / §6.5)**"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "`POST /campaigns/{campaignId}/donations` و `POST /donations/{id}/checkout` **يشترطان** الـ header `Idempotency-Key`. المفتاح المفقود يُرجع **400**.",
+    "خزّن كل مفتاح في `IdempotencyRecord`: `Key`, `UserId`, `RequestHash`, `ResponseStatusCode`, `ResponseBody`, `CreatedAt`, `ExpiresAt`.",
+    "نفس المفتاح + نفس المستخدم + نفس الـ body: أرجِع الاستجابة المخزَّنة **دون تكرار الإجراء**.",
+    "نفس المفتاح + body مختلف: أرجِع **422** برمز الخطأ `Idempotency.KeyReusedWithDifferentRequest`.",
+    "المفاتيح تنتهي صلاحيتها بعد **24 ساعة**.",
+    "طلبان متزامنان بنفس المفتاح يجب ألا يُنشئا تبرعين (مثلًا: فهرس فريد على `Key` + `UserId`، والإدخال يتم **قبل** تنفيذ الإجراء)."
+   ]
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| السيناريو | الاستجابة |\n|---|---|\n| الطلب الأول بمفتاح جديد | ينفَّذ الإجراء، تُخزَّن الاستجابة (مثلًا 201) |\n| إعادة نفس الطلب بنفس المفتاح ونفس الـ body | نفس الحالة ونفس الـ body المخزَّن، **بدون** تبرع جديد |\n| نفس المفتاح مع body مختلف (مبلغ آخر) | **422** `Idempotency.KeyReusedWithDifferentRequest` |\n| بدون header `Idempotency-Key` | **400** |\n| نفس المفتاح من **مستخدم آخر** | يُعامل كمفتاح مستقل (المفتاح فريد لكل مستخدم) |\n| نفس المفتاح بعد مرور 24 ساعة | يُعامل كطلب جديد |"
+  },
+  {
+   "type": "Code",
+   "language": "text",
+   "code": "POST /api/v1/campaigns/9d1e.../donations\nAuthorization: Bearer <access-token>\nIdempotency-Key: 6f1b0c1e-8a53-4c3a-9a9c-0d6f9d0c2f11\nContent-Type: application/json\n\n{ \"amount\": 25.00 }\n\n→ 201 Created   { \"id\": \"7a2c...\", \"status\": \"Pending\", ... }\n\n-- the same request again (client retry after a timeout) --\n→ 201 Created   { \"id\": \"7a2c...\", \"status\": \"Pending\", ... }   (same body, no new row)\n\n-- same key, different body: { \"amount\": 50.00 } --\n→ 422 Unprocessable Entity   code: Idempotency.KeyReusedWithDifferentRequest",
+   "filename": "idempotency-replay.txt"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**التزامن هو الاختبار الحقيقي:** الحل الساذج «ابحث عن المفتاح، وإن لم يوجد نفّذ ثم خزّن» يفشل عندما يصل طلبان في نفس اللحظة — كلاهما لا يجد المفتاح فينفّذ كلاهما. الحل: **أدخل السجل أولًا** (بحالة «قيد التنفيذ») بفهرس فريد على (`Key`, `UserId`)، فيفشل الإدخال الثاني على مستوى قاعدة البيانات، ثم نفّذ الإجراء وحدّث السجل بالاستجابة."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "الـ `Idempotency-Key` يولّده **العميل** (عادةً UUID) مرة واحدة لكل عملية يقصدها المستخدم، ويعيد استخدامه في كل إعادة محاولة لنفس العملية. ضغطتان مقصودتان على «تبرّع» = مفتاحان مختلفان."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**ثانيًا: إزالة تكرار أحداث الـ Webhook (PAY-06)**"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "خزّن كل حدث Stripe تمت معالجته في سجل `ProcessedStripeEvent` (`EventId` كمفتاح أساسي، `Type`، `ProcessedAt`)، ويُحفظ في **نفس المعاملة** مع تغييرات الحدث.",
+    "إذا وصل حدث معرّفه موجود مسبقًا، أقرّ باستلامه فورًا بـ **HTTP 200 OK** وتجاهل التكرار، لمنع احتساب أموال الحملة مرتين."
+   ]
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**لماذا نفس المعاملة؟** لو حفظت `ProcessedStripeEvent` ثم فشل حفظ التبرع، سيُعتبر الحدث معالَجًا ولن يكتمل التبرع أبدًا. ولو حفظت التبرع ثم فشل حفظ سجل الحدث، فإعادة الإرسال ستضيف المبلغ مرة ثانية. الحفظ معًا في `SaveChanges` واحد يجعل الأمرين ينجحان معًا أو يفشلان معًا."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**ثالثًا: شكل الأخطاء** — الأخطاء تتبع كتالوج الأخطاء المشترك (`Code`, `Message`, `Type`)، وتُرجَع كـ ProblemDetails (RFC 9457) تحتوي `code` و `traceId`، وكذلك `errors` في أخطاء التحقق:"
+  },
+  {
+   "type": "Code",
+   "language": "json",
+   "code": "{\n  \"type\": \"https://httpstatuses.io/422\",\n  \"title\": \"The Idempotency-Key was already used with a different request.\",\n  \"status\": 422,\n  \"code\": \"Idempotency.KeyReusedWithDifferentRequest\",\n  \"traceId\": \"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\"\n}",
+   "filename": "problem-idempotency-422.json"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الموارد:**"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/smXAgcdJzLc",
+   "title": "⭐ How To Make Your API Idempotent — Milan Jovanović (14:26)"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "نقاط مهمة في الفيديو: الـ header `Idempotency-Key` عند **01:50**، و Pipeline behavior عند **03:13**، ومخطط قاعدة البيانات عند **07:45**. لاحظ أن الفيديو لا يعالج حالة الطلبين المتزامنين ولا مقارنة الـ body — وهما مطلوبان هنا."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Stripe Documentation — Handle duplicate webhook events",
+   "url": "https://docs.stripe.com/webhooks#handle-duplicate-events",
+   "kind": "doc",
+   "description": "قسم التوثيق الرسمي عن استقبال نفس الحدث أكثر من مرة وكيفية تسجيل معرّفات الأحداث المعالَجة."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 5 — اختبارات التكامل بـ WebApplicationFactory (و Testcontainers كمهمة إضافية)",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "أنشئ مشروع `DonationHub.Api.IntegrationTests` (SRS §6.13). اختبارات الوحدة تثبت أن كل جزء صحيح وحده؛ اختبارات التكامل تثبت أن الأجزاء تعمل **معًا**: الـ routing، والمصادقة، والـ filters، و EF Core، والقيود الفريدة، والمعاملات — عبر طلبات HTTP حقيقية إلى تطبيقك."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "اضبط `WebApplicationFactory<Program>` لتشغيل الـ API داخل الذاكرة (in-memory test server).",
+    "شغّل الاختبارات على **قاعدة بيانات اختبار SQL Server حقيقية** (خدمة Docker Compose أو LocalDB). لا تستخدم مزوّد EF Core InMemory أبدًا.",
+    "**BONUS:** استخدم **Testcontainers for .NET** لتشغيل حاوية SQL Server مؤقتة لمجموعة الاختبارات.",
+    "لا تستدعِ Stripe الحقيقي ولا SMTP الحقيقي في الاختبارات: ابنِ payloads الـ webhook محليًا ووقّعها بسر webhook تجريبي، واستبدل مرسل البريد بنسخة مزيفة (fake).",
+    "`dotnet test` يشغّل كل الاختبارات دون أي خطوة يدوية إضافية (عدا تشغيل SQL Server)."
+   ]
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**ممنوع في الاختبارات:** مزوّد EF Core InMemory، واستدعاء `api.stripe.com`، وإرسال بريد عبر SMTP حقيقي، ووضع مفتاح `sk_test` حقيقي في كود الاختبارات. الاختبار يجب أن ينجح على جهاز المنتور وفي CI دون إنترنت إلى Stripe."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**السيناريوهات الستة المطلوبة كحد أدنى:**\n\n| # | السيناريو | النتيجة المتوقعة |\n|---|---|---|\n| 1 | التسجيل ثم تسجيل الدخول | 200/201 ثم access token صالح |\n| 2 | إنشاء حملة (Admin) ثم تبرع (Donor) | التبرع `Pending` |\n| 3 | مسار نجاح الـ webhook بـ payload موقَّع محليًا | التبرع `Succeeded` و `RaisedAmount` محدَّث |\n| 4 | حدث webhook مكرر | الأموال تُحتسب مرة واحدة، والاستدعاء الثاني يُرجع 200 |\n| 5 | توقيع غير صالح | 400، ولا شيء تغيّر في قاعدة البيانات |\n| 6 | إعادة طلب بنفس `Idempotency-Key` | نفس الاستجابة، ولا تبرع ثانٍ |"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**رحلة المستخدم الحرجة** التي يجب أن يغطيها اختبار واحد على الأقل من البداية للنهاية:"
+  },
+  {
+   "type": "Code",
+   "language": "text",
+   "code": "Register Donor\n     ↓\nAuthenticate & Receive JWT\n     ↓\nCreate Campaign as Admin\n     ↓\nCreate Donation as Donor (Pending)\n     ↓\nSimulate Valid Stripe Webhook Delivery\n     ↓\nAssert Donation is Succeeded & Campaign RaisedAmount is Updated",
+   "filename": "critical-user-journey.txt"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**كيف توقّع payload محليًا؟** الـ header `Stripe-Signature` شكله `t={unix-timestamp},v1={signature}`، حيث `signature` = HMAC-SHA256 بالـ hex (أحرف صغيرة) للنص `\"{timestamp}.{payload}\"` باستخدام سر الـ webhook كمفتاح. اضبط نفس السر التجريبي (مثل `whsec_integration_tests_secret`) في إعدادات الـ factory، فيقبله `EventUtility.ConstructEvent` الحقيقي دون أي mock للتحقق."
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "dotnet new xunit -n DonationHub.Api.IntegrationTests -o tests/DonationHub.Api.IntegrationTests\ndotnet sln DonationHub.slnx add tests/DonationHub.Api.IntegrationTests/DonationHub.Api.IntegrationTests.csproj\ndotnet add tests/DonationHub.Api.IntegrationTests reference src/DonationHub.Api/DonationHub.Api.csproj\ndotnet add tests/DonationHub.Api.IntegrationTests package Microsoft.AspNetCore.Mvc.Testing\ndotnet add tests/DonationHub.Api.IntegrationTests package FluentAssertions --version 7.0.0\n\ndotnet test",
+   "filename": "integration-tests-setup.sh"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**BONUS — Testcontainers:** بدل قاعدة LocalDB أو Compose، تشغّل الحزمة `Testcontainers.MsSql` حاوية SQL Server جديدة عند بدء الاختبارات وتحذفها في النهاية؛ فلا تعتمد على حالة جهازك. يتطلب Docker يعمل محليًا. لا تبدأ بها قبل أن تنجح الاختبارات الستة على SQL Server عادي."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الموارد:**"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/ssRE0pBNvpE",
+   "title": "⭐ Stop Mocking Your Database! Use Testcontainers in .NET — Milan Jovanović (15:59)"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "إعداد `WebApplicationFactory` في الفيديو ينطبق على المهمة الأساسية (CORE)؛ أما جزء Testcontainers فهو للخيار الإضافي (BONUS)."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Integration Testing in ASP.NET Core — Julio Casal",
+   "url": "https://youtu.be/RXSPCIrrjHc",
+   "kind": "video",
+   "description": "شرح بديل لاختبارات التكامل في ASP.NET Core باستخدام WebApplicationFactory واستبدال الخدمات."
+  },
+  {
+   "type": "Divider"
+  },
+  {
+   "type": "Heading",
+   "text": "📦 مخرجات السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "Endpoint لإنشاء جلسة Stripe Checkout يُرجع رابط توجيه Stripe صالحًا (PAY-01 إلى PAY-03).",
+    "`GET /donations/{id}/payment-status` للمالك و Admin.",
+    "Endpoint webhook موثَّق تشفيريًا باستخدام `EventUtility.ConstructEvent`، يعالج أحداث PAY-05 الثلاثة مع التحقق من المبلغ والعملة (PAY-07).",
+    "إزالة تكرار أحداث الـ webhook عبر سجلات `ProcessedStripeEvent` (PAY-06).",
+    "معالجة `Idempotency-Key` مع `IdempotencyRecord` على إنشاء التبرع وعلى الـ checkout (DON-10، §6.5).",
+    "حذف الـ stub `mark-succeeded` (PAY-09).",
+    "توثيق مسار الاختبار المحلي باستخدام Stripe CLI في الـ README.",
+    "مجموعة اختبارات تكامل (`WebApplicationFactory` + قاعدة اختبار SQL Server حقيقية) تغطي سيناريوهات SRS §6.13 الستة."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "✅ تعريف الإنجاز (Definition of Done)",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "إنشاء جلسة checkout يُنتج رابطًا صالحًا ويخزّن `PaymentAttempt` بحالة `Created`.",
+    "طلبات الـ webhook المعدَّلة أو غير الموقَّعة تُرفض بـ HTTP 400.",
+    "إرسال نفس payload الـ webhook مرتين لا يزيد أموال الحملة مرة ثانية؛ والتكرار يُرد عليه بـ 200.",
+    "`checkout.session.expired` يحوّل المحاولة إلى `Expired`، و `payment_intent.payment_failed` يحوّلها إلى `Failed`.",
+    "عدم تطابق المبلغ أو العملة يُسجَّل كـ error ولا يُكمل التبرع.",
+    "التبرع يصبح `Succeeded` عبر الـ webhook فقط، وليس أبدًا عبر رابط النجاح.",
+    "الـ webhook لا ينفّذ أي عمل PDF أو بريد داخل الطلب؛ هذه الـ jobs تُضاف إلى الطابور بعد الـ commit.",
+    "الـ endpoint المؤقت `POST /admin/donations/{id}/mark-succeeded` لم يعد موجودًا.",
+    "تكرار طلب بنفس `Idempotency-Key` يُرجع الاستجابة المخزَّنة دون إنشاء كيانات مكررة؛ المفتاح المفقود يُرجع 400، والمفتاح المعاد استخدامه مع body مختلف يُرجع 422.",
+    "`dotnet test` يشغّل كل اختبارات التكامل على قاعدة اختبار SQL Server حقيقية، دون استدعاء Stripe أو SMTP الحقيقيين.",
+    "الـ README محدَّث لهذا السبرنت، ويشمل قسم **how to test Stripe locally**.",
+    "لا توجد أسرار (مفاتيح Stripe، سر الـ webhook) في تاريخ المستودع.",
+    "الـ tag `sprint-5` موجود ويشير إلى آخر commit."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "⭐ مهام إضافية (BONUS)",
+   "level": 2
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "اختيارية — تُحتسب فقط بعد اجتياز **كل** المهام الأساسية (CORE)."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**PAY-11:** استرجاع (refund) تبرع ناجح بواسطة Admin (انظر DON-13).",
+    "**PAY-12:** معالجة حدث الـ webhook `charge.refunded`.",
+    "**DON-13:** استرجاع تبرع ناجح (Admin)، مع طرح المبلغ من `RaisedAmount` للحملة.",
+    "**Testcontainers:** تشغيل اختبارات التكامل على حاوية SQL Server مؤقتة.",
+    "**IDN-13:** اكتشاف إعادة استخدام الـ Refresh Token (إن لم تنفّذه في سبرنت سابق): استخدام رمز ملغى مسبقًا يلغي عائلة الرموز كلها."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "📤 التسليم",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "سلّم رابط المستودع على **tawjeh.net** قبل **الساعة 23:59 يوم 05/01/2027** (اليوم 15). اعمل commit لآخر عمل، ثم أنشئ الـ tag وارفعه:"
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "git tag sprint-5\ngit push origin sprint-5",
+   "filename": "submit-sprint-5.sh"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "التصحيحات مسموحة خلال نافذة المراجعة (**06/01/2027 إلى 08/01/2027**). **لا تحرّك** الـ tag `sprint-5` ولا تعمل له force-push؛ ضع tag جديدًا `sprint-5-fix` على الـ commit المصحَّح وارفعه: `git tag sprint-5-fix && git push origin sprint-5-fix`."
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "تذكير: إذا لم تتمكن من إنشاء حساب Stripe تجريبي في بلدك، أخبر المنتور **قبل Stand-up 1 (26/12/2026)** — وليس يوم التسليم."
+  },
+  {
+   "type": "Heading",
+   "text": "🧮 التقييم (100 نقطة)",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| الجزء | النقاط | الطريقة |\n|---|---|---|\n| تلقائي | 40 | البناء ينجح، `dotnet test` ينجح، الـ tag `sprint-5` موجود، والـ endpoints الأساسية تستجيب كما هو مطلوب (فحص سريع من المنتور) |\n| قائمة التحقق | 40 | بنود «تعريف الإنجاز» أعلاه (الهيكل، القواعد، الأمان، README) |\n| الشرح | 20 | سؤال قصير عن أحد قراراتك التصميمية، أو مراجعة كود للقرارات المكتوبة في الـ README |\n\nالمهام الإضافية (BONUS) تضيف درجات إضافية (بسقف يحدده المنتورون) فوق الـ 100 نقطة، وفقط عندما تنجح كل المهام الأساسية."
+  },
+  {
+   "type": "Heading",
+   "text": "💡 إثراء بعد السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Resource",
+   "title": "Building Resilient Cloud Microservices with Polly (.NET Foundation)",
+   "url": "https://youtu.be/L9_fGJOqzbM",
+   "kind": "video",
+   "description": "بناء خدمات مرنة أمام الأعطال الشبكية بـ Polly: إعادة المحاولة، و circuit breaker، والمهل الزمنية — مفيد عند استدعاء بوابات دفع خارجية."
+  }
+ ],
+ "solutionBlocks": [
+  {
+   "type": "Heading",
+   "text": "الحل النموذجي — Sprint 5",
+   "level": 1
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "هذا حل مرجعي يوضّح **طريقة تفكير** صحيحة لكل مهمة، وليس الطريقة الوحيدة. يكمل نفس قاعدة الكود من السبرنتات السابقة. ركّز على **سبب** كل قرار: في هذا السبرنت ستُسأل كثيرًا «ماذا يحدث لو وصل الطلب مرتين؟» و«ماذا لو فشل الحفظ في المنتصف؟»."
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "لتقليل الطول حُذفت الأجزاء المتكررة (validators و DTOs وبعض التسجيلات)، والأجزاء المهمة مكتوبة كاملة. الأسماء المشتركة تتبع تعريفات Sprint 2–4: `Result`/`Result<T>` في `DonationHub.Domain.Common` بتحويلات ضمنية من `Error` ومن القيمة، و `ApiControllerBase.ProblemFrom(error)`، و `IReceiptNumberGenerator` و `IEmailService` و `IBackgroundJobScheduler` — إن اختلفت أسماؤك فطابِقها."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 1 — جلسة Checkout ومحاولة الدفع وحذف الـ stub",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**لماذا `PaymentAttempt` منفصل عن `Donation`؟** التبرع هو «نية التبرع بمبلغ لحملة»، والمحاولة هي «جلسة دفع واحدة على Stripe». المتبرع قد يفتح عدة جلسات لنفس التبرع، ولكل جلسة مصير مستقل. فصلهما يسمح بتتبع كل جلسة وربط أي حدث webhook بها عبر `StripeCheckoutSessionId` دون تلويث حالة التبرع.\n\nنولّد معرّف المحاولة **قبل** استدعاء Stripe حتى نضعه في الـ metadata؛ وبذلك يحمل حدث `payment_intent.payment_failed` (الذي لا يحتوي بيانات الجلسة) ما يدلنا على المحاولة."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Domain.Donations;\n\npublic enum PaymentAttemptStatus { Created, Succeeded, Failed, Expired }\n\npublic sealed class PaymentAttempt : Entity\n{\n    private PaymentAttempt() { }   // EF Core\n    private PaymentAttempt(Guid id) : base(id) { }\n\n    public Guid DonationId { get; private set; }\n    public string StripeCheckoutSessionId { get; private set; } = default!;\n    public string? StripePaymentIntentId { get; private set; }\n    public decimal Amount { get; private set; }\n    public PaymentAttemptStatus Status { get; private set; }\n    public DateTime CreatedAt { get; private set; }\n    public DateTime UpdatedAt { get; private set; }\n    public string? FailureCode { get; private set; }\n\n    public bool IsOpen => Status == PaymentAttemptStatus.Created;\n\n    // id يُولَّد قبل استدعاء Stripe حتى يوضع في metadata الجلسة\n    public static PaymentAttempt Create(Guid id, Donation donation, string checkoutSessionId, DateTime utcNow)\n    {\n        if (donation.Status != DonationStatus.Pending)\n            throw new DomainException(\"Donation.InvalidState\", \"Only a pending donation can start a payment.\");\n        if (string.IsNullOrWhiteSpace(checkoutSessionId))\n            throw new DomainException(\"Validation.Failed\", \"Checkout session id is required.\");\n\n        return new PaymentAttempt(id)\n        {\n            DonationId = donation.Id,\n            StripeCheckoutSessionId = checkoutSessionId,\n            Amount = donation.Amount,   // من حالة الخادم، لا من العميل\n            Status = PaymentAttemptStatus.Created,\n            CreatedAt = utcNow,\n            UpdatedAt = utcNow\n        };\n    }\n\n    public void MarkSucceeded(string? paymentIntentId, DateTime utcNow)\n    {\n        // Checkout يسمح بإعادة المحاولة ببطاقة أخرى داخل نفس الجلسة بعد payment_failed،\n        // لذلك Failed -> Succeeded مسموح للمحاولة (المال وصل فعلًا ويجب تسجيله)\n        if (Status is not (PaymentAttemptStatus.Created or PaymentAttemptStatus.Failed))\n            throw new DomainException(\"Donation.InvalidState\", $\"Payment attempt is already {Status}.\");\n\n        Status = PaymentAttemptStatus.Succeeded;\n        StripePaymentIntentId = paymentIntentId ?? StripePaymentIntentId;\n        FailureCode = null;\n        UpdatedAt = utcNow;\n    }\n\n    public void MarkFailed(string failureCode, string? paymentIntentId, DateTime utcNow)\n    {\n        EnsureOpen();\n        Status = PaymentAttemptStatus.Failed;\n        FailureCode = failureCode;\n        StripePaymentIntentId = paymentIntentId ?? StripePaymentIntentId;\n        UpdatedAt = utcNow;\n    }\n\n    public void MarkExpired(DateTime utcNow)\n    {\n        EnsureOpen();\n        Status = PaymentAttemptStatus.Expired;\n        UpdatedAt = utcNow;\n    }\n\n    private void EnsureOpen()\n    {\n        if (!IsOpen)\n            throw new DomainException(\"Donation.InvalidState\", $\"Payment attempt is already {Status}.\");\n    }\n}",
+   "filename": "DonationHub.Domain/Donations/PaymentAttempt.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الوحدات الصغرى** تُحسب في مكان واحد فقط، بـ `decimal` ثم `checked` حتى يظهر أي overflow كخطأ بدل رقم خاطئ صامت:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Application.Features.Payments.Common;\n\npublic static class MinorUnits\n{\n    // عملات بلا كسور في Stripe (قائمة مختصرة — راجع توثيق Stripe قبل إضافة عملة جديدة)\n    private static readonly HashSet<string> ZeroDecimal =\n        new(StringComparer.OrdinalIgnoreCase) { \"JPY\", \"KRW\", \"VND\", \"CLP\", \"XAF\", \"XOF\" };\n\n    public static long FromAmount(decimal amount, string currency)\n    {\n        var factor = ZeroDecimal.Contains(currency) ? 1m : 100m;   // USD, EUR, EGP: 100\n        var minor = decimal.Round(amount * factor, 0, MidpointRounding.AwayFromZero);\n        return checked((long)minor);\n    }\n\n    public static decimal ToAmount(long minor, string currency) =>\n        ZeroDecimal.Contains(currency) ? minor : minor / 100m;\n}",
+   "filename": "DonationHub.Application/Features/Payments/Common/MinorUnits.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "لا تكتب `(long)(amount * 100)` مع `double` أبدًا: `0.29 * 100` في `double` تساوي `28.999999999999996`، والتحويل يقطعها إلى `28`. نفس الفكرة تجعل `decimal` النوع الصحيح للمال في الكيانات وفي EF (`HasPrecision(18, 2)`)."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**التجريد في Application:** طبقة `Application` لا تعرف Stripe.net. نعرّف عقدين منفصلين عمدًا: `IPaymentGateway` (يستدعي شبكة Stripe لإنشاء جلسة) و `IPaymentWebhookVerifier` (محلي بالكامل: HMAC وتحليل JSON). الفصل يسمح في اختبارات التكامل باستبدال الـ gateway بنسخة مزيفة مع إبقاء التحقق من التوقيع **حقيقيًا**."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Application.Abstractions;\n\npublic sealed record CreateCheckoutSessionRequest(\n    Guid DonationId, Guid CampaignId, Guid PaymentAttemptId,\n    string CampaignTitle, long AmountMinor, string IdempotencyKey);\n\npublic sealed record CheckoutSessionCreated(string SessionId, string CheckoutUrl);\n\npublic interface IPaymentGateway\n{\n    string Currency { get; }   // من StripeOptions، lowercase مثل \"usd\"\n    Task<CheckoutSessionCreated> CreateCheckoutSessionAsync(CreateCheckoutSessionRequest request, CancellationToken ct);\n}\n\npublic enum PaymentEventKind { CheckoutCompleted, CheckoutExpired, PaymentFailed, Unhandled }\n\n// حدث مستقل عن Stripe.net: الـ handler يعمل على هذا النوع فقط\npublic sealed record PaymentWebhookEvent(\n    string EventId,\n    string Type,\n    PaymentEventKind Kind,\n    string? CheckoutSessionId = null,\n    string? ClientReferenceId = null,\n    string? PaymentIntentId = null,\n    string? PaymentStatus = null,\n    long? AmountTotalMinor = null,\n    string? Currency = null,\n    string? FailureCode = null,\n    string? PaymentAttemptId = null);\n\npublic interface IPaymentWebhookVerifier\n{\n    Result<PaymentWebhookEvent> Verify(string payload, string signatureHeader);\n}\n\n// الـ jobs بعد الـ commit: IBackgroundJobScheduler من Sprint 4 (EnqueueDonationReceipt / EnqueueGoalReachedEmail)",
+   "filename": "DonationHub.Application/Abstractions/Payments.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**`StripeOptions`** بنفس أسلوب Sprint 1: `BindConfiguration` + `ValidateDataAnnotations` + `ValidateOnStart`. القيود هنا ليست شكلية؛ الـ regex على `sk_test_` يحقق PAY-10 حرفيًا — التطبيق **يرفض الإقلاع** بمفتاح live:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.ComponentModel.DataAnnotations;\n\nnamespace DonationHub.Infrastructure.Options;\n\npublic sealed class StripeOptions\n{\n    public const string SectionName = \"Stripe\";\n\n    // PAY-10: مفاتيح test mode فقط\n    [Required]\n    [RegularExpression(\"^sk_test_[A-Za-z0-9_]+$\", ErrorMessage = \"Stripe:SecretKey must be a test-mode key (sk_test_...).\")]\n    public string SecretKey { get; init; } = string.Empty;\n\n    [Required]\n    [RegularExpression(\"^whsec_[A-Za-z0-9_]+$\", ErrorMessage = \"Stripe:WebhookSecret must start with whsec_.\")]\n    public string WebhookSecret { get; init; } = string.Empty;\n\n    [Required, StringLength(3, MinimumLength = 3)]\n    public string Currency { get; init; } = \"usd\";\n\n    [Required, Url] public string SuccessUrl { get; init; } = string.Empty;\n    [Required, Url] public string CancelUrl { get; init; } = string.Empty;\n\n    // Stripe يشترط أن تنتهي الجلسة بعد 30 دقيقة على الأقل من إنشائها\n    [Range(31, 1440)] public int SessionExpiryMinutes { get; init; } = 60;\n}",
+   "filename": "DonationHub.Infrastructure/Options/StripeOptions.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "services.AddOptions<StripeOptions>()\n    .BindConfiguration(StripeOptions.SectionName)\n    .ValidateDataAnnotations()\n    .ValidateOnStart();   // قيمة فارغة في appsettings = فشل واضح عند الإقلاع\n\nservices.AddSingleton<IStripeClient>(sp =>\n    new StripeClient(sp.GetRequiredService<IOptions<StripeOptions>>().Value.SecretKey));\n\nservices.AddScoped<IPaymentGateway, StripePaymentGateway>();\nservices.AddSingleton<IPaymentWebhookVerifier, StripeWebhookVerifier>();\nservices.AddScoped<IPaymentsRepository, PaymentsRepository>();\nservices.AddScoped<IIdempotencyStore, EfIdempotencyStore>();",
+   "filename": "DonationHub.Infrastructure/DependencyInjection.Stripe.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Infrastructure.Options;\nusing Microsoft.Extensions.Options;\nusing Stripe;\nusing Stripe.Checkout;\n\nnamespace DonationHub.Infrastructure.Payments;\n\ninternal sealed class StripePaymentGateway(\n    IStripeClient stripeClient,\n    IOptions<StripeOptions> options,\n    TimeProvider timeProvider) : IPaymentGateway\n{\n    private readonly StripeOptions _options = options.Value;\n\n    public string Currency => _options.Currency.ToLowerInvariant();\n\n    public async Task<CheckoutSessionCreated> CreateCheckoutSessionAsync(\n        CreateCheckoutSessionRequest request, CancellationToken ct)\n    {\n        var metadata = new Dictionary<string, string>\n        {\n            [\"donationId\"] = request.DonationId.ToString(),\n            [\"campaignId\"] = request.CampaignId.ToString(),\n            [\"paymentAttemptId\"] = request.PaymentAttemptId.ToString()\n        };\n\n        var sessionOptions = new SessionCreateOptions\n        {\n            Mode = \"payment\",\n            ClientReferenceId = request.DonationId.ToString(),   // PAY-02\n            Metadata = metadata,\n            // payment_intent.payment_failed يحمل الـ PaymentIntent لا الجلسة، فننسخ الـ metadata إليه\n            PaymentIntentData = new SessionPaymentIntentDataOptions { Metadata = metadata },\n            LineItems =\n            [\n                new SessionLineItemOptions\n                {\n                    Quantity = 1,\n                    PriceData = new SessionLineItemPriceDataOptions\n                    {\n                        Currency = Currency,\n                        UnitAmount = request.AmountMinor,   // long بالسنتات\n                        ProductData = new SessionLineItemPriceDataProductDataOptions\n                        {\n                            Name = request.CampaignTitle\n                        }\n                    }\n                }\n            ],\n            SuccessUrl = _options.SuccessUrl,\n            CancelUrl = _options.CancelUrl,\n            ExpiresAt = timeProvider.GetUtcNow().UtcDateTime.AddMinutes(_options.SessionExpiryMinutes)\n        };\n\n        var service = new SessionService(stripeClient);\n        var session = await service.CreateAsync(\n            sessionOptions,\n            new RequestOptions { IdempotencyKey = request.IdempotencyKey },  // إعادة إرسال آمنة لنفس المحاولة\n            ct);\n\n        return new CheckoutSessionCreated(session.Id, session.Url);\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Payments/StripePaymentGateway.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الـ handler:** نتحقق من الملكية (404 لا 403 — SRS §6.3)، ومن أن التبرع `Pending` وأن الحملة ما زالت تقبل التبرعات، ثم نستدعي Stripe، ثم نحفظ المحاولة. ترتيب «Stripe أولًا ثم DB» مقصود: نحتاج `session.Id` للحفظ، ولو فشل الحفظ بعد إنشاء الجلسة فالمتبرع لن يرى رابطها أبدًا، وستنتهي صلاحيتها وحدها (حدث `expired` لجلسة غير معروفة يُسجَّل ويُرد عليه 200)."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Features.Payments.Common;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing MediatR;\nusing Microsoft.Extensions.Logging;\n\nnamespace DonationHub.Application.Features.Payments.CreateCheckoutSession;\n\npublic sealed record CreateCheckoutSessionCommand(Guid DonationId, Guid UserId)\n    : IRequest<Result<CheckoutSessionResponse>>;\n\npublic sealed record CheckoutSessionResponse(\n    Guid DonationId, Guid PaymentAttemptId, string SessionId, string CheckoutUrl);\n\ninternal sealed class CreateCheckoutSessionCommandHandler(\n    IUnitOfWork uow,\n    IPaymentGateway gateway,\n    TimeProvider timeProvider,\n    ILogger<CreateCheckoutSessionCommandHandler> logger)\n    : IRequestHandler<CreateCheckoutSessionCommand, Result<CheckoutSessionResponse>>\n{\n    public async Task<Result<CheckoutSessionResponse>> Handle(CreateCheckoutSessionCommand command, CancellationToken ct)\n    {\n        var donation = await uow.Repository<Donation>().GetByIdAsync(command.DonationId, ct);\n        if (donation is null || donation.DonorUserId != command.UserId)\n            return DonationErrors.NotFound;   // لا نكشف وجود تبرع لغير صاحبه\n\n        if (donation.Status != DonationStatus.Pending)\n            return DonationErrors.InvalidState;   // 409\n\n        var now = timeProvider.GetUtcNow().UtcDateTime;\n        var campaign = await uow.Repository<Campaign>().GetByIdAsync(donation.CampaignId, ct);\n        if (campaign is null || campaign.Status != CampaignStatus.Active || campaign.EndDate <= now)\n            return CampaignErrors.NotActive;   // لا نفتح جلسة دفع لحملة انتهت\n\n        var attemptId = Guid.NewGuid();\n        var session = await gateway.CreateCheckoutSessionAsync(new CreateCheckoutSessionRequest(\n            DonationId: donation.Id,\n            CampaignId: campaign.Id,\n            PaymentAttemptId: attemptId,\n            CampaignTitle: campaign.TitleEn,\n            AmountMinor: MinorUnits.FromAmount(donation.Amount, gateway.Currency),\n            IdempotencyKey: $\"checkout-{attemptId}\"), ct);\n\n        var attempt = PaymentAttempt.Create(attemptId, donation, session.SessionId, now);\n        await uow.Repository<PaymentAttempt>().AddAsync(attempt, ct);\n        await uow.SaveChangesAsync(ct);\n\n        logger.LogInformation(\"Checkout session {SessionId} created for donation {DonationId} (attempt {AttemptId})\",\n            session.SessionId, donation.Id, attempt.Id);\n\n        return new CheckoutSessionResponse(donation.Id, attempt.Id, session.SessionId, session.CheckoutUrl);\n    }\n}",
+   "filename": "DonationHub.Application/Features/Payments/CreateCheckoutSession/CreateCheckoutSessionCommand.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**مهلة الجلسة مقابل DON-09:** job الـ Sprint 4 يفشل التبرع المعلّق بعد 30 دقيقة، بينما جلسة Stripe قد تبقى مفتوحة 60 دقيقة. لو دفع المتبرع في الدقيقة 40 ستصل دفعة لتبرع `Failed`. اجعل الـ job يتحقق أولًا: إن وُجدت محاولة `Created` لم تنتهِ جلستها، يعيد جدولة نفسه بعد `ExpiresAt` بدل إفشال التبرع. وعند إنشاء جلسة جديدة يمكنك (اختياريًا) إنهاء الجلسات المفتوحة السابقة بـ `SessionService.ExpireAsync` حتى لا يُدفع نفس التبرع مرتين."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**حالة الدفع** قراءة فقط، فتمر عبر `IReadDbContext` (`Donations` فيه منذ Sprint 3؛ أضف `PaymentAttempts` بدون تتبّع). الإسقاط (projection) يعيد الـ enums نفسها، و `JsonStringEnumConverter` المضبوط منذ Sprint 2 يحوّلها لنصوص:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing MediatR;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Application.Features.Payments.GetPaymentStatus;\n\npublic sealed record GetPaymentStatusQuery(Guid DonationId, Guid UserId, bool IsAdmin)\n    : IRequest<Result<PaymentStatusResponse>>;\n\npublic sealed record LatestAttemptResponse(\n    Guid Id, PaymentAttemptStatus Status, string? FailureCode, DateTime CreatedAt, DateTime UpdatedAt);\n\npublic sealed record PaymentStatusResponse(\n    Guid DonationId, DonationStatus DonationStatus, LatestAttemptResponse? LatestAttempt);\n\ninternal sealed class GetPaymentStatusQueryHandler(IReadDbContext read)\n    : IRequestHandler<GetPaymentStatusQuery, Result<PaymentStatusResponse>>\n{\n    public async Task<Result<PaymentStatusResponse>> Handle(GetPaymentStatusQuery query, CancellationToken ct)\n    {\n        var donation = await read.Donations\n            .Where(d => d.Id == query.DonationId && (query.IsAdmin || d.DonorUserId == query.UserId))\n            .Select(d => new { d.Id, d.Status })\n            .FirstOrDefaultAsync(ct);\n\n        if (donation is null)\n            return DonationErrors.NotFound;   // تبرع مستخدم آخر = 404\n\n        var latest = await read.PaymentAttempts\n            .Where(a => a.DonationId == donation.Id)\n            .OrderByDescending(a => a.CreatedAt)\n            .Select(a => new LatestAttemptResponse(a.Id, a.Status, a.FailureCode, a.CreatedAt, a.UpdatedAt))\n            .FirstOrDefaultAsync(ct);\n\n        return new PaymentStatusResponse(donation.Id, donation.Status, latest);\n    }\n}",
+   "filename": "DonationHub.Application/Features/Payments/GetPaymentStatus/GetPaymentStatusQuery.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using Asp.Versioning;\nusing DonationHub.Api.Extensions;   // RateLimitPolicies\nusing DonationHub.Api.Idempotency;\nusing DonationHub.Application.Common;   // Roles\nusing DonationHub.Application.Features.Payments.CreateCheckoutSession;\nusing DonationHub.Application.Features.Payments.GetPaymentStatus;\nusing MediatR;\nusing Microsoft.AspNetCore.Authorization;\nusing Microsoft.AspNetCore.Mvc;\nusing Microsoft.AspNetCore.RateLimiting;\n\nnamespace DonationHub.Api.Controllers;\n\n[ApiController]\n[ApiVersion(\"1.0\")]\n[Route(\"api/v{version:apiVersion}/donations\")]\n[Authorize]\npublic sealed class DonationPaymentsController(ISender sender) : ApiControllerBase\n{\n    [HttpPost(\"{id:guid}/checkout\")]\n    [EnableRateLimiting(RateLimitPolicies.Donations)]\n    [Idempotent]   // DON-10\n    public async Task<IActionResult> Checkout(Guid id, CancellationToken ct)\n    {\n        var result = await sender.Send(new CreateCheckoutSessionCommand(id, User.GetUserId()), ct);\n        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);\n    }\n\n    [HttpGet(\"{id:guid}/payment-status\")]\n    public async Task<IActionResult> GetPaymentStatus(Guid id, CancellationToken ct)\n    {\n        var query = new GetPaymentStatusQuery(id, User.GetUserId(), User.IsInRole(Roles.Admin));\n        var result = await sender.Send(query, ct);\n        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);\n    }\n}",
+   "filename": "DonationHub.Api/Controllers/DonationPaymentsController.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**PAY-09 — حذف الـ stub:** نحذف الـ endpoint والـ command والاختبارات الخاصة به، لكن **لا نحذف** منطق النجاح: `Donation.MarkSucceeded` و `IReceiptNumberGenerator` وقواعد المعاملة الواحدة كلها يعيد الـ webhook استخدامها. إن كان منطق النجاح موجودًا داخل handler الـ stub نفسه، انقله أولًا إلى مكان مشترك ثم احذف الـ stub."
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "git rm -r src/DonationHub.Application/Features/Donations/MarkSucceeded\n# واحذف DonationSuccessFlow وتسجيله واختباره، واختبارات الـ command (لا مستدعٍ له — انظر المهمة 2)\n# احذف الـ action [HttpPost(\"{id:guid}/mark-succeeded\")] من AdminDonationsController يدويًا\n\ngit grep -n -i \"mark-succeeded\"          # يجب ألا يُرجع شيئًا\ndotnet build && dotnet test",
+   "filename": "remove-stub.sh"
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 2 — الـ Webhook: التوقيع، الأحداث، والمعاملة الواحدة",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الفكرة الأساسية:** الـ controller لا يعرف شيئًا عن Stripe؛ يقرأ النص الخام والـ header ويرسلهما إلى command. الـ handler يطلب من `IPaymentWebhookVerifier` التحقق والتحويل إلى `PaymentWebhookEvent`، ثم يزيل التكرار، ثم يوزّع حسب نوع الحدث، ثم يحفظ **كل شيء في `SaveChanges` واحد** (التغييرات + سجل الحدث)، وبعد نجاح الـ commit فقط يضيف الـ jobs."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Text;\nusing Asp.Versioning;\nusing DonationHub.Application.Features.Payments.ProcessStripeWebhook;\nusing MediatR;\nusing Microsoft.AspNetCore.Authorization;\nusing Microsoft.AspNetCore.Mvc;\nusing Microsoft.AspNetCore.RateLimiting;\n\nnamespace DonationHub.Api.Controllers;\n\n[ApiController]\n[ApiVersion(\"1.0\")]\n[Route(\"api/v{version:apiVersion}/payments\")]\npublic sealed class PaymentsController(ISender sender) : ApiControllerBase\n{\n    // PAY-04: مجهول (التوقيع هو المصادقة) ومستثنى من الـ rate limiting (SRS §6.4)\n    [HttpPost(\"webhook\")]\n    [AllowAnonymous]\n    [DisableRateLimiting]\n    [ApiExplorerSettings(IgnoreApi = true)]   // لا داعي لظهوره في Scalar\n    public async Task<IActionResult> Webhook(CancellationToken ct)\n    {\n        // لا [FromBody]: نحتاج النص كما وقّعه Stripe حرفيًا\n        using var reader = new StreamReader(Request.Body, Encoding.UTF8);\n        var payload = await reader.ReadToEndAsync(ct);\n        var signature = Request.Headers[\"Stripe-Signature\"].ToString();\n\n        var result = await sender.Send(new ProcessStripeWebhookCommand(payload, signature), ct);\n        return result.IsSuccess ? Ok() : ProblemFrom(result.Error);   // 400 Payment.InvalidSignature\n    }\n}",
+   "filename": "DonationHub.Api/Controllers/PaymentsController.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "`[DisableRateLimiting]` يتجاوز الـ global limiter أيضًا لهذا الـ endpoint. لو طبّقت سياسة الـ rate limit عبر `RequireRateLimiting` على مجموعة كل الـ controllers، تأكد أن الـ attribute هنا يتغلب عليها. وإن كان لديك `FallbackPolicy` تشترط المصادقة، فإن `[AllowAnonymous]` ضروري، وإلا سيصل Stripe إلى 401 ويعيد المحاولة بلا نهاية."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**المحقِّق (Verifier)** هو المكان الوحيد الذي يعرف Stripe.net في مسار الـ webhook. يلتقط `StripeException` (توقيع خاطئ، أو timestamp قديم أكثر من 5 دقائق — حماية من replay attacks) ويحوّلها إلى `PaymentErrors.InvalidSignature` (`new Error(\"Payment.InvalidSignature\", ..., ErrorType.Validation)` ← 400):"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Features.Payments.Common;\nusing DonationHub.Domain.Common;\nusing DonationHub.Infrastructure.Options;\nusing Microsoft.Extensions.Logging;\nusing Microsoft.Extensions.Options;\nusing Stripe;\nusing Stripe.Checkout;\n\nnamespace DonationHub.Infrastructure.Payments;\n\ninternal sealed class StripeWebhookVerifier(\n    IOptions<StripeOptions> options,\n    ILogger<StripeWebhookVerifier> logger) : IPaymentWebhookVerifier\n{\n    public Result<PaymentWebhookEvent> Verify(string payload, string signatureHeader)\n    {\n        if (string.IsNullOrWhiteSpace(signatureHeader))\n            return PaymentErrors.InvalidSignature;\n\n        Event stripeEvent;\n        try\n        {\n            stripeEvent = EventUtility.ConstructEvent(\n                payload,\n                signatureHeader,\n                options.Value.WebhookSecret,\n                throwOnApiVersionMismatch: false);\n        }\n        catch (StripeException ex)\n        {\n            // لا نسجّل الـ payload ولا السر — السبب فقط\n            logger.LogWarning(\"Rejected Stripe webhook: {Reason}\", ex.Message);\n            return PaymentErrors.InvalidSignature;\n        }\n\n        PaymentWebhookEvent result = stripeEvent.Type switch\n        {\n            EventTypes.CheckoutSessionCompleted when stripeEvent.Data.Object is Session completed\n                => FromSession(stripeEvent, completed, PaymentEventKind.CheckoutCompleted),\n            EventTypes.CheckoutSessionExpired when stripeEvent.Data.Object is Session expired\n                => FromSession(stripeEvent, expired, PaymentEventKind.CheckoutExpired),\n            EventTypes.PaymentIntentPaymentFailed when stripeEvent.Data.Object is PaymentIntent intent\n                => new PaymentWebhookEvent(\n                    stripeEvent.Id, stripeEvent.Type, PaymentEventKind.PaymentFailed,\n                    PaymentIntentId: intent.Id,\n                    FailureCode: intent.LastPaymentError?.DeclineCode ?? intent.LastPaymentError?.Code ?? \"payment_failed\",\n                    PaymentAttemptId: intent.Metadata?.GetValueOrDefault(\"paymentAttemptId\")),\n            _ => new PaymentWebhookEvent(stripeEvent.Id, stripeEvent.Type, PaymentEventKind.Unhandled)\n        };\n\n        return result;\n    }\n\n    private static PaymentWebhookEvent FromSession(Event stripeEvent, Session session, PaymentEventKind kind) =>\n        new(stripeEvent.Id, stripeEvent.Type, kind,\n            CheckoutSessionId: session.Id,\n            ClientReferenceId: session.ClientReferenceId,\n            PaymentIntentId: session.PaymentIntentId,\n            PaymentStatus: session.PaymentStatus,   // \"paid\" / \"unpaid\" / \"no_payment_required\"\n            AmountTotalMinor: session.AmountTotal,\n            Currency: session.Currency,\n            PaymentAttemptId: session.Metadata?.GetValueOrDefault(\"paymentAttemptId\"));\n}",
+   "filename": "DonationHub.Infrastructure/Payments/StripeWebhookVerifier.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**Stripe.net:** `throwOnApiVersionMismatch: false` يمنع رفض حدث يختلف `api_version` فيه (حسابك أو الـ CLI أو payloads الاختبارات) عن إصدار المكتبة؛ البديل الأدق ضبط إصدار الـ API للـ webhook endpoint في لوحة Stripe. ثوابت `EventTypes` من نوع `const string` فتعمل في الـ switch."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**المستودع المتخصص:** `ProcessedStripeEvent` ليس `Entity` (مفتاحه نص `EventId`)، وبعض الاستعلامات خاصة بالدفع، لذلك نعرّف `IPaymentsRepository`. المهم أنه يستخدم **نفس** `AppDbContext` الـ scoped الذي يستخدمه `IUnitOfWork`، فيدخل كل ما يضيفه في نفس `SaveChanges` — أي نفس المعاملة:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// Application/Abstractions/IPaymentsRepository.cs\npublic interface IPaymentsRepository\n{\n    Task<PaymentAttempt?> GetAttemptBySessionIdAsync(string sessionId, CancellationToken ct);\n    Task<PaymentAttempt?> GetAttemptByPaymentIntentIdAsync(string paymentIntentId, CancellationToken ct);\n    Task<bool> HasOtherOpenAttemptsAsync(Guid donationId, Guid exceptAttemptId, CancellationToken ct);\n    Task<bool> IsEventProcessedAsync(string eventId, CancellationToken ct);\n    void AddProcessedEvent(ProcessedStripeEvent processedEvent);\n}\n\n// Infrastructure/Payments/PaymentsRepository.cs\ninternal sealed class PaymentsRepository(AppDbContext db) : IPaymentsRepository\n{\n    public Task<PaymentAttempt?> GetAttemptBySessionIdAsync(string sessionId, CancellationToken ct) =>\n        db.PaymentAttempts.FirstOrDefaultAsync(a => a.StripeCheckoutSessionId == sessionId, ct);\n\n    public Task<PaymentAttempt?> GetAttemptByPaymentIntentIdAsync(string paymentIntentId, CancellationToken ct) =>\n        db.PaymentAttempts.FirstOrDefaultAsync(a => a.StripePaymentIntentId == paymentIntentId, ct);\n\n    public Task<bool> HasOtherOpenAttemptsAsync(Guid donationId, Guid exceptAttemptId, CancellationToken ct) =>\n        db.PaymentAttempts.AnyAsync(a => a.DonationId == donationId\n                                      && a.Id != exceptAttemptId\n                                      && a.Status == PaymentAttemptStatus.Created, ct);\n\n    // يسأل قاعدة البيانات لا الـ change tracker\n    public Task<bool> IsEventProcessedAsync(string eventId, CancellationToken ct) =>\n        db.ProcessedStripeEvents.AsNoTracking().AnyAsync(e => e.EventId == eventId, ct);\n\n    public void AddProcessedEvent(ProcessedStripeEvent processedEvent) =>\n        db.ProcessedStripeEvents.Add(processedEvent);\n}",
+   "filename": "DonationHub.Infrastructure/Payments/PaymentsRepository.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**معالج الـ webhook — الهيكل العام:** التحقق ← إزالة التكرار ← التوزيع ← حفظ واحد ← الـ jobs. لاحظ معالجة السباق: لو وصل نفس الحدث في طلبين متزامنين، كلاهما يجتاز فحص «هل عولج؟»، لكن الـ primary key على `EventId` يُفشل الحفظ الثاني؛ نلتقط الخطأ ونتأكد أنه فعلًا تكرار ثم نرد 200."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Caching;\nusing DonationHub.Application.Features.Payments.Common;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing MediatR;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.Extensions.Logging;\n\nnamespace DonationHub.Application.Features.Payments.ProcessStripeWebhook;\n\npublic sealed record ProcessStripeWebhookCommand(string Payload, string SignatureHeader) : IRequest<Result>;\n\ninternal sealed class ProcessStripeWebhookCommandHandler(\n    IPaymentWebhookVerifier verifier,\n    IPaymentsRepository payments,\n    IUnitOfWork uow,\n    IReceiptNumberGenerator receiptNumbers,\n    IBackgroundJobScheduler jobs,\n    ICacheService cache,\n    IPaymentGateway gateway,\n    TimeProvider timeProvider,\n    ILogger<ProcessStripeWebhookCommandHandler> logger)\n    : IRequestHandler<ProcessStripeWebhookCommand, Result>\n{\n    private const int MaxAttempts = 3;   // DON-08: كما في DonationSuccessFlow\n    private string? _receiptNumber;   // رقم إيصال واحد عبر المحاولات\n\n    private sealed record AfterCommit(\n        Guid? ReceiptForDonation = null, Guid? GoalReachedCampaign = null, Guid? ChangedCampaign = null)\n    {\n        public static readonly AfterCommit Nothing = new();\n    }\n\n    public async Task<Result> Handle(ProcessStripeWebhookCommand command, CancellationToken ct)\n    {\n        var verified = verifier.Verify(command.Payload, command.SignatureHeader);\n        if (verified.IsFailure)\n            return verified.Error;   // 400 — لم نلمس قاعدة البيانات\n\n        var evt = verified.Value;\n\n        // PAY-06: التسليم at-least-once — الحدث المعالَج سابقًا يُقرّ به فقط\n        if (await payments.IsEventProcessedAsync(evt.EventId, ct))\n        {\n            logger.LogInformation(\"Duplicate Stripe event {EventId} ({EventType}) ignored\", evt.EventId, evt.Type);\n            return Result.Success();\n        }\n\n        var now = timeProvider.GetUtcNow().UtcDateTime;\n        for (var attempt = 1; ; attempt++)\n        {\n            var afterCommit = evt.Kind switch\n            {\n                PaymentEventKind.CheckoutCompleted => await HandleCompletedAsync(evt, now, ct),\n                PaymentEventKind.CheckoutExpired => await HandleExpiredAsync(evt, now, ct),\n                PaymentEventKind.PaymentFailed => await HandleFailedAsync(evt, now, ct),\n                _ => LogUnhandled(evt)\n            };\n\n            payments.AddProcessedEvent(ProcessedStripeEvent.Create(evt.EventId, evt.Type, now));\n\n            try\n            {\n                await uow.SaveChangesAsync(ct);   // معاملة واحدة: تغييرات الحدث + سجل الحدث\n            }\n            catch (DbUpdateConcurrencyException) when (attempt < MaxAttempts)\n            {\n                // DON-08: تبرع آخر للحملة حُفظ قبلنا (RowVersion) — لم يُحفظ شيء؛ نعيد بقيم حديثة\n                uow.ClearChangeTracker();\n                continue;\n            }\n            catch (DbUpdateException)\n            {\n                // تسليمان متزامنان لنفس الحدث: الآخر حفظ قبلنا — هذا تكرار وليس خطأ\n                if (await payments.IsEventProcessedAsync(evt.EventId, CancellationToken.None))\n                {\n                    logger.LogInformation(\"Stripe event {EventId} was processed concurrently\", evt.EventId);\n                    return Result.Success();\n                }\n                throw;   // استنفدنا المحاولات: 500 فيعيد Stripe الإرسال\n            }\n\n            // PAY-08: بعد الـ commit فقط — لا إيصال لتبرع تراجعت معاملته\n            if (afterCommit.ReceiptForDonation is Guid donationId)\n                jobs.EnqueueDonationReceipt(donationId);\n            if (afterCommit.GoalReachedCampaign is Guid campaignId)\n                jobs.EnqueueGoalReachedEmail(campaignId);\n            if (afterCommit.ChangedCampaign is Guid changedCampaignId)\n                await cache.InvalidateCampaignAsync(changedCampaignId, ct);   // CMP-09: RaisedAmount تغيّر\n\n            return Result.Success();\n        }\n    }\n\n    private AfterCommit LogUnhandled(PaymentWebhookEvent evt)\n    {\n        logger.LogInformation(\"Unhandled Stripe event type {EventType} ({EventId})\", evt.Type, evt.EventId);\n        return AfterCommit.Nothing;\n    }\n}",
+   "filename": "DonationHub.Application/Features/Payments/ProcessStripeWebhook/ProcessStripeWebhookCommandHandler.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**`checkout.session.completed`:** نربط الحدث بالمحاولة عبر رقم الجلسة، ونتأكد أن `client_reference_id` يطابق تبرع المحاولة، ثم نتحقق من PAY-07 مقابل قيم **قاعدة البيانات**، ثم ننفّذ DON-07 بقطع Sprint 3 نفسها: `Donation.MarkSucceeded` (المبلغ + إكمال الحملة) و `IReceiptNumberGenerator`. **لماذا لا نستدعي `DonationSuccessFlow` نفسه؟** لأنه يملك `SaveChanges` الخاص به، وعند تعارض `RowVersion` يستدعي `ClearChangeTracker()` فيمسح تغيير المحاولة وسجل `ProcessedStripeEvent`، فينكسر شرط PAY-06 (نفس المعاملة). لذلك ينقل الـ handler ضماناته كما هي: تحذير الدفع المتأخر، وإعادة المحاولة على `RowVersion`، والـ jobs والكاش بعد الـ commit:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// تابع داخل نفس الكلاس ProcessStripeWebhookCommandHandler (الكلاس ليس partial)\n\n    private async Task<AfterCommit> HandleCompletedAsync(PaymentWebhookEvent evt, DateTime now, CancellationToken ct)\n    {\n        var attempt = evt.CheckoutSessionId is null ? null\n            : await payments.GetAttemptBySessionIdAsync(evt.CheckoutSessionId, ct);\n\n        if (attempt is null\n            || !Guid.TryParse(evt.ClientReferenceId, out var donationId)\n            || attempt.DonationId != donationId)\n        {\n            logger.LogWarning(\"Stripe event {EventId}: unknown checkout session {SessionId}\", evt.EventId, evt.CheckoutSessionId);\n            return AfterCommit.Nothing;\n        }\n\n        var donation = await uow.Repository<Donation>().GetByIdAsync(donationId, ct);\n        var campaign = donation is null ? null : await uow.Repository<Campaign>().GetByIdAsync(donation.CampaignId, ct);\n        if (donation is null || campaign is null)\n        {\n            logger.LogError(\"Stripe event {EventId}: donation {DonationId} or its campaign was not found\", evt.EventId, donationId);\n            return AfterCommit.Nothing;\n        }\n\n        if (evt.PaymentStatus != \"paid\")\n        {\n            logger.LogWarning(\"Checkout session {SessionId} completed with payment status {PaymentStatus}\",\n                evt.CheckoutSessionId, evt.PaymentStatus);\n            return AfterCommit.Nothing;\n        }\n\n        // PAY-07: المرجع هو قاعدة البيانات، لا ما يقوله الحدث\n        var expectedMinor = MinorUnits.FromAmount(donation.Amount, gateway.Currency);\n        if (evt.AmountTotalMinor != expectedMinor\n            || !string.Equals(evt.Currency, gateway.Currency, StringComparison.OrdinalIgnoreCase))\n        {\n            logger.LogError(\n                \"Payment mismatch for donation {DonationId}: paid {PaidMinor} {PaidCurrency}, expected {ExpectedMinor} {ExpectedCurrency}\",\n                donation.Id, evt.AmountTotalMinor, evt.Currency, expectedMinor, gateway.Currency);\n            return AfterCommit.Nothing;   // التبرع يبقى Pending\n        }\n\n        if (donation.Status != DonationStatus.Pending)\n        {\n            if (donation.Status == DonationStatus.Failed)\n                logger.LogError(\"Donation {DonationId} was paid after it failed; a manual refund is required\", donation.Id);\n            else\n                logger.LogWarning(\"Donation {DonationId} already succeeded; extra session {SessionId} was paid\",\n                    donation.Id, evt.CheckoutSessionId);\n\n            if (attempt.Status != PaymentAttemptStatus.Succeeded)\n                attempt.MarkSucceeded(evt.PaymentIntentId, now);   // نسجّل أن المال وصل فعلًا\n            return AfterCommit.Nothing;\n        }\n\n        // SRS §5.5: الدفعة المتأخرة تُقبل، مع تحذير\n        if (campaign.Status != CampaignStatus.Active || campaign.EndDate <= now)\n            logger.LogWarning(\"Late payment accepted for donation {DonationId} on campaign {CampaignId} ({CampaignStatus})\",\n                donation.Id, campaign.Id, campaign.Status);\n\n        var wasCompleted = campaign.Status == CampaignStatus.Completed;\n        _receiptNumber ??= await receiptNumbers.NextAsync(now, ct);   // DN-{year}-{000001}\n\n        donation.MarkSucceeded(campaign, _receiptNumber, now);   // Succeeded + CompletedAt + RaisedAmount + Completed\n        attempt.MarkSucceeded(evt.PaymentIntentId, now);\n\n        logger.LogInformation(\"Donation {DonationId} succeeded via Stripe event {EventId}\", donation.Id, evt.EventId);\n\n        var justCompleted = !wasCompleted && campaign.Status == CampaignStatus.Completed;\n        return new AfterCommit(donation.Id, justCompleted ? campaign.Id : null, campaign.Id);\n    }",
+   "filename": "DonationHub.Application/Features/Payments/ProcessStripeWebhook/ProcessStripeWebhookCommandHandler.Part2.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**عدم التطابق يُسجَّل لكن الحدث يُعلَّم كمعالَج.** هذا مقصود: إعادة إرسال نفس الحدث لن تغيّر المبلغ، فلا فائدة من إرجاع 500 وجعل Stripe يعيد المحاولة أيامًا. الـ log بمستوى error هو التنبيه للبشر. لكن **لا تُكمل التبرع أبدًا** في هذه الحالة."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**`expired` و `payment_failed`:** كلاهما idempotent بطبيعته — إن لم تكن المحاولة `Created` فلا نفعل شيئًا (الأحداث قد تصل بغير ترتيب). التبرع يفشل فقط عندما لا تبقى محاولة أخرى مفتوحة:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// تابع داخل نفس الكلاس ProcessStripeWebhookCommandHandler (الكلاس ليس partial)\n\n    private async Task<AfterCommit> HandleExpiredAsync(PaymentWebhookEvent evt, DateTime now, CancellationToken ct)\n    {\n        var attempt = evt.CheckoutSessionId is null ? null\n            : await payments.GetAttemptBySessionIdAsync(evt.CheckoutSessionId, ct);\n\n        if (attempt is null)\n            logger.LogWarning(\"Stripe event {EventId}: unknown expired session {SessionId}\", evt.EventId, evt.CheckoutSessionId);\n        else if (attempt.IsOpen)\n            attempt.MarkExpired(now);   // التبرع يبقى Pending: يمكن فتح جلسة جديدة\n\n        return AfterCommit.Nothing;\n    }\n\n    private async Task<AfterCommit> HandleFailedAsync(PaymentWebhookEvent evt, DateTime now, CancellationToken ct)\n    {\n        PaymentAttempt? attempt = null;\n        if (Guid.TryParse(evt.PaymentAttemptId, out var attemptId))\n            attempt = await uow.Repository<PaymentAttempt>().GetByIdAsync(attemptId, ct);\n        if (attempt is null && evt.PaymentIntentId is not null)\n            attempt = await payments.GetAttemptByPaymentIntentIdAsync(evt.PaymentIntentId, ct);\n\n        if (attempt is null || !attempt.IsOpen)\n        {\n            logger.LogWarning(\"Stripe event {EventId}: no open attempt for payment intent {PaymentIntentId}\",\n                evt.EventId, evt.PaymentIntentId);\n            return AfterCommit.Nothing;\n        }\n\n        attempt.MarkFailed(evt.FailureCode ?? \"payment_failed\", evt.PaymentIntentId, now);\n\n        if (!await payments.HasOtherOpenAttemptsAsync(attempt.DonationId, attempt.Id, ct))\n        {\n            var donation = await uow.Repository<Donation>().GetByIdAsync(attempt.DonationId, ct);\n            if (donation is { Status: DonationStatus.Pending })\n                donation.MarkFailed($\"Payment failed: {attempt.FailureCode}\", now);\n        }\n\n        logger.LogInformation(\"Payment attempt {AttemptId} failed with {FailureCode}\", attempt.Id, attempt.FailureCode);\n        return AfterCommit.Nothing;\n    }",
+   "filename": "DonationHub.Application/Features/Payments/ProcessStripeWebhook/ProcessStripeWebhookCommandHandler.Part3.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**مقايضة يجب أن تشرحها:** صفحة Checkout تسمح للمتبرع بتجربة بطاقة أخرى **في نفس الجلسة** بعد رفض الأولى. المتطلب يقول «التبرع `Failed` عند عدم وجود محاولة أخرى يمكن أن تنجح»، فطبقناه حرفيًا على المحاولات الأخرى. النتيجة النادرة: تبرع `Failed` ثم يصل `completed` لنفس الجلسة — نسجّل المحاولة `Succeeded` ونكتب error للاسترجاع اليدوي (DON-13 BONUS)."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**بين الـ commit والـ Enqueue فجوة صغيرة:** لو توقفت العملية بعد الحفظ وقبل `Enqueue`، يكتمل التبرع بلا إيصال. هذا مقبول في نطاق المشروع، ويُعالَج إما بـ job دوري «تبرعات Succeeded بلا `ReceiptFileName`»، أو بنمط Transactional Outbox (تخزين الرسالة في نفس المعاملة). اذكر هذا كقرار واعٍ في الـ README."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**التزامن على الحملة (DON-08):** حدثان ناجحان لتبرعين مختلفين على نفس الحملة قد يتعارضان على `RowVersion`. الحلقة في `Handle` تطابق `DonationSuccessFlow`: عند `DbUpdateConcurrencyException` لم يُحفظ شيء (ولا سجل الحدث)، فنمسح الـ change tracker ونعيد التوزيع على بيانات حديثة حتى 3 مرات بنفس رقم الإيصال؛ وإن استمر التعارض نُرجع 500 فيعيد Stripe الإرسال لاحقًا كخط دفاع أخير. أما `ProcessedStripeEvent` فكيان بسيط (`EventId` مفتاح أساسي، `Type`، `ProcessedAt`) بدالة `Create`."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 3 — Stripe CLI وقسم الـ README",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "لا كود هنا، لكن التوثيق جزء من التقييم. القسم الجيد يسمح لمنتور لم يرَ مشروعك من قبل أن يجرب الدفع في 5 دقائق. لاحظ أن الأوامر مكتوبة بإزاحة (indentation) داخل الـ README:"
+  },
+  {
+   "type": "Code",
+   "language": "markdown",
+   "code": "## How to test Stripe locally\n\n1. Create a free Stripe account and stay in **test mode** (keys start with `sk_test_`).\n2. Store the secrets with user-secrets (never in `appsettings*.json`):\n\n        cd src/DonationHub.Api\n        dotnet user-secrets set \"Stripe:SecretKey\" \"sk_test_...\"\n\n3. Run the API on `https://localhost:7001`, then forward webhooks:\n\n        stripe login\n        stripe listen --forward-to https://localhost:7001/api/v1/payments/webhook\n\n4. Copy the `whsec_...` secret printed by `stripe listen` and restart the API:\n\n        dotnet user-secrets set \"Stripe:WebhookSecret\" \"whsec_...\"\n\n5. Trigger the three handled events (they create their own objects, so the API logs\n   \"unknown session\" and answers 200):\n\n        stripe trigger checkout.session.completed\n        stripe trigger checkout.session.expired\n        stripe trigger payment_intent.payment_failed\n\n6. Full flow: `POST /api/v1/campaigns/{id}/donations` (with `Idempotency-Key`), then\n   `POST /api/v1/donations/{id}/checkout`, open `checkoutUrl`, pay with card\n   `4242 4242 4242 4242`, and check `GET /api/v1/donations/{id}/payment-status`.",
+   "filename": "README.StripeSection.md"
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 4 — Idempotency: فلتر للـ API وسجل للأحداث",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**لماذا Action Filter وليس MediatR Pipeline Behavior كما في الفيديو؟** المطلوب هو إرجاع **نفس استجابة HTTP** (الحالة 201 والـ body) — وهذا مفهوم من طبقة الـ API، لا من طبقة Application. الفلتر يرى الـ header والمستخدم والـ `ObjectResult` النهائي مباشرة، ويُطبَّق بـ attribute على الـ endpoint-ين فقط. كما أن الفلتر يعمل **بعد** المصادقة (فالمستخدم معروف) و**بعد** فلتر `[ApiController]` للتحقق التلقائي من النموذج.\n\n**الـ hash** نحسبه على `ActionArguments` بعد الـ binding (مع المسار)، فهو يشمل الـ body والـ route id معًا، ولا يتأثر بالمسافات أو ترتيب حقول JSON."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Domain.Idempotency;\n\npublic sealed class IdempotencyRecord\n{\n    public const int InProgress = 0;\n\n    private IdempotencyRecord() { }   // EF Core\n\n    public string Key { get; private set; } = default!;\n    public Guid UserId { get; private set; }\n    public string RequestHash { get; private set; } = default!;\n    public int ResponseStatusCode { get; private set; }   // 0 = قيد التنفيذ\n    public string? ResponseBody { get; private set; }\n    public DateTime CreatedAt { get; private set; }\n    public DateTime ExpiresAt { get; private set; }\n\n    public static IdempotencyRecord Start(string key, Guid userId, string requestHash, DateTime utcNow, DateTime expiresAt) =>\n        new()\n        {\n            Key = key,\n            UserId = userId,\n            RequestHash = requestHash,\n            ResponseStatusCode = InProgress,\n            CreatedAt = utcNow,\n            ExpiresAt = expiresAt\n        };\n}",
+   "filename": "DonationHub.Domain/Idempotency/IdempotencyRecord.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "internal sealed class IdempotencyRecordConfiguration : IEntityTypeConfiguration<IdempotencyRecord>\n{\n    public void Configure(EntityTypeBuilder<IdempotencyRecord> builder)\n    {\n        builder.ToTable(\"IdempotencyRecords\");\n        builder.HasKey(r => new { r.Key, r.UserId });   // الفهرس الفريد الذي يمنع الطلب المتزامن الثاني\n        builder.Property(r => r.Key).HasMaxLength(100);\n        builder.Property(r => r.RequestHash).HasMaxLength(64).IsRequired();\n        builder.HasIndex(r => r.ExpiresAt);   // لـ job التنظيف\n    }\n}\n\ninternal sealed class ProcessedStripeEventConfiguration : IEntityTypeConfiguration<ProcessedStripeEvent>\n{\n    public void Configure(EntityTypeBuilder<ProcessedStripeEvent> builder)\n    {\n        builder.ToTable(\"ProcessedStripeEvents\");\n        builder.HasKey(e => e.EventId);   // PAY-06: الحدث يُدخل مرة واحدة فقط\n        builder.Property(e => e.EventId).HasMaxLength(255);\n        builder.Property(e => e.Type).HasMaxLength(100).IsRequired();\n    }\n}\n\ninternal sealed class PaymentAttemptConfiguration : IEntityTypeConfiguration<PaymentAttempt>\n{\n    public void Configure(EntityTypeBuilder<PaymentAttempt> builder)\n    {\n        builder.ToTable(\"PaymentAttempts\");\n        builder.HasKey(a => a.Id);\n        builder.Property(a => a.StripeCheckoutSessionId).HasMaxLength(255).IsRequired();\n        builder.Property(a => a.StripePaymentIntentId).HasMaxLength(255);\n        builder.Property(a => a.Amount).HasPrecision(18, 2);\n        builder.Property(a => a.Status).HasConversion<string>().HasMaxLength(20);\n        builder.Property(a => a.FailureCode).HasMaxLength(100);\n\n        builder.HasOne<Donation>().WithMany().HasForeignKey(a => a.DonationId).OnDelete(DeleteBehavior.Restrict);\n        builder.HasIndex(a => a.StripeCheckoutSessionId).IsUnique();\n        builder.HasIndex(a => a.StripePaymentIntentId).HasFilter(\"[StripePaymentIntentId] IS NOT NULL\");\n        builder.HasIndex(a => new { a.DonationId, a.Status });\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Persistence/Configurations/PaymentsConfigurations.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Application.Abstractions;\n\npublic enum IdempotencyOutcome { Started, Replay, Mismatch, InProgress }\n\npublic sealed record IdempotencyBeginResult(IdempotencyOutcome Outcome, int StatusCode = 0, string? Body = null);\n\npublic interface IIdempotencyStore\n{\n    Task<IdempotencyBeginResult> TryBeginAsync(string key, Guid userId, string requestHash,\n        DateTime utcNow, DateTime expiresAt, CancellationToken ct);\n    Task CompleteAsync(string key, Guid userId, int statusCode, string responseBody, CancellationToken ct);\n    Task ReleaseAsync(string key, Guid userId, CancellationToken ct);\n}\n",
+   "filename": "DonationHub.Application/Abstractions/IIdempotencyStore.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Domain.Common;\n\n// تعديل على IdempotencyErrors الموجود من Sprint 2 (لا كلاس جديد): نضيف KeyMissing و RequestInProgress\npublic static class IdempotencyErrors\n{\n    public static readonly Error KeyMissing =\n        new(\"Validation.Failed\", \"The Idempotency-Key header is required.\", ErrorType.Validation);   // 400\n    public static readonly Error KeyReusedWithDifferentRequest =\n        new(\"Idempotency.KeyReusedWithDifferentRequest\", \"This Idempotency-Key was already used with a different request.\",\n            ErrorType.UnprocessableEntity);   // 422\n    public static readonly Error RequestInProgress =\n        new(\"Idempotency.RequestInProgress\", \"A request with this Idempotency-Key is still being processed.\",\n            ErrorType.Conflict);   // 409 — إضافة منا، ليست في كتالوج SRS\n}",
+   "filename": "DonationHub.Domain/Common/ErrorCatalogue.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**المخزن في Infrastructure:** الإدخال يُحفظ فورًا (commit) **قبل** تنفيذ الإجراء. الطلب المتزامن الثاني يصطدم بالـ primary key (أخطاء SQL Server رقم 2627 أو 2601) فيقرأ السجل الموجود ويقرر: replay أو mismatch أو in-progress. نفصل الكيان عن الـ change tracker لأن `AppDbContext` مشترك مع الـ handler — وإلا سيحاول `SaveChanges` التالي إدخاله مرة أخرى:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Domain.Idempotency;\nusing Microsoft.Data.SqlClient;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Infrastructure.Persistence;\n\ninternal sealed class EfIdempotencyStore(AppDbContext db) : IIdempotencyStore\n{\n    public async Task<IdempotencyBeginResult> TryBeginAsync(string key, Guid userId, string requestHash,\n        DateTime utcNow, DateTime expiresAt, CancellationToken ct)\n    {\n        // مفتاح أقدم من 24 ساعة يُعامل كمفتاح جديد\n        await db.IdempotencyRecords\n            .Where(r => r.Key == key && r.UserId == userId && r.ExpiresAt <= utcNow)\n            .ExecuteDeleteAsync(ct);\n\n        var record = IdempotencyRecord.Start(key, userId, requestHash, utcNow, expiresAt);\n        db.IdempotencyRecords.Add(record);\n        try\n        {\n            await db.SaveChangesAsync(ct);\n            return new IdempotencyBeginResult(IdempotencyOutcome.Started);\n        }\n        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2627 or 2601 })\n        {\n            // المفتاح موجود — نحدد نوع التكرار بالأسفل\n        }\n        finally\n        {\n            db.Entry(record).State = EntityState.Detached;\n        }\n\n        var existing = await db.IdempotencyRecords.AsNoTracking()\n            .FirstOrDefaultAsync(r => r.Key == key && r.UserId == userId, ct);\n\n        if (existing is null)\n            return new IdempotencyBeginResult(IdempotencyOutcome.InProgress);   // حُرّر للتو؛ العميل يعيد المحاولة\n        if (existing.RequestHash != requestHash)\n            return new IdempotencyBeginResult(IdempotencyOutcome.Mismatch);\n        if (existing.ResponseStatusCode == IdempotencyRecord.InProgress)\n            return new IdempotencyBeginResult(IdempotencyOutcome.InProgress);\n\n        return new IdempotencyBeginResult(IdempotencyOutcome.Replay, existing.ResponseStatusCode, existing.ResponseBody);\n    }\n\n    public Task CompleteAsync(string key, Guid userId, int statusCode, string responseBody, CancellationToken ct) =>\n        db.IdempotencyRecords\n            .Where(r => r.Key == key && r.UserId == userId)\n            .ExecuteUpdateAsync(s => s\n                .SetProperty(r => r.ResponseStatusCode, statusCode)\n                .SetProperty(r => r.ResponseBody, responseBody), ct);\n\n    public Task ReleaseAsync(string key, Guid userId, CancellationToken ct) =>\n        db.IdempotencyRecords\n            .Where(r => r.Key == key && r.UserId == userId)\n            .ExecuteDeleteAsync(ct);\n}",
+   "filename": "DonationHub.Infrastructure/Persistence/EfIdempotencyStore.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الفلتر في Api:** يرفض غياب المفتاح بـ 400، ويعيد الاستجابة المخزَّنة كما هي، ويخزّن أي استجابة أقل من 500 (خطأ 422 مثلًا يُعاد أيضًا كما هو). عند exception أو 500 نحرّر المفتاح حتى يستطيع العميل إعادة المحاولة فعلًا. التطبيق على الـ endpoint-ين مجرد إضافة `[Idempotent]` بجانب `[EnableRateLimiting(RateLimitPolicies.Donations)]` على action إنشاء التبرع (Sprint 3) وعلى `Checkout`:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Diagnostics;\nusing System.Security.Cryptography;\nusing System.Text;\nusing System.Text.Json;\nusing DonationHub.Api.Controllers;   // ToStatusCode و GetUserId\nusing DonationHub.Application.Abstractions;\nusing DonationHub.Domain.Common;\nusing Microsoft.AspNetCore.Mvc;\nusing Microsoft.AspNetCore.Mvc.Filters;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Api.Idempotency;\n\npublic sealed class IdempotentAttribute : TypeFilterAttribute\n{\n    public IdempotentAttribute() : base(typeof(IdempotencyFilter)) { }\n}\n\ninternal sealed class IdempotencyFilter(\n    IIdempotencyStore store,\n    TimeProvider timeProvider,\n    IOptions<Microsoft.AspNetCore.Mvc.JsonOptions> jsonOptions) : IAsyncActionFilter   // مؤهَّل بالكامل: يوجد JsonOptions آخر في Microsoft.AspNetCore.Http.Json\n{\n    public const string HeaderName = \"Idempotency-Key\";\n    private static readonly TimeSpan Lifetime = TimeSpan.FromHours(24);\n\n    public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)\n    {\n        var http = context.HttpContext;\n        var key = http.Request.Headers[HeaderName].ToString();\n        if (string.IsNullOrWhiteSpace(key) || key.Length > 100)\n        {\n            context.Result = Problem(http, IdempotencyErrors.KeyMissing);\n            return;\n        }\n\n        var userId = http.User.GetUserId();\n        var requestHash = ComputeHash(http.Request.Path, context.ActionArguments);\n        var now = timeProvider.GetUtcNow().UtcDateTime;\n\n        var begin = await store.TryBeginAsync(key, userId, requestHash, now, now.Add(Lifetime), http.RequestAborted);\n        switch (begin.Outcome)\n        {\n            case IdempotencyOutcome.Mismatch:\n                context.Result = Problem(http, IdempotencyErrors.KeyReusedWithDifferentRequest);\n                return;\n            case IdempotencyOutcome.InProgress:\n                context.Result = Problem(http, IdempotencyErrors.RequestInProgress);\n                return;\n            case IdempotencyOutcome.Replay:\n                http.Response.Headers[\"Idempotent-Replayed\"] = \"true\";\n                context.Result = new ContentResult\n                {\n                    StatusCode = begin.StatusCode,\n                    Content = begin.Body,\n                    ContentType = begin.StatusCode >= 400 ? \"application/problem+json\" : \"application/json; charset=utf-8\"\n                };\n                return;\n        }\n\n        var executed = await next();\n\n        if (executed.Exception is null && executed.Result is ObjectResult result)\n        {\n            var status = result.StatusCode ?? StatusCodes.Status200OK;\n            if (status < 500)\n            {\n                var body = JsonSerializer.Serialize(result.Value, result.Value?.GetType() ?? typeof(object),\n                    jsonOptions.Value.JsonSerializerOptions);\n                await store.CompleteAsync(key, userId, status, body, CancellationToken.None);\n                return;\n            }\n        }\n\n        // استثناء أو 5xx: لا نحفظ نتيجة غير مكتملة — نحرّر المفتاح\n        await store.ReleaseAsync(key, userId, CancellationToken.None);\n    }\n\n    private string ComputeHash(PathString path, IDictionary<string, object?> arguments)\n    {\n        var relevant = arguments\n            .Where(a => a.Value is not CancellationToken)\n            .OrderBy(a => a.Key, StringComparer.Ordinal)\n            .ToDictionary(a => a.Key, a => a.Value);\n\n        var json = JsonSerializer.Serialize(new { path = path.Value, args = relevant }, jsonOptions.Value.JsonSerializerOptions);\n        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));\n    }\n\n    // نفس شكل ApiControllerBase.ProblemFrom (Sprint 2) — الفلتر ليس controller فلا يرثه\n    private static ObjectResult Problem(HttpContext http, Error error)\n    {\n        var status = error.Type.ToStatusCode();   // ErrorTypeExtensions من Sprint 2\n\n        var problem = new ProblemDetails { Status = status, Title = error.Message, Type = $\"https://httpstatuses.io/{status}\" };\n        problem.Extensions[\"code\"] = error.Code;\n        problem.Extensions[\"traceId\"] = Activity.Current?.Id ?? http.TraceIdentifier;\n        if (error.Type == ErrorType.Validation)\n            problem.Extensions[\"errors\"] = new Dictionary<string, string[]> { [HeaderName] = [error.Message] };\n\n        return new ObjectResult(problem) { StatusCode = status, ContentTypes = { \"application/problem+json\" } };\n    }\n}",
+   "filename": "DonationHub.Api/Idempotency/IdempotencyFilter.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**إضافة منّا يجب أن تدافع عنها:** الـ SRS والـ brief لا يحددان رد طلب ثانٍ بنفس المفتاح بينما الأول لم ينتهِ؛ اخترنا **409** برمز جديد `Idempotency.RequestInProgress` (ليس في كتالوج SRS، وهكذا تفعل Stripe نفسها)، والشرط الإلزامي — لا تبرع ثانٍ — محقق في الحالتين. البديل — انتظار الأول — يعقّد الكود ويحجز threads. وتذكّر أن الـ replay لا يعيد الـ header `Location` (غير مخزَّن في `IdempotencyRecord`)؛ إن أردته خزّن الـ headers المهمة أيضًا."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "التنظيف: السجلات المنتهية تُحذف عند الطلب في `TryBeginAsync`، لكن أضف job دوريًا بسيطًا حتى لا يكبر الجدول: `RecurringJob.AddOrUpdate<IdempotencyCleanupJob>(\"idempotency-cleanup\", j => j.RunAsync(CancellationToken.None), Cron.Hourly);` وداخله `ExecuteDeleteAsync` على `ExpiresAt <= now`."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الـ Webhook (PAY-06)** مُغطّى بالفعل في المهمة 2: فحص مسبق سريع + primary key على `EventId` كضمان نهائي + حفظ في نفس `SaveChanges`."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 5 — اختبارات التكامل",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الاستراتيجية:** factory واحدة مشتركة لكل الاختبارات (`ICollectionFixture`) تعيد إنشاء قاعدة الاختبار مرة واحدة في البداية، وكل اختبار ينشئ بياناته الخاصة (بريد فريد، حملة جديدة) فلا تتداخل الاختبارات. نستبدل أربعة أشياء فقط: الـ gateway (لا شبكة Stripe)، ومرسل البريد، وطابور الـ jobs (لنتحقق مما أُضيف)، و `IDistributedCache` بنسخة في الذاكرة بدل Redis. وكل خيار عليه `ValidateOnStart` يُضبط بـ `UseSetting` لأن `Testing` لا تحمّل user-secrets ولا ملف Development. **التحقق من التوقيع يبقى حقيقيًا** — وهذا بالضبط ما نريد اختباره."
+  },
+  {
+   "type": "Code",
+   "language": "xml",
+   "code": "<Project Sdk=\"Microsoft.NET.Sdk\">\n\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n    <IsPackable>false</IsPackable>\n  </PropertyGroup>\n\n  <ItemGroup>\n    <PackageReference Include=\"Microsoft.AspNetCore.Mvc.Testing\" Version=\"10.0.0\" />\n    <PackageReference Include=\"Microsoft.NET.Test.Sdk\" Version=\"17.14.1\" />\n    <PackageReference Include=\"xunit\" Version=\"2.9.3\" />\n    <PackageReference Include=\"xunit.runner.visualstudio\" Version=\"3.1.0\" />\n    <PackageReference Include=\"FluentAssertions\" Version=\"[7.0.0]\" />\n  </ItemGroup>\n\n  <ItemGroup>\n    <ProjectReference Include=\"..\\..\\src\\DonationHub.Api\\DonationHub.Api.csproj\" />\n  </ItemGroup>\n\n</Project>",
+   "filename": "tests/DonationHub.Api.IntegrationTests/DonationHub.Api.IntegrationTests.csproj"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "إصدارات `Microsoft.NET.Test.Sdk` و `xunit.runner.visualstudio` أمثلة (استخدم أحدث إصدار مستقر)؛ الثابت المطلوب هو FluentAssertions `[7.0.0]` (آخر إصدار بترخيص مجاني) و Moq `[4.18.4]` إن احتجته. الكود لـ xUnit v2؛ في v3 يعيد `IAsyncLifetime` النوع `ValueTask` بدل `Task`."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Infrastructure.Persistence;\nusing Microsoft.AspNetCore.Hosting;\nusing Microsoft.AspNetCore.Mvc.Testing;\nusing Microsoft.AspNetCore.TestHost;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.Extensions.Caching.Distributed;\nusing Microsoft.Extensions.DependencyInjection;\nusing Microsoft.Extensions.DependencyInjection.Extensions;\n\nnamespace DonationHub.Api.IntegrationTests.Infrastructure;\n\npublic sealed class DonationHubApiFactory : WebApplicationFactory<Program>, IAsyncLifetime\n{\n    public const string WebhookSecret = \"whsec_integration_tests_secret\";\n    public const string AdminEmail = \"admin@tests.local\";\n    public const string AdminPassword = \"Admin#12345\";\n\n    private static readonly string ConnectionString =\n        Environment.GetEnvironmentVariable(\"DONATIONHUB_TEST_SQL\")\n        ?? @\"Server=(localdb)\\MSSQLLocalDB;Database=DonationHub_IntegrationTests;Trusted_Connection=True;TrustServerCertificate=True\";\n\n    public FakeEmailService Emails { get; } = new();\n    public FakeBackgroundJobs Jobs { get; } = new();\n\n    protected override void ConfigureWebHost(IWebHostBuilder builder)\n    {\n        builder.UseEnvironment(\"Testing\");\n\n        builder.UseSetting(\"ConnectionStrings:Default\", ConnectionString);\n        builder.UseSetting(\"Stripe:SecretKey\", \"sk_test_integration_fake\");   // لا يُستخدم: الـ gateway مزيف\n        builder.UseSetting(\"Stripe:WebhookSecret\", WebhookSecret);\n        builder.UseSetting(\"Stripe:Currency\", \"usd\");\n        builder.UseSetting(\"Stripe:SuccessUrl\", \"https://localhost/payment/success\");\n        builder.UseSetting(\"Stripe:CancelUrl\", \"https://localhost/payment/cancel\");\n        builder.UseSetting(\"SeedAdmin:Email\", AdminEmail);\n        builder.UseSetting(\"SeedAdmin:Password\", AdminPassword);\n        builder.UseSetting(\"SeedAdmin:FullName\", \"Test Admin\");\n        builder.UseSetting(\"Jwt:SecretKey\", \"integration-tests-signing-key-with-32-plus-chars\");\n        // خيارات ValidateOnStart من Sprint 3–4 (Testing لا يحمّل user-secrets ولا ملف Development)\n        builder.UseSetting(\"Email:Host\", \"localhost\");   // لا SMTP: الـ jobs والبريد مزيفان\n        builder.UseSetting(\"Email:SenderEmail\", \"no-reply@tests.local\");\n        builder.UseSetting(\"Email:SenderName\", \"DonationHub Tests\");\n        builder.UseSetting(\"HangfireDashboard:Username\", \"tests\");\n        builder.UseSetting(\"HangfireDashboard:Password\", \"integration-tests-pass\");\n        builder.UseSetting(\"ConnectionStrings:Redis\", \"localhost:6379\");   // التسجيل يشترطه فقط؛ الكاش في الذاكرة\n\n        builder.ConfigureTestServices(services =>\n        {\n            services.RemoveAll<IPaymentGateway>();\n            services.AddSingleton<IPaymentGateway, FakePaymentGateway>();\n\n            services.RemoveAll<IEmailService>();\n            services.AddSingleton<IEmailService>(Emails);\n\n            services.RemoveAll<IBackgroundJobScheduler>();\n            services.AddSingleton<IBackgroundJobScheduler>(Jobs);\n\n            services.RemoveAll<IDistributedCache>();   // لا Redis في الاختبارات\n            services.AddDistributedMemoryCache();\n        });\n    }\n\n    // تُنفَّذ قبل أول وصول إلى Services/CreateClient، أي قبل أن يبدأ الـ host ويشغّل الـ seeding\n    public async Task InitializeAsync()\n    {\n        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(ConnectionString).Options;\n        await using var db = new AppDbContext(options);\n        await db.Database.EnsureDeletedAsync();\n        await db.Database.MigrateAsync();   // نفس الـ migrations الحقيقية — لا EnsureCreated\n    }\n\n    Task IAsyncLifetime.DisposeAsync() => Task.CompletedTask;   // نترك القاعدة للفحص؛ تُعاد في التشغيل التالي\n\n    public async Task<T> QueryDbAsync<T>(Func<AppDbContext, Task<T>> query)\n    {\n        using var scope = Services.CreateScope();\n        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();\n        return await query(db);\n    }\n}\n\n[CollectionDefinition(Name)]\npublic sealed class ApiCollection : ICollectionFixture<DonationHubApiFactory>\n{\n    public const string Name = \"api\";\n}",
+   "filename": "tests/DonationHub.Api.IntegrationTests/Infrastructure/DonationHubApiFactory.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**نقاط تحقق في مشروعك:** (1) في .NET 10 يصبح `Program` المولَّد عامًا تلقائيًا؛ في .NET 8/9 أضف `public partial class Program;` في آخر `Program.cs`. (2) إن قرأ `Program.cs` إعدادًا قبل وصول قيم `UseSetting`، استخدم متغيرات البيئة (`ConnectionStrings__Default`). (3) الـ constructor `AppDbContext(DbContextOptions<AppDbContext>)` يجب أن يكون متاحًا. (4) ارفع حدود سياسة `auth` في بيئة `Testing` وإلا ستصل الاختبارات إلى 429."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**توقيع payload محليًا:** نفس الخوارزمية التي يستخدمها Stripe — HMAC-SHA256 على `\"{t}.{payload}\"` بسر الـ webhook كاملًا كمفتاح — فيقبله `EventUtility.ConstructEvent` الحقيقي:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Security.Cryptography;\nusing System.Text;\nusing System.Text.Json;\n\nnamespace DonationHub.Api.IntegrationTests.Infrastructure;\n\npublic static class StripeWebhookSigner\n{\n    public static string Sign(string payload, string secret, DateTimeOffset? signedAt = null)\n    {\n        var timestamp = (signedAt ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds();\n        var hash = HMACSHA256.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes($\"{timestamp}.{payload}\"));\n        return $\"t={timestamp},v1={Convert.ToHexString(hash).ToLowerInvariant()}\";\n    }\n\n    public static string CheckoutSessionCompleted(string eventId, string sessionId, Guid donationId,\n        long amountMinor, string currency = \"usd\") =>\n        JsonSerializer.Serialize(new\n        {\n            id = eventId,\n            @object = \"event\",\n            api_version = \"2025-01-27.acacia\",\n            created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),\n            livemode = false,\n            type = \"checkout.session.completed\",\n            data = new\n            {\n                @object = new\n                {\n                    id = sessionId,\n                    @object = \"checkout.session\",\n                    mode = \"payment\",\n                    status = \"complete\",\n                    payment_status = \"paid\",\n                    client_reference_id = donationId.ToString(),\n                    amount_total = amountMinor,\n                    currency,\n                    payment_intent = $\"pi_test_{Guid.NewGuid():N}\",\n                    metadata = new { donationId = donationId.ToString() }\n                }\n            }\n        });\n}",
+   "filename": "tests/DonationHub.Api.IntegrationTests/Infrastructure/StripeWebhookSigner.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Collections.Concurrent;\nusing DonationHub.Application.Abstractions;\n\nnamespace DonationHub.Api.IntegrationTests.Infrastructure;\n\npublic sealed class FakePaymentGateway : IPaymentGateway\n{\n    public string Currency => \"usd\";\n\n    public Task<CheckoutSessionCreated> CreateCheckoutSessionAsync(CreateCheckoutSessionRequest request, CancellationToken ct)\n    {\n        var sessionId = $\"cs_test_{request.PaymentAttemptId:N}\";\n        return Task.FromResult(new CheckoutSessionCreated(sessionId, $\"https://checkout.stripe.test/c/pay/{sessionId}\"));\n    }\n}\n\npublic sealed class FakeBackgroundJobs : IBackgroundJobScheduler\n{\n    public ConcurrentQueue<Guid> Receipts { get; } = new();\n    public ConcurrentQueue<Guid> GoalReached { get; } = new();\n\n    public void EnqueueDonationReceipt(Guid donationId) => Receipts.Enqueue(donationId);\n    public void EnqueueGoalReachedEmail(Guid campaignId) => GoalReached.Enqueue(campaignId);\n    public void ScheduleStalePendingCheck(Guid donationId) { }   // DON-09 خارج هذه الاختبارات\n}\n\npublic sealed class FakeEmailService : IEmailService   // Sprint 4\n{\n    public ConcurrentQueue<EmailMessage> Sent { get; } = new();\n\n    public Task SendAsync(EmailMessage message, CancellationToken ct = default)\n    {\n        Sent.Enqueue(message);\n        return Task.CompletedTask;\n    }\n}",
+   "filename": "tests/DonationHub.Api.IntegrationTests/Infrastructure/Fakes.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Net.Http.Headers;\nusing System.Net.Http.Json;\nusing System.Text.Json;\n\nnamespace DonationHub.Api.IntegrationTests.Infrastructure;\n\npublic static class ApiTestExtensions\n{\n    public static async Task<string> RegisterAndLoginAsync(this HttpClient client, string email, string password = \"Donor#12345\")\n    {\n        var register = await client.PostAsJsonAsync(\"/api/v1/auth/register\",\n            new { email, password, fullName = \"Test Donor\", preferredLanguage = \"en\" });\n        register.EnsureSuccessStatusCode();\n        return await client.LoginAsync(email, password);\n    }\n\n    public static async Task<string> LoginAsync(this HttpClient client, string email, string password)\n    {\n        var response = await client.PostAsJsonAsync(\"/api/v1/auth/login\", new { email, password });\n        response.EnsureSuccessStatusCode();\n        var body = await response.Content.ReadFromJsonAsync<JsonElement>();\n        return body.GetProperty(\"accessToken\").GetString()!;\n    }\n\n    public static void UseToken(this HttpClient client, string token) =>\n        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(\"Bearer\", token);\n\n    public static async Task<Guid> CreateCampaignAsAdminAsync(this HttpClient admin, decimal goal = 1000m)\n    {\n        var suffix = Guid.NewGuid().ToString(\"N\")[..8];\n        var category = await admin.PostAsJsonAsync(\"/api/v1/categories\",\n            new { nameAr = $\"تصنيف {suffix}\", nameEn = $\"Category {suffix}\", descriptionAr = \"وصف\", descriptionEn = \"Description\" });\n        category.EnsureSuccessStatusCode();\n        var categoryId = (await category.Content.ReadFromJsonAsync<JsonElement>()).GetProperty(\"id\").GetGuid();\n\n        var campaign = await admin.PostAsJsonAsync(\"/api/v1/campaigns\", new\n        {\n            titleAr = $\"حملة {suffix}\", titleEn = $\"Campaign {suffix}\",\n            descriptionAr = \"وصف الحملة\", descriptionEn = \"Campaign description\",\n            goalAmount = goal, endDate = DateTime.UtcNow.AddDays(30), categoryId\n        });\n        campaign.EnsureSuccessStatusCode();\n        return (await campaign.Content.ReadFromJsonAsync<JsonElement>()).GetProperty(\"id\").GetGuid();\n    }\n\n    public static Task<HttpResponseMessage> CreateDonationAsync(this HttpClient donor, Guid campaignId,\n        decimal amount, string? idempotencyKey)\n    {\n        var request = new HttpRequestMessage(HttpMethod.Post, $\"/api/v1/campaigns/{campaignId}/donations\")\n        {\n            Content = JsonContent.Create(new { amount })\n        };\n        if (idempotencyKey is not null)\n            request.Headers.Add(\"Idempotency-Key\", idempotencyKey);\n        return donor.SendAsync(request);\n    }\n\n    public static Task<HttpResponseMessage> CheckoutAsync(this HttpClient donor, Guid donationId)\n    {\n        var request = new HttpRequestMessage(HttpMethod.Post, $\"/api/v1/donations/{donationId}/checkout\");\n        request.Headers.Add(\"Idempotency-Key\", Guid.NewGuid().ToString());\n        return donor.SendAsync(request);\n    }\n\n    public static Task<HttpResponseMessage> PostWebhookAsync(this HttpClient client, string payload, string signature)\n    {\n        var request = new HttpRequestMessage(HttpMethod.Post, \"/api/v1/payments/webhook\")\n        {\n            Content = new StringContent(payload, System.Text.Encoding.UTF8, \"application/json\")\n        };\n        request.Headers.Add(\"Stripe-Signature\", signature);\n        return client.SendAsync(request);\n    }\n}",
+   "filename": "tests/DonationHub.Api.IntegrationTests/Infrastructure/ApiTestExtensions.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Net;\nusing DonationHub.Api.IntegrationTests.Infrastructure;\nusing FluentAssertions;\n\nnamespace DonationHub.Api.IntegrationTests;\n\n[Collection(ApiCollection.Name)]\npublic sealed class AuthTests(DonationHubApiFactory factory)\n{\n    [Fact]   // السيناريو 1\n    public async Task Register_then_login_returns_an_access_token_that_works()\n    {\n        var client = factory.CreateClient();\n        var token = await client.RegisterAndLoginAsync($\"donor-{Guid.NewGuid():N}@tests.local\");\n\n        client.UseToken(token);\n        var me = await client.GetAsync(\"/api/v1/auth/me\");\n\n        token.Should().NotBeNullOrWhiteSpace();\n        me.StatusCode.Should().Be(HttpStatusCode.OK);\n    }\n}",
+   "filename": "tests/DonationHub.Api.IntegrationTests/AuthTests.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Net;\nusing System.Net.Http.Json;\nusing System.Text.Json;\nusing DonationHub.Api.IntegrationTests.Infrastructure;\nusing DonationHub.Domain.Donations;\nusing FluentAssertions;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Api.IntegrationTests;\n\n[Collection(ApiCollection.Name)]\npublic sealed class StripeWebhookTests(DonationHubApiFactory factory)\n{\n    private sealed record Arranged(HttpClient Donor, Guid CampaignId, Guid DonationId, string SessionId);\n\n    // السيناريو 2 + الرحلة الحرجة حتى ما قبل الـ webhook\n    private async Task<Arranged> ArrangePendingDonationAsync(decimal amount)\n    {\n        var admin = factory.CreateClient();\n        admin.UseToken(await admin.LoginAsync(DonationHubApiFactory.AdminEmail, DonationHubApiFactory.AdminPassword));\n        var campaignId = await admin.CreateCampaignAsAdminAsync(goal: 1000m);\n\n        var donor = factory.CreateClient();\n        donor.UseToken(await donor.RegisterAndLoginAsync($\"donor-{Guid.NewGuid():N}@tests.local\"));\n\n        var created = await donor.CreateDonationAsync(campaignId, amount, Guid.NewGuid().ToString());\n        created.StatusCode.Should().Be(HttpStatusCode.Created);\n        var donation = await created.Content.ReadFromJsonAsync<JsonElement>();\n        donation.GetProperty(\"status\").GetString().Should().Be(\"Pending\");\n        var donationId = donation.GetProperty(\"id\").GetGuid();\n\n        var checkout = await donor.CheckoutAsync(donationId);\n        checkout.StatusCode.Should().Be(HttpStatusCode.OK);\n        var sessionId = (await checkout.Content.ReadFromJsonAsync<JsonElement>()).GetProperty(\"sessionId\").GetString()!;\n\n        return new Arranged(donor, campaignId, donationId, sessionId);\n    }\n\n    [Fact]   // السيناريو 3\n    public async Task Signed_checkout_completed_marks_donation_succeeded_and_updates_raised_amount()\n    {\n        var a = await ArrangePendingDonationAsync(25.00m);\n        var payload = StripeWebhookSigner.CheckoutSessionCompleted($\"evt_{Guid.NewGuid():N}\", a.SessionId, a.DonationId, 2500);\n\n        var response = await a.Donor.PostWebhookAsync(payload, StripeWebhookSigner.Sign(payload, DonationHubApiFactory.WebhookSecret));\n\n        response.StatusCode.Should().Be(HttpStatusCode.OK);\n        var donation = await factory.QueryDbAsync(db => db.Donations.AsNoTracking().SingleAsync(d => d.Id == a.DonationId));\n        donation.Status.Should().Be(DonationStatus.Succeeded);\n        donation.ReceiptNumber.Should().MatchRegex(@\"^DN-\\d{4}-\\d{6}$\");\n        var campaign = await factory.QueryDbAsync(db => db.Campaigns.AsNoTracking().SingleAsync(c => c.Id == a.CampaignId));\n        campaign.RaisedAmount.Should().Be(25.00m);\n        factory.Jobs.Receipts.Should().Contain(a.DonationId);   // أُضيف للطابور بعد الـ commit\n    }\n\n    [Fact]   // السيناريو 4\n    public async Task Duplicate_event_is_acknowledged_and_credited_once()\n    {\n        var a = await ArrangePendingDonationAsync(40.00m);\n        var eventId = $\"evt_{Guid.NewGuid():N}\";\n        var payload = StripeWebhookSigner.CheckoutSessionCompleted(eventId, a.SessionId, a.DonationId, 4000);\n        var signature = StripeWebhookSigner.Sign(payload, DonationHubApiFactory.WebhookSecret);\n\n        var first = await a.Donor.PostWebhookAsync(payload, signature);\n        var second = await a.Donor.PostWebhookAsync(payload, signature);\n\n        first.StatusCode.Should().Be(HttpStatusCode.OK);\n        second.StatusCode.Should().Be(HttpStatusCode.OK);\n        var campaign = await factory.QueryDbAsync(db => db.Campaigns.AsNoTracking().SingleAsync(c => c.Id == a.CampaignId));\n        campaign.RaisedAmount.Should().Be(40.00m);\n        var processed = await factory.QueryDbAsync(db => db.ProcessedStripeEvents.CountAsync(e => e.EventId == eventId));\n        processed.Should().Be(1);\n    }\n\n    [Fact]   // السيناريو 5\n    public async Task Invalid_signature_returns_400_and_changes_nothing()\n    {\n        var a = await ArrangePendingDonationAsync(30.00m);\n        var payload = StripeWebhookSigner.CheckoutSessionCompleted($\"evt_{Guid.NewGuid():N}\", a.SessionId, a.DonationId, 3000);\n\n        var response = await a.Donor.PostWebhookAsync(payload, StripeWebhookSigner.Sign(payload, \"whsec_wrong_secret\"));\n\n        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);\n        var problem = await response.Content.ReadFromJsonAsync<JsonElement>();\n        problem.GetProperty(\"code\").GetString().Should().Be(\"Payment.InvalidSignature\");\n        var donation = await factory.QueryDbAsync(db => db.Donations.AsNoTracking().SingleAsync(d => d.Id == a.DonationId));\n        donation.Status.Should().Be(DonationStatus.Pending);\n        var campaign = await factory.QueryDbAsync(db => db.Campaigns.AsNoTracking().SingleAsync(c => c.Id == a.CampaignId));\n        campaign.RaisedAmount.Should().Be(0m);\n    }\n}",
+   "filename": "tests/DonationHub.Api.IntegrationTests/StripeWebhookTests.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Net;\nusing System.Net.Http.Json;\nusing System.Text.Json;\nusing DonationHub.Api.IntegrationTests.Infrastructure;\nusing FluentAssertions;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Api.IntegrationTests;\n\n[Collection(ApiCollection.Name)]\npublic sealed class IdempotencyTests(DonationHubApiFactory factory)\n{\n    private async Task<(HttpClient Donor, Guid CampaignId)> ArrangeAsync()\n    {\n        var admin = factory.CreateClient();\n        admin.UseToken(await admin.LoginAsync(DonationHubApiFactory.AdminEmail, DonationHubApiFactory.AdminPassword));\n        var campaignId = await admin.CreateCampaignAsAdminAsync();\n\n        var donor = factory.CreateClient();\n        donor.UseToken(await donor.RegisterAndLoginAsync($\"donor-{Guid.NewGuid():N}@tests.local\"));\n        return (donor, campaignId);\n    }\n\n    [Fact]   // السيناريو 6\n    public async Task Same_key_and_body_returns_stored_response_without_a_second_donation()\n    {\n        var (donor, campaignId) = await ArrangeAsync();\n        var key = Guid.NewGuid().ToString();\n\n        var first = await donor.CreateDonationAsync(campaignId, 25.00m, key);\n        var replay = await donor.CreateDonationAsync(campaignId, 25.00m, key);\n\n        first.StatusCode.Should().Be(HttpStatusCode.Created);\n        replay.StatusCode.Should().Be(HttpStatusCode.Created);\n        var firstId = (await first.Content.ReadFromJsonAsync<JsonElement>()).GetProperty(\"id\").GetGuid();\n        var replayId = (await replay.Content.ReadFromJsonAsync<JsonElement>()).GetProperty(\"id\").GetGuid();\n        replayId.Should().Be(firstId);\n\n        var count = await factory.QueryDbAsync(db => db.Donations.CountAsync(d => d.CampaignId == campaignId));\n        count.Should().Be(1);\n    }\n\n    [Fact]\n    public async Task Same_key_with_different_body_returns_422()\n    {\n        var (donor, campaignId) = await ArrangeAsync();\n        var key = Guid.NewGuid().ToString();\n\n        await donor.CreateDonationAsync(campaignId, 25.00m, key);\n        var reused = await donor.CreateDonationAsync(campaignId, 50.00m, key);\n\n        reused.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);\n        var problem = await reused.Content.ReadFromJsonAsync<JsonElement>();\n        problem.GetProperty(\"code\").GetString().Should().Be(\"Idempotency.KeyReusedWithDifferentRequest\");\n    }\n\n}",
+   "filename": "tests/DonationHub.Api.IntegrationTests/IdempotencyTests.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**Hangfire في الاختبارات:** `AddHangfireServer` يستطلع قاعدة الاختبار ويشغّل jobs دورية (مثل JOB-04) قد تغيّر البيانات أثناء التشغيل؛ سجّله فقط خارج بيئة `Testing` (`if (!builder.Environment.IsEnvironment(\"Testing\"))`)."
+  },
+  {
+   "type": "Divider"
+  },
+  {
+   "type": "Heading",
+   "text": "أخطاء شائعة تخسّر نقاطًا",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "تحويل التبرع إلى `Succeeded` في endpoint رابط النجاح أو بعد إنشاء الجلسة مباشرة، بدل انتظار الـ webhook.",
+    "استقبال الـ webhook بـ `[FromBody] Event` أو نموذج مخصص — التحقق من التوقيع يصبح مستحيلًا أو يتم على نص معاد تسلسله.",
+    "التقاط فشل التوقيع وإرجاع 200 «حتى لا يعيد Stripe المحاولة» — المطلوب 400، ولا شيء يتغير.",
+    "إرسال المبلغ إلى Stripe بالدولار (`25`) بدل السنتات (`2500`)، أو الحساب بـ `double`.",
+    "عدم التحقق من `amount_total` و `currency` في `checkout.session.completed` (PAY-07).",
+    "حفظ `ProcessedStripeEvent` في `SaveChanges` منفصل عن تغييرات التبرع.",
+    "توليد PDF أو إرسال بريد داخل طلب الـ webhook، أو إضافة الـ job **قبل** الـ commit.",
+    "Idempotency بأسلوب «ابحث ثم نفّذ ثم خزّن» دون فهرس فريد يُدخل قبل التنفيذ — يفشل مع الطلبات المتزامنة.",
+    "ترك endpoint `mark-succeeded` أو أي كود يستدعيه.",
+    "اختبارات تكامل تستخدم EF Core InMemory، أو تستدعي Stripe الحقيقي، أو تحتاج مفتاح `sk_test` حقيقيًا لتنجح.",
+    "`whsec_...` أو `sk_test_...` في `appsettings.Development.json` أو في أي commit سابق."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "أسئلة استعد لها في المراجعة",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "لماذا لا نثق برابط النجاح؟ ماذا يحدث لو أغلق المتبرع المتصفح فور الدفع وقبل إعادة التوجيه؟",
+    "ما الذي يحميه HMAC بالضبط؟ ولماذا يحتوي التوقيع على timestamp؟ (فكّر في replay attacks والـ tolerance)",
+    "وصل نفس الحدث مرتين في نفس الميلي ثانية: اشرح خطوة بخطوة لماذا لا يُحتسب المبلغ مرتين في كودك.",
+    "لماذا يُحفظ `ProcessedStripeEvent` في نفس المعاملة؟ ماذا يحدث في كل ترتيب بديل إذا تعطل الخادم في المنتصف؟",
+    "طلبا إنشاء تبرع متزامنان بنفس `Idempotency-Key`: أين بالضبط يفشل الثاني؟ وماذا يرى العميل؟",
+    "لماذا 422 عند إعادة استخدام المفتاح بـ body مختلف وليس 409؟ ولماذا المفتاح فريد لكل مستخدم؟",
+    "لماذا نُرجع 200 عند عدم تطابق المبلغ بدل 500؟ ومتى نريد أن يعيد Stripe المحاولة فعلًا؟",
+    "دفعة وصلت لحملة منتهية: لماذا نقبلها؟ وما المخاطرة لو رفضناها؟",
+    "ما الذي تختبره اختبارات التكامل ولا تستطيع اختبارات الوحدة اختباره؟ ولماذا ليس InMemory؟",
+    "ماذا يحدث لو توقف الخادم بعد الـ commit وقبل `Enqueue` الإيصال؟ وكيف تعالجه (Outbox)؟"
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "تلميحات للمهام الإضافية",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**DON-13 / PAY-11 (استرجاع Admin):** أضف `RefundAsync(paymentIntentId, idempotencyKey)` إلى `IPaymentGateway` يستدعي `RefundService`، ثم في الـ domain دالة `Donation.MarkRefunded(campaign, utcNow)` تطرح المبلغ من `RaisedAmount` وتنقل الحالة إلى `Refunded` (قيمة الـ enum الإضافية). قرّر ووثّق: هل تعود حملة `Completed` إلى `Active` إن نزل المبلغ تحت الهدف؟ (القاعدة 8 تقول إن الحالة النهائية لا تتغير)."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "public async Task RefundAsync(string paymentIntentId, string idempotencyKey, CancellationToken ct)\n{\n    var service = new RefundService(stripeClient);\n    await service.CreateAsync(\n        new RefundCreateOptions { PaymentIntent = paymentIntentId },\n        new RequestOptions { IdempotencyKey = idempotencyKey },\n        ct);\n}",
+   "filename": "DonationHub.Infrastructure/Payments/StripePaymentGateway.Refund.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**PAY-12 (`charge.refunded`):** أضف حالة في الـ verifier لـ `EventTypes.ChargeRefunded` حيث `Data.Object` من نوع `Charge` (استخدم `charge.PaymentIntentId` و `charge.AmountRefunded`)، ثم اربطه بالمحاولة عبر `StripePaymentIntentId`. اجعل المعالجة idempotent مع الاسترجاع من لوحة الـ Admin: من يصل أولًا يغيّر الحالة، والثاني يجد التبرع `Refunded` فلا يطرح المبلغ مرة ثانية."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**Testcontainers:** استبدل سلسلة الاتصال الثابتة بحاوية تبدأ في `InitializeAsync` (الحزمة `Testcontainers.MsSql`). ابنِ الحاوية بـ `new MsSqlBuilder().WithImage(\"mcr.microsoft.com/mssql/server:2022-latest\").Build()`، وفي `InitializeAsync` نفّذ `await _sql.StartAsync()` ثم خزّن `_sql.GetConnectionString()` وطبّق الـ migrations عليها، وفي `DisposeAsync` احذف الحاوية. لأن `ConfigureWebHost` يُستدعى بعد `InitializeAsync`، تكون سلسلة الاتصال جاهزة."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**IDN-13 (اكتشاف إعادة استخدام الـ Refresh Token):** نفس تلميح Sprint 1 — رمز **ملغى** (وليس منتهيًا) وصل مرة أخرى يعني سرقة محتملة: تتبّع سلسلة `ReplacedByTokenId` وألغِ كل الرموز النشطة في العائلة، ثم أرجِع `Auth.RefreshTokenInvalid` (401). أضف له اختبار تكامل: refresh مرتين بنفس الرمز ← الثاني 401، والرمز الجديد الناتج عن الأول أصبح ملغى أيضًا."
+  },
+  {
+   "type": "Callout",
+   "variant": "Success",
+   "markdown": "لو حلّك يحقق نفس **المبادئ** — الـ webhook الموقَّع هو المصدر الوحيد للحقيقة، والمبالغ بالوحدات الصغرى ومن الخادم، وكل حدث يُعالَج مرة واحدة في معاملة واحدة، والطلبات المكررة لا تُنشئ كيانات مكررة حتى تحت التزامن، واختبارات تثبت ذلك على SQL Server حقيقي — فأنت بنيت نظام دفع يمكن الوثوق به، حتى لو اختلفت التفاصيل."
+  }
+ ]
+}

@@ -1,0 +1,54 @@
+{
+ "criteria": [
+  {
+   "title": "المعمارية النظيفة وتنظيم الحل",
+   "description": "الحل بصيغة .slnx (أو .sln على SDK أقدم) ويحتوي أربعة مشاريع (Domain وApplication وInfrastructure وApi) والاعتماد بينها في اتجاه واحد صحيح. Domain بدون أي PackageReference. طبقة Application منظّمة في مجلدات حسب الميزة (Vertical Slices) وليس حسب النوع التقني. كل طبقة لها دالة تسجيل DI خاصة بها (AddApplicationServices وAddInfrastructureServices) تُستدعى من Program.cs. الحل يُبنى بدون أخطاء (dotnet build).",
+   "maxPoints": 10
+  },
+  {
+   "title": "نموذج المجال الغني والقواعد الثابتة",
+   "description": "الكيانات الثمانية والـ Enums الثلاثة موجودة بأسماء الحقول المطلوبة (المعرّفات Guid والأوقات UTC). الـ setters خاصة، والإنشاء والتعديل يتمّان عبر Factory Methods ودوال الكيان. الكلاس الأساسي ValueObject يقارن بالقيمة، ومعه Value Object واحد على الأقل مثل Money. القواعد العشر في SRS §4.5 كلها ممثّلة في الـ Domain: داخل الكيانات، والقاعدة 10 كدالة على الكيان (مثل Category.EnsureCanBeDeleted) تستقبل نتيجة الاستعلام من الـ handler، والقاعدة 9 عبر ISoftDeletable والحذف الناعم. لا يوجد DateTime.UtcNow داخل الـ Domain؛ الوقت يُمرَّر كمعامل.",
+   "maxPoints": 12
+  },
+  {
+   "title": "طبقة البيانات: EF Core وFluent API وMigrations",
+   "description": "يوجد AppDbContext، وكل كيان له كلاس IEntityTypeConfiguration مستقل يُسجَّل عبر ApplyConfigurationsFromAssembly، ولا تُستخدم Data Annotations للـ mapping. العلاقات صحيحة (Category ← Campaigns مع Restrict، وCampaign ← Donations، وUser ← Campaigns وDonations)، ودقة الحقول المالية مضبوطة، والفهارس مناسبة. RowVersion مضبوط كـ concurrency token على Campaign. الـ Migration الأولى موجودة في المستودع وتُطبَّق بنجاح على SQL Server.",
+   "maxPoints": 10
+  },
+  {
+   "title": "Generic Repository وUnit of Work وفصل القراءة عن الكتابة",
+   "description": "الواجهتان IGenericRepository<T> وIUnitOfWork معرّفتان في Application ومطبّقتان في Infrastructure. عمليات الكتابة تمر عبر الـ Repository والـ UoW، وتُحفظ بـ SaveChangesAsync واحد لكل عملية. استعلامات القراءة تستخدم AsNoTracking وتعمل projection مباشرة إلى DTO. الفلترة تتم على IQueryable داخل قاعدة البيانات وليس في الذاكرة.",
+   "maxPoints": 6
+  },
+  {
+   "title": "الحذف الناعم وفلاتر الاستعلام",
+   "description": "الواجهة ISoftDeletable موجودة، وSoftDeleteInterceptor يحوّل حالة Deleted إلى IsDeleted = true مع تسجيل DeletedAtUtc. الـ interceptor مسجّل على الـ DbContext. الفلتر HasQueryFilter يستبعد السجلات المحذوفة، ويُستخدم IgnoreQueryFilters فقط حيث يلزم (مثل التحقق من وجود حملات قبل حذف تصنيف).",
+   "maxPoints": 6
+  },
+  {
+   "title": "Options Pattern وحماية الأسرار",
+   "description": "الكلاسات JwtOptions وSeedAdminOptions وDonationOptions موجودة بقيمها الافتراضية المطلوبة، وعليها Data Annotations، ومسجّلة مع ValidateOnStart. التطبيق يتوقف فورًا عند بدء التشغيل إذا نقص إعداد مطلوب أو كان غير صالح. الخدمات تقرأ الإعدادات عبر IOptions<T> وليس IConfiguration مباشرة. appsettings.json يحتوي placeholders فقط، ولا يوجد أي سر (مفتاح JWT، كلمات مرور، connection string حقيقي) في المستودع أو في تاريخ Git.",
+   "maxPoints": 8
+  },
+  {
+   "title": "الهوية والمصادقة: JWT وتدوير Refresh Token",
+   "description": "المتطلبات IDN-01 إلى IDN-12 تعمل: التسجيل بدور Donor، وسياسة كلمة المرور، ورفض البريد المكرر بدون حساسية لحالة الأحرف (Auth.EmailAlreadyExists — 409)، والدخول بـ Access Token عمره 15 دقيقة (قابل للضبط) يحتوي الـ claims المطلوبة. الـ Refresh Token يُخزَّن hash فقط، ويُلغى القديم ويُربط بالجديد عند كل تجديد، ولا يمكن إعادة استخدامه؛ الرمز غير الصالح أو المنتهي أو الملغى يُرجع Auth.RefreshTokenInvalid (401). تسجيل الخروج يلغي الرمز، وGET /auth/me يعمل، والمستخدم المعطَّل يُمنع من الدخول والتجديد (Auth.AccountDeactivated — 403). رسالة الخطأ موحّدة (Auth.InvalidCredentials) سواء كان البريد أو كلمة المرور خطأ. Admin البذر يُنشأ من الإعدادات (مع الأدوار الثلاثة)، ومستخدما التجربة (Campaign Manager وDonor) يُنشآن في بيئة التطوير فقط ببيانات من user-secrets، وPOST /admin/staff يعمل للـ Admin فقط. الـ endpoints المحمية تُرجع 401 بدون توكن.",
+   "maxPoints": 14
+  },
+  {
+   "title": "وحدة التصنيفات",
+   "description": "المتطلبات CAT-01 إلى CAT-04 تعمل: الإنشاء والتعديل والحذف للـ Admin فقط، والعرض متاح بدون تسجيل دخول. الاسم مطلوب بالعربي والإنجليزي، بحد أقصى 100 حرف، وفريد في كل لغة. حذف تصنيف مرتبط بحملات يُرجع 409 Category.HasCampaigns، والتصنيف غير الموجود يُرجع 404 Category.NotFound. الـ API كله (التصنيفات والهوية) يُرجع DTOs وليس الكيانات، والـ Controller رفيع بلا منطق عمل. بيانات التطوير تحتوي خمسة تصنيفات ثنائية اللغة.",
+   "maxPoints": 8
+  },
+  {
+   "title": "توثيق الـ API والـ README والتسليم",
+   "description": "Scalar (أو Swagger على .NET 8) يعمل ويدعم إدخال Bearer Token لتجربة الـ endpoints المحمية. الـ README يشرح المتطلبات وأوامر الـ Migrations وضبط الأسرار عبر dotnet user-secrets وطريقة التجربة، ويحتوي قسم Design decisions يبرّر فصل القراءة عن الكتابة. الـ tag باسم sprint-1 موجود ويشير إلى آخر commit، وأي تصحيح يكون على tag باسم sprint-1-fix دون تحريك الأصلي.",
+   "maxPoints": 6
+  },
+  {
+   "title": "شرح القرارات المعمارية والمقايضات",
+   "description": "قدرة الطالب في المراجعة على شرح سبب قراراته وبدائلها والمقايضات (trade-offs) بين كل قرار وبدائله، مثل: لماذا تمر الكتابة عبر Repository والقراءة لا، والفرق بين Entity وValue Object، ولماذا يُخزَّن الـ Refresh Token كـ hash، وأعمار الخدمات في DI، ولماذا يُمنع Task.Run حول استعلامات EF Core. تُقيَّم الإجابة بمدى الفهم وليس بالحفظ.",
+   "maxPoints": 20
+  }
+ ]
+}

@@ -1,0 +1,1222 @@
+{
+ "title": "Sprint 4 — Hangfire و MailKit و QuestPDF وأمان الملفات و Serilog",
+ "summary": "أخرج العمليات الثقيلة من الطلب: Hangfire وإيصالات QuestPDF وبريد MailKit ورفع ملفات آمن و Serilog.",
+ "isGraded": true,
+ "basePoints": 100,
+ "lateMultiplier": 0.4,
+ "allowedSubmissionTypes": [
+  "Link"
+ ],
+ "allowResubmission": true,
+ "briefBlocks": [
+  {
+   "type": "Heading",
+   "text": "Sprint 4 — Hangfire و MailKit و QuestPDF وأمان الملفات و Serilog",
+   "level": 1
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "نكمل بناء **DonationHub** — منصّة إدارة التبرعات والتمويل الجماعي. بعد أن أصبح لدينا في Sprint 3 مسار نجاح التبرع داخل transaction واحدة، حان الوقت لإخراج كل عمل **ثقيل أو بطيء** من مسار طلب HTTP: توليد إيصالات PDF، وإرسال البريد، والمهام الدورية والمؤجَّلة. وفي نفس السبرنت نؤمّن رفع صور الحملات ونضبط تسجيلًا منظّمًا (Structured Logging) يشمل الطلبات والـ background jobs."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "- **المدة:** 15 يومًا (من 07/12/2026 إلى 21/12/2026)\n- **Stand-up 1 (اليوم 5):** 11/12/2026 — يقودها **Mohamed Atef**\n- **Stand-up 2 (اليوم 10):** 16/12/2026 — تقودها **Asma ELhadidy**\n- **الختام وآخر موعد للتسليم (اليوم 15):** 21/12/2026 — يقودها **Kareem Zein**\n- **المراجعة والتصحيح (الأيام 16–18):** من 22/12/2026 إلى 24/12/2026\n- **التقييم:** 100 نقطة"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**الإطار المستهدف:** .NET 10 (`net10.0`) بصيغة الحل `.slnx`، ومتوافق بالكامل مع .NET 8 و .NET 9."
+  },
+  {
+   "type": "Heading",
+   "text": "🎯 هدف السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "أزِل العمليات الثقيلة والمعطِّلة من مسار طلب HTTP. عندما يكتمل تبرع، انقل توليد الإيصال وإشعارات البريد إلى عمّال في الخلفية باستخدام **Hangfire**. ولّد إيصالات PDF احترافية باستخدام **QuestPDF**، وأرسل رسائل بريد المعاملات (Transactional Emails) عبر **MailKit** مع اختبارها محليًا على حاوية **Mailpit**، وافرض الأمان على رفع ملفات الحملات عبر **التحقق من الـ Magic Bytes**، وجدوِل مهام صيانة مؤجَّلة ودورية، واضبط تسجيلًا منظّمًا باستخدام **Serilog** (Console + ملف دوّار؛ و **Seq** وجهة إضافية اختيارية BONUS)."
+  },
+  {
+   "type": "Code",
+   "language": "text",
+   "code": "HTTP Donation Completed (success flow transaction)\n           ↓\nTransaction Commits\n           ↓\nEnqueue Hangfire Job (Fire-and-Forget) — only AFTER the commit\n           ↓\nImmediate HTTP 200 OK Returned to Client\n           ↓ (Background Worker)\nGenerate PDF Receipt via QuestPDF\n           ↓\nSend Email with Attachment via MailKit (Captured in Mailpit)",
+   "filename": "sprint-4-flow.txt"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "لاحظ الترتيب: الـ job **لا يُضاف إلا بعد** نجاح الـ commit، والعميل يستلم `200 OK` فورًا بدون انتظار PDF أو SMTP."
+  },
+  {
+   "type": "Heading",
+   "text": "📌 المتطلبات المسبقة",
+   "level": 2
+  },
+  {
+   "type": "Heading",
+   "text": "اختبار SMTP محليًا عبر Mailpit في Docker",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "*لاختبار إرسال البريد محليًا بدون تسريب رسائل الاختبار إلى صناديق بريد حقيقية، شغّل حاوية Mailpit محلية:*"
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "docker run -d --name mailpit -p 8025:8025 -p 1025:1025 axllent/mailpit",
+   "filename": "mailpit-run.sh"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "- خادم SMTP يعمل على `localhost:1025` (بدون TLS في بيئة التطوير).\n- لوحة الويب متاحة على `http://localhost:8025` لفحص الرسائل كما ستظهر للمستلم، ومعها المرفقات."
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "# لاحقًا: تشغيل الحاوية الموجودة بدل إنشاء واحدة جديدة\ndocker start mailpit\ndocker ps --filter name=mailpit",
+   "filename": "mailpit-start.sh"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "Mailpit يلتقط **كل** الرسائل مهما كان عنوان المستلم، لذلك يمكنك استخدام عناوين بريد وهمية لحسابات البذر (seed) بأمان."
+  },
+  {
+   "type": "Heading",
+   "text": "📋 القرارات الهندسية والتراخيص",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| الحزمة / الأداة | الترخيص / الإعداد | ملاحظات وقواعد |\n|---|---|---|\n| **QuestPDF** | Community License | `QuestPDF.Settings.License = LicenseType.Community;` داخل `Program.cs`. مجاني للأفراد والشركات الصغيرة والتعليم والمشاريع مفتوحة المصدر. |\n| **Hangfire** | LGPL v3 Free Core | استخدم `Hangfire.Core` و `Hangfire.AspNetCore` و `Hangfire.SqlServer`. تجنّب إضافات Pro التجارية المدفوعة. |\n| **Mailpit** | MIT | الحاوية `axllent/mailpit` لاعتراض البريد محليًا بدون أي مخاطرة. |\n| **Serilog** | Apache 2.0 | الوجهات الأساسية (CORE): Console + ملف دوّار. تسجيل منظّم مُثرى بـ `traceId` ومعرّف المستخدم (عند تسجيل الدخول). |\n| **Seq** *(BONUS)* | نسخة مطوّر مجانية | وجهة Serilog إضافية اختيارية. ليست مطلوبة في الـ CORE. |\n| **الأسرار** | User secrets / متغيرات البيئة | بيانات دخول SMTP وبيانات `HangfireDashboardOptions` **لا تُرفع أبدًا** داخل `appsettings*.json`. |"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**الأسرار خارج Git دائمًا:** بيانات SMTP واسم المستخدم وكلمة المرور الخاصة بلوحة Hangfire تُقرأ من `dotnet user-secrets` في التطوير ومن متغيرات البيئة في غيره. لو رُفعت مرة واحدة تبقى في تاريخ المستودع حتى لو حذفتها لاحقًا."
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "Hangfire يُنشئ جداوله تلقائيًا في نفس قاعدة SQL Server تحت schema منفصل اسمه `HangFire`؛ هذه الجداول **ليست** جزءًا من EF Core Migrations الخاصة بك."
+  },
+  {
+   "type": "Heading",
+   "text": "🛠️ مهام السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "كل المهام التالية **أساسية (CORE)** ما لم يُذكر أنها BONUS."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "الروابط المعلَّمة بـ 📘 من كورس [.NET Web API Zero to Hero](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) المجاني (مقالات .NET 10 مع كود كامل). أمثلته تستخدم **PostgreSQL** و **Minimal APIs** — طبّق نفس الأفكار على **SQL Server** و **Controllers رفيعة** كما في مشروعنا، والتزم بإصدارات الحزم المثبّتة في المشروع."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 1 — بنية Hangfire التحتية ولوحة تحكم محمية",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "طبّق تنسيق الـ background jobs حسب SRS §5.8:"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "اضبط Hangfire بتخزين دائم على SQL Server: `UseSqlServerStorage`.",
+    "سجّل خادم Hangfire في `Program.cs`: `builder.Services.AddHangfireServer()`.",
+    "**JOB-05 (لوحة تحكم محمية):** احمِ endpoint لوحة Hangfire `/hangfire` ولا تتركها مفتوحة للعامة.",
+    "المتصفح لا يستطيع إرسال JWT، لذلك استخدم **basic authentication** ببيانات دخول مربوطة من `HangfireDashboardOptions` (مُتحقَّق منها بـ `ValidateOnStart()`، وقيمها من user secrets / متغيرات البيئة). سياسة ASP.NET Core تشترط دور `Admin` بديل مقبول أيضًا.",
+    "**إعادة المحاولة (NTF-04):** كل job يُعاد تلقائيًا **3 مرات على الأقل** (مثلًا `[AutomaticRetry(Attempts = 3)]` أو فلتر عام global filter)، وكل فشل يُسجَّل بمستوى `Error`."
+   ]
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "الإعداد الافتراضي للوحة Hangfire يسمح فقط بالطلبات المحلية (`LocalRequestsOnlyAuthorizationFilter`)، وهذا **ليس حماية حقيقية**: خلف reverse proxy أو داخل Docker قد تبدو كل الطلبات «محلية». اكتب فلتر تفويض خاصًا بك (basic auth)، أو استخدم البديل المقبول: سياسة تشترط دور `Admin`."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "basic authentication ترسل بيانات الدخول مشفّرة بـ Base64 فقط (ليست تشفيرًا حقيقيًا)، لذلك استخدمها دائمًا عبر **HTTPS**."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/hnK1qn6ZjKo",
+   "title": "⭐1 1. Prepare Your Project — Mohamed El-Helaly [Arabic] (10:42)"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/uqWRHmPm30E",
+   "title": "⭐2 2. Enqueue Jobs — El-Helaly (06:07)"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/_3C9BVwwM80",
+   "title": "⭐3 3. Scheduled Jobs — El-Helaly (04:28)"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/GjsJrMtNES0",
+   "title": "⭐4 4. Recurring Jobs — El-Helaly (06:19)"
+  },
+  {
+   "type": "Resource",
+   "title": "⭐5 Hangfire Dashboard Authorization Documentation",
+   "url": "https://docs.hangfire.io/en/latest/configuration/using-dashboard.html",
+   "kind": "doc",
+   "description": "التوثيق الرسمي لإعداد لوحة Hangfire وكتابة `IDashboardAuthorizationFilter`."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Hangfire in .NET Core (Complete Guide with Dashboard Auth at 15:09) — Coding Droplets (16:17)",
+   "url": "https://youtu.be/lsP5ZjcFtMM",
+   "kind": "video",
+   "description": "دليل شامل بديل؛ حماية اللوحة عند الدقيقة 15:09."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 2 — خدمة بريد المعاملات عبر MailKit و Mailpit",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "طبّق وحدة الإشعارات حسب SRS §5.6:"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**NTF-01:** عرّف `IEmailService` في `DonationHub.Application` وطبّقه في `DonationHub.Infrastructure` باستخدام **MailKit** و **MimeKit**، مع إعدادات SMTP من `EmailOptions` (Host, Port, SenderEmail, SenderName؛ وبيانات الدخول من user secrets / متغيرات البيئة).",
+    "**NTF-02:** أرسل الإيصال بالبريد إلى المتبرع بعد نجاح التبرع، مع إرفاق إيصال PDF (يرسله JOB-01).",
+    "**NTF-03:** راسل منشئ الحملة عندما تصل الحملة إلى هدفها (يرسله JOB-02).",
+    "**NTF-04:** البريد يُرسل **فقط من Hangfire jobs، وأبدًا داخل طلب HTTP**. الـ job الفاشل يُعاد (3 محاولات على الأقل) ويُسجَّل الفشل.",
+    "**NTF-05:** نص البريد بلغة المستلم `PreferredLanguage` (`ar` أو `en`). الرسائل العربية تُعرض من اليمين لليسار (`<html dir=\"rtl\" lang=\"ar\">`).",
+    "**NTF-06:** في بيئة Development يذهب البريد إلى حاوية Mailpit المحلية (`localhost:1025`)؛ ولا يُرسل أي بريد حقيقي.",
+    "أرسل رسائل بتنسيق HTML مع مرفقات اختيارية."
+   ]
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "`IEmailService` واجهة صغيرة لا تعرف شيئًا عن MailKit: الـ Application يعرف «أرسل رسالة»، والـ Infrastructure يعرف «كيف». هذا يسهّل الاختبار ويسمح بتغيير مزوّد البريد لاحقًا بدون لمس منطق العمل."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/J23_c3uSyD0",
+   "title": "⭐1 Sending Emails With .NET Core Part 1 — Mohamed El-Helaly [Arabic] (10:33)"
+  },
+  {
+   "type": "Resource",
+   "title": "⭐2 Mailpit Docker Documentation",
+   "url": "https://mailpit.axllent.org/docs/install/docker/",
+   "kind": "doc",
+   "description": "التوثيق الرسمي لتشغيل Mailpit داخل Docker (المنافذ والخيارات)."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Send Emails with MailKit — tutorialsEU",
+   "url": "https://youtu.be/lCHKwyekbT4",
+   "kind": "video",
+   "description": "شرح بديل لإرسال البريد باستخدام MailKit."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Easy Email Verification in .NET: FluentEmail + Papercut — Milan Jovanović",
+   "url": "https://youtu.be/KtCjH-1iCIk",
+   "kind": "video",
+   "description": "مفهوم خادم SMTP المحلي من 04:50 إلى 06:45؛ يستخدم Papercut وليس Mailpit."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 3 — توليد إيصال PDF ديناميكي عبر QuestPDF",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "طبّق توليد إيصال المتبرع حسب SRS §5.7 (FIL-06, FIL-07):"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "اضبط QuestPDF بترخيص Community: `QuestPDF.Settings.License = LicenseType.Community;`.",
+    "**FIL-06:** ولّد إيصال PDF لكل تبرع ناجح **داخل Hangfire job** (أبدًا داخل الطلب).",
+    "يُولَّد الإيصال كـ byte array / stream ويُخزَّن عبر `IFileStorage` حتى يمكن تحميله لاحقًا.",
+    "**FIL-07:** `GET /donations/{id}/receipt` يحمّل ملف PDF (`application/pdf`)، **لصاحب التبرع أو الـ Admin فقط**. تبرع مستخدم آخر يُرجع 404."
+   ]
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "يحتوي الإيصال، **بلغة المتبرع `PreferredLanguage`**، على:\n\n- رقم الإيصال (`DN-{year}-{6-digit sequence}`، يُولَّد في مسار النجاح) وتاريخ المعاملة.\n- عنوان الحملة (بلغة المتبرع) والتصنيف.\n- اسم المتبرع. *(BONUS فقط، إذا طبّقت DON-11: اعرض \"Anonymous Donor\" عندما `IsAnonymous = true`.)*\n- المبلغ منسّقًا مع العملة.\n- ترويسة وتذييل يوضّحان توثيق المنظمة."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// Program.cs — قبل توليد أي مستند\nQuestPDF.Settings.License = LicenseType.Community;",
+   "filename": "Program.QuestPdfLicense.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| Method | Path | الصلاحية |\n|---|---|---|\n| `GET` | `/donations/{id}/receipt` | Owner, Admin |"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "إيصالات PDF تحتوي بيانات شخصية: **لا تخزّنها في مجلد يُقدَّم للعامة** (مثل `wwwroot`). التحميل يمر فقط عبر الـ endpoint المحمي الذي يتحقق من الملكية."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "النص العربي في PDF يحتاج خطًّا يدعم الحروف العربية، والصفحة تحتاج اتجاهًا من اليمين لليسار. جرّب إيصالًا عربيًا مبكرًا ولا تنتظر آخر يوم."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/T89A_7dz1P8",
+   "title": "⭐ QuestPDF - The BEST PDF Generator for .NET — Claudio Bernasconi (12:07)"
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Generate PDF Invoice in ASP.NET Core — M Alvin Maulana",
+   "url": "https://youtu.be/eiry9Zli5Rc",
+   "kind": "video",
+   "description": "مثال بديل لتوليد فاتورة PDF داخل ASP.NET Core."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 QuestPDF Official Invoice Tutorial",
+   "url": "https://www.questpdf.com/quick-start.html",
+   "kind": "doc",
+   "description": "الدليل الرسمي السريع لـ QuestPDF ببناء فاتورة كاملة خطوة بخطوة."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 4 — رفع ملفات آمن والتحقق بالـ Magic Bytes",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "طبّق رفع صور (banner) الحملات حسب SRS §5.7:"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**FIL-01:** ارفع صورة الحملة عبر `IFormFile` (`multipart/form-data`). مسموح فقط لـ **Admin أو صاحب الحملة** (Campaign Manager). الأنواع المسموحة: JPG, PNG, WEBP. الحجم الأقصى **2 MB**، قابل للتعديل عبر `FileStorageOptions`.",
+    "**FIL-02 — قاعدة أمان ثابتة (Magic Bytes):** لا تعتمد على امتداد الملف أو ترويسة `ContentType` القادمة من العميل (يسهل تزويرهما). افحص أول البايتات الخام للملف (التوقيع / Magic Bytes) للتأكد أنه JPEG أو PNG أو WebP حقيقي.",
+    "**FIL-03:** خزّن الملفات عبر تجريد `IFileStorage` (معرّف في Application، وتطبيق على القرص المحلي في Infrastructure). احفظ الملف باسم عشوائي مولَّد (`Guid`)، وأبدًا باسم الملف القادم من المستخدم.",
+    "**FIL-04:** استبدال الصورة يحذف الملف القديم. الحذف الناعم للحملة يُبقي الملف (التنظيف النهائي غير مطلوب).",
+    "**FIL-05:** الصورة تُقدَّم للعامة عبر رابط يُرجع داخل استجابة الحملة (مثلًا `bannerUrl`).",
+    "**الأخطاء:** نوع خاطئ أو فشل فحص التوقيع ← `File.InvalidType` (400)؛ ملف يتجاوز الحد ← `File.TooLarge` (413)."
+   ]
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| Method | Path | الصلاحية |\n|---|---|---|\n| `POST` | `/campaigns/{id}/banner` | Admin، أو Campaign Manager صاحب الحملة (multipart/form-data) |\n| `DELETE` | `/campaigns/{id}/banner` | Admin، أو Campaign Manager صاحب الحملة |"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**تواقيع الملفات المطلوبة (للمرجع):**\n\n| النوع | أول البايتات (Hex) |\n|---|---|\n| JPEG | `FF D8 FF` |\n| PNG | `89 50 4E 47 0D 0A 1A 0A` |\n| WebP | `52 49 46 46` (\"RIFF\") ثم 4 بايتات للحجم ثم `57 45 42 50` (\"WEBP\") |"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "اختبار القبول الحاسم: أعد تسمية ملف `.exe` إلى `.jpg` وارفعه — يجب أن يُرفض بـ `File.InvalidType` (400). ملف `.exe` يبدأ بالبايتين `4D 5A` (\"MZ\")."
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "طبّق قاعدة الملكية بنفس أسلوب Sprint 3: Campaign Manager يحاول تعديل صورة حملة لا يملكها يحصل على 404 (لا نكشف وجود موارد الآخرين)."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/mh0ZTXfSdBI",
+   "title": "⭐1 Upload Files With Fake Extensions Part 1 — Mohamed El-Helaly [Arabic] (09:38)"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/08Ke6nhNWK8",
+   "title": "⭐2 Upload Files Part 2 — Mohamed El-Helaly [Arabic] (11:10)"
+  },
+  {
+   "type": "Resource",
+   "title": "⭐3 Microsoft Learn — File signature validation (Magic Bytes)",
+   "url": "https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads",
+   "kind": "doc",
+   "description": "دليل Microsoft الرسمي لرفع الملفات في ASP.NET Core، وفيه قسم التحقق من توقيع الملف واعتبارات الأمان."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Design a File Upload Service — Milan Jovanović",
+   "url": "https://youtu.be/ka_WCmNdybE",
+   "kind": "video",
+   "description": "تصميم خدمة رفع ملفات خلف تجريد قابل للاستبدال."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 5 — المهام غير المتزامنة: معالجة التبرعات والحملات المنتهية",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "طبّق الـ jobs حسب SRS §5.8 ومسار النجاح في SRS §5.5:"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**الإضافة بعد الـ commit:** الـ jobs تُضاف **فقط بعد نجاح commit لـ transaction مسار النجاح**، وأبدًا داخل الـ transaction.",
+    "الـ stub المؤقت `POST /admin/donations/{id}/mark-succeeded` (Admin, DON-06) ما زال موجودًا في هذا السبرنت ويشغّل نفس المسار.",
+    "**JOB-01 (Fire-and-forget) — إرسال إيصال التبرع:** بعد نجاح التبرع؛ الـ job يجلب التبرع، يولّد إيصال PDF (FIL-06)، ويرسله بالبريد للمتبرع (NTF-02).",
+    "**JOB-02 (Fire-and-forget) — بريد الوصول للهدف:** إذا أصبحت الحملة `Completed` للتو، أضف job يراسل منشئ الحملة (NTF-03).",
+    "**JOB-03 (Delayed) — إفشال التبرع المعلّق القديم (DON-09):** عند إنشاء تبرع (`POST /campaigns/{campaignId}/donations`) جدوِل `BackgroundJob.Schedule(...)` ليعمل بعد `DonationOptions.PendingTimeoutMinutes` (الافتراضي **30 دقيقة**). إذا كان التبرع ما زال `Pending` يصبح `Failed`؛ وإلا فالـ job لا يفعل شيئًا.",
+    "**JOB-04 (Recurring، كل ساعة):** سجّل **Recurring Job** يعمل كل ساعة (`Cron.Hourly()` / `0 * * * *`) يحوّل كل الحملات `Active` التي تجاوزت `EndDate` إلى `Expired`.",
+    "**Idempotency:** الـ jobs يجب أن تكون idempotent — تشغيل الـ job مرتين لا يرسل بريدين ولا يغيّر الحالة مرتين (مثلًا افحص علامة `ReceiptSentAt` / `GoalEmailSentAt` أو الحالة الحالية قبل التنفيذ).",
+    "**أفضل ممارسة في Hangfire:** مرّر معرّفات الكيانات فقط (`Guid`/`int`) كوسائط للـ job، وأبدًا كيانات كاملة أو نسخ `DbContext`.",
+    "مبالغ التبرع ما زالت تُتحقَّق مقابل `DonationOptions` (الحد الأدنى 1.00، الأقصى 10,000.00)."
+   ]
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "مثال الإضافة المطلوب لـ JOB-01 (كما في المواصفات):"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "BackgroundJob.Enqueue<IDonationNotificationService>(s => s.SendReceiptAsync(donationId));",
+   "filename": "Enqueue.Example.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| ID | الـ Job | النوع | السلوك |\n|---|---|---|---|\n| JOB-01 | إرسال إيصال التبرع | Fire-and-forget | يولّد PDF ثم يرسله بالبريد |\n| JOB-02 | بريد الوصول للهدف | Fire-and-forget | إلى منشئ الحملة |\n| JOB-03 | إفشال التبرع المعلّق القديم | Delayed | يُجدوَل عند إنشاء التبرع، يعمل بعد مهلة الانتظار، ويُفشل التبرع إن كان ما زال `Pending` |\n| JOB-04 | إنهاء الحملات | Recurring (كل ساعة) | الحملات `Active` التي تجاوزت `EndDate` تصبح `Expired` |\n| JOB-05 | لوحة Hangfire | — | مفعّلة ومحمية (غير مفتوحة للعامة) |"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**لماذا بعد الـ commit؟** لو أضفت الـ job قبل الـ commit ثم فشلت الـ transaction، سيرسل العامل إيصالًا لتبرع لم ينجح أصلًا. ولو التقط العامل الـ job قبل أن ينتهي الـ commit قد لا يجد البيانات الجديدة."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "اسأل نفسك عن كل job: «ماذا يحدث لو شُغّل مرتين؟» و «ماذا لو فشل في منتصفه ثم أُعيد؟». هذا بالضبط نوع الأسئلة في جزء الشرح من التقييم."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 6 — التسجيل المنظّم باستخدام Serilog (و Seq اختياري)",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "طبّق التسجيل حسب SRS §6.10:"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "استبدل الـ logger الافتراضي بـ Serilog (`Serilog.AspNetCore`).",
+    "**الوجهات الأساسية (CORE):** Console و **ملف دوّار** (rolling file) (مثلًا `logs/donationhub-.log` يدور يوميًا). *وجهة **Seq** (محلية أو في حاوية) هي BONUS.*",
+    "فعّل middleware تسجيل الطلبات (`UseSerilogRequestLogging`) ليلتقط status code والمدة.",
+    "أثرِ كل سطر log بمعرّف الترابط (`traceId`) وبمعرّف المستخدم عند تسجيل الدخول.",
+    "استخدم قوالب رسائل منظّمة (`\"Donation {DonationId} succeeded\"`)، وليس دمج النصوص.",
+    "مستويات الـ log: `Information` لأحداث العمل، `Warning` للحالات الشاذة القابلة للتعافي (مثل دفعة متأخرة)، `Error` للفشل (بما فيه محاولات الـ jobs الفاشلة).",
+    "لا تسجّل الأسرار أبدًا: كلمات المرور، JWT / refresh tokens، بيانات SMTP، أو بيانات البطاقات."
+   ]
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "الفرق بين `$\"Donation {id} succeeded\"` و `\"Donation {DonationId} succeeded\"` جوهري: الأول نص مسطّح، والثاني يحفظ `DonationId` كخاصية مستقلة يمكنك البحث والفلترة بها لاحقًا."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/BwcsVcLgFLw",
+   "title": "⭐ .NET Logging Using Seq — Bishoy Youssef [Arabic] (20:26)"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "مفاهيم Serilog في الفيديو تنطبق على الـ CORE؛ أما جزء Seq فهو للوجهة الإضافية BONUS."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Structured Logging With Serilog — Milan Jovanović",
+   "url": "https://youtu.be/nVAkSBpsuTk",
+   "kind": "video",
+   "description": "شرح بديل للتسجيل المنظّم مع Serilog."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 63. Serilog in Clean Architecture — Coding-Future",
+   "url": "https://youtu.be/4Sf156KA4N0",
+   "kind": "video",
+   "description": "دمج Serilog داخل مشروع Clean Architecture."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 Structured Logging with Serilog in ASP.NET Core — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/structured-logging-with-serilog-in-aspnet-core/",
+   "kind": "article",
+   "description": "مرجع مكتوب مجاني مع كود .NET 10 كامل."
+  },
+  {
+   "type": "Divider"
+  },
+  {
+   "type": "Heading",
+   "text": "📦 مخرجات السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "Hangfire مدمج مع تخزين دائم على SQL Server ولوحة تحكم محمية بـ basic auth (JOB-05).",
+    "خدمة بريد MailKit تتواصل مع خادم Mailpit SMTP المحلي، ومترجمة حسب `PreferredLanguage` مع عربية من اليمين لليسار (NTF-01..06).",
+    "إيصال QuestPDF يُولَّد داخل job ويمكن تحميله عبر `GET /donations/{id}/receipt` (FIL-06, FIL-07).",
+    "endpoints رفع وحذف صورة الحملة مع تحقق Magic Bytes و `IFileStorage` وأسماء عشوائية ورابط عام (FIL-01..05).",
+    "بريد الإيصال وبريد الوصول للهدف منقولان إلى Hangfire ويُضافان بعد الـ commit (JOB-01, JOB-02).",
+    "job مؤجَّل للتبرعات المعلّقة القديمة (JOB-03 / DON-09) و job دوري كل ساعة لإنهاء الحملات (JOB-04).",
+    "تسجيل Serilog منظّم (Console + ملف دوّار) يلتقط طلبات HTTP وتنفيذ الـ background jobs."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "✅ تعريف الإنجاز (Definition of Done)",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "استجابة HTTP للتبرع سريعة (<100ms) لأن عمل PDF والبريد يوضع في طابور غير متزامن.",
+    "الرسائل المرسلة مع إيصالات PDF المرفقة تظهر في لوحة Mailpit (`http://localhost:8025`).",
+    "لوحة Hangfire (`/hangfire`) لا يمكن الوصول إليها بدون تسجيل دخول.",
+    "إعادة تسمية ملف `.exe` إلى `.jpg` ورفعه يُرفض بـ `File.InvalidType` (400)؛ والملف الذي يتجاوز الحد يُرجع `File.TooLarge` (413).",
+    "لا يعمل أي بريد أو PDF داخل طلب HTTP.",
+    "الـ jobs idempotent: تشغيل نفس الـ job مرتين يرسل بريدًا واحدًا بالضبط ويغيّر الحالة مرة واحدة.",
+    "الـ logs في الـ Console والملف الدوّار تُظهر خصائص منظّمة (`traceId`، معرّف المستخدم، حالة الطلب ومدته).",
+    "فشل الـ background jobs يُعاد 3 مرات على الأقل وكل فشل يُسجَّل.",
+    "Unit tests تغطي السلوك الجديد (مثل التحقق من توقيع الملف، منطق job التبرع المعلّق، و idempotency الـ jobs).",
+    "الـ tag `sprint-4` موجود ويشير إلى آخر commit.",
+    "`README.md` محدَّث للسبرنت (ما أُضيف، كيف تجرّبه، والقرارات).",
+    "لا أسرار في تاريخ المستودع (بيانات SMTP ولوحة Hangfire في user secrets / متغيرات البيئة)."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "⭐ مهام إضافية (BONUS)",
+   "level": 2
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "اختيارية — تُحتسب فقط بعد اجتياز **كل** المهام الأساسية (CORE)."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**NTF-07:** بريد ترحيب بعد التسجيل.",
+    "**NTF-08:** راسل منشئ الحملة عندما تنتهي الحملة بدون الوصول لهدفها.",
+    "**FIL-08:** الـ Admin يصدّر التبرعات إلى ملف CSV.",
+    "**FIL-09:** تغيير حجم الصور أو توليد صور مصغّرة (thumbnails).",
+    "**JOB-06:** بريد ملخّص يومي للـ Admin.",
+    "**Seq sink:** أضف Seq كوجهة Serilog إضافية (راجع مصادر المهمة 6).",
+    "**DON-11 على الإيصالات:** إذا طبّقت علامة التبرع المجهول، اعرض \"Anonymous Donor\" في العروض العامة وعلى الإيصال."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "📤 التسليم",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "سلّم رابط المستودع على **tawjeh.net** قبل **الساعة 23:59 يوم 21/12/2026** (اليوم 15). اعمل commit لآخر عمل، ثم ضع tag على الـ commit النهائي وارفعه:"
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "git tag sprint-4\ngit push origin sprint-4",
+   "filename": "submit-tag.sh"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "التصحيحات مسموحة خلال نافذة المراجعة (**22/12/2026 إلى 24/12/2026**). **لا تحرّك** الـ tag `sprint-4` ولا تعمل له force-push؛ ضع tag جديد `sprint-4-fix` على الـ commit المصحَّح وارفعه: `git tag sprint-4-fix && git push origin sprint-4-fix`."
+  },
+  {
+   "type": "Heading",
+   "text": "🧮 التقييم (100 نقطة)",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| الجزء | النقاط | الطريقة |\n|---|---|---|\n| تلقائي | 40 | البناء ينجح، الاختبارات تنجح، الـ tag `sprint-4` موجود، والـ endpoints الأساسية تستجيب كما يحدد عقد الـ API (سكربت فحص يشغّله المنتور). |\n| قائمة التحقق | 40 | بنود «تعريف الإنجاز» أعلاه (الهيكل، القواعد، الأمان، README). |\n| الشرح | 20 | أسئلة قصيرة لشرح قراراتك (مثلًا: «ماذا يحدث لو شُغّل هذا الـ job مرتين؟»). |\n\nالمهام الإضافية تمنح نقاطًا زائدة محدودة فقط بعد اجتياز كل المهام الأساسية."
+  },
+  {
+   "type": "Heading",
+   "text": "💡 إثراء بعد السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Resource",
+   "title": "Transactional Outbox Pattern with Hangfire — Milan Jovanović",
+   "url": "https://youtu.be/gytZxzT2IWY",
+   "kind": "video",
+   "description": "كيف تضمن عدم ضياع الـ job إذا فشلت إضافته بعد الـ commit."
+  },
+  {
+   "type": "Resource",
+   "title": "Automatic Logging via MediatR Pipeline Behaviors",
+   "url": "https://youtu.be/JVX9MMpO6pE",
+   "kind": "video",
+   "description": "تسجيل تلقائي لكل command/query عبر pipeline behavior."
+  },
+  {
+   "type": "Resource",
+   "title": "TickerQ: Modern Background Job Queue in .NET",
+   "url": "https://youtu.be/x0dfj95Cj0U",
+   "kind": "video",
+   "description": "بديل حديث لـ Hangfire للمقارنة."
+  },
+  {
+   "type": "Resource",
+   "title": "Zero-Allocation File Streaming in ASP.NET Core — Raw Coding",
+   "url": "https://youtu.be/l69kUe1fNSc",
+   "kind": "video",
+   "description": "بث الملفات الكبيرة بدون تحميلها كاملة في الذاكرة."
+  },
+  {
+   "type": "Resource",
+   "title": "Logging Crash Course in .NET",
+   "url": "https://youtu.be/XrCxy0SNRqM",
+   "kind": "video",
+   "description": "مراجعة سريعة شاملة لنظام الـ logging في .NET."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 IHostedService vs BackgroundService in .NET — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/ihostedservice-vs-backgroundservice-dotnet/",
+   "kind": "article",
+   "description": "ما الذي يمنحك إياه Hangfire مقارنة بـ hosted service عادي."
+  }
+ ],
+ "solutionBlocks": [
+  {
+   "type": "Heading",
+   "text": "الحل النموذجي — Sprint 4",
+   "level": 1
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "هذا حل مرجعي يكمل نفس قاعدة الكود من السبرنتات السابقة (`Entity`، `Campaign`، `Donation`، `Result`، `IUnitOfWork`، `IReadDbContext`...). الفكرة المحورية في هذا السبرنت: **طلب HTTP يغيّر الحالة ويحفظها فقط، وكل عمل بطيء أو قابل للفشل (PDF، SMTP، صيانة) يحدث في الخلفية**، مع jobs تتحمّل إعادة التشغيل بدون آثار جانبية مكرّرة."
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "لتقليل الطول، بعض الكلاسات معروضة كمقتطفات (مثل `CreateDonationCommandHandler` من Sprint 3، وأجزاء Sprints 1–3 في `Program.cs`). الأسماء المشتركة تتبع تعريفات Sprint 2–3: `Result`/`Result<T>` و `Error` في `DonationHub.Domain.Common` (مع `Result<T>.Success(value)` و `Result<T>.Failure(error)` والتحويلات الضمنية)، و `ApiControllerBase.ProblemFrom(error)` و `FromResult(...)`، و `ICurrentUser` و `ICampaignAuthorizer` و `ICacheService`، و `IReceiptNumberGenerator.NextAsync(utcNow, ct)`، و `DonationOptions` في `Application/Common/Options`. إن اختلفت الأسماء في مشروعك فطابِقها. الأجزاء المهمة لهذا السبرنت (الفلاتر، الـ jobs، التخزين، التحقق من التوقيع، QuestPDF، MailKit، Serilog) معروضة كاملة."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 1 — Hangfire: التخزين، إعادة المحاولة، وحماية اللوحة",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "نستخدم نفس قاعدة SQL Server لتخزين Hangfire حتى لا نضيف بنية تحتية جديدة؛ الـ jobs تبقى محفوظة حتى لو أُعيد تشغيل التطبيق (على عكس `Task.Run` أو طابور في الذاكرة). الحزم المجانية فقط:"
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "dotnet add src/DonationHub.Infrastructure package Hangfire.Core\ndotnet add src/DonationHub.Infrastructure package Hangfire.AspNetCore\ndotnet add src/DonationHub.Infrastructure package Hangfire.SqlServer\ndotnet add src/DonationHub.Infrastructure package MailKit\ndotnet add src/DonationHub.Infrastructure package QuestPDF\ndotnet add src/DonationHub.Api package Serilog.AspNetCore\ndotnet add tests/DonationHub.UnitTests package Microsoft.Extensions.TimeProvider.Testing",
+   "filename": "sprint4-packages.sh"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الإعدادات الجديدة تتبع نفس نمط Sprint 1: Data Annotations + `ValidateOnStart()` حتى يفشل التطبيق فورًا إذا نقصت كلمة مرور اللوحة أو عنوان المرسل. `FileStorageOptions` يوضع في Application لأن handler الرفع يحتاج الحد الأقصى للحجم:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.ComponentModel.DataAnnotations;\n\nnamespace DonationHub.Infrastructure.Options;\n\npublic sealed class EmailOptions\n{\n    public const string SectionName = \"Email\";\n\n    [Required] public string Host { get; init; } = string.Empty;\n    [Range(1, 65535)] public int Port { get; init; } = 1025;\n    [Required, EmailAddress] public string SenderEmail { get; init; } = string.Empty;\n    [Required] public string SenderName { get; init; } = string.Empty;\n    public bool UseStartTls { get; init; }          // false مع Mailpit\n    public string? Username { get; init; }          // user-secrets / env فقط\n    public string? Password { get; init; }\n}\n\npublic sealed class HangfireDashboardOptions\n{\n    public const string SectionName = \"HangfireDashboard\";\n\n    [Required] public string Username { get; init; } = string.Empty;\n    [Required, MinLength(12)] public string Password { get; init; } = string.Empty;\n}",
+   "filename": "DonationHub.Infrastructure/Options/Sprint4Options.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.ComponentModel.DataAnnotations;\n\nnamespace DonationHub.Application.Common.Files;\n\npublic sealed class FileStorageOptions\n{\n    public const string SectionName = \"FileStorage\";\n\n    [Required] public string RootPath { get; init; } = \"storage\";                 // خارج wwwroot\n    [Range(1, 20_971_520)] public int MaxBannerSizeBytes { get; init; } = 2 * 1024 * 1024;\n    [Required] public string PublicBannersPath { get; init; } = \"/files/banners\";\n}\n\npublic static class FileFolders\n{\n    public const string Banners = \"banners\";     // عام (static files)\n    public const string Receipts = \"receipts\";   // خاص — عبر endpoint محمي فقط\n}",
+   "filename": "DonationHub.Application/Common/Files/FileStorageOptions.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "تسجيل كل خدمات السبرنت في امتداد واحد داخل Infrastructure. لاحظ أن إعادة المحاولة وتسجيل الفشل **فلاتر عامة** تنطبق على كل job، بدل الاعتماد على تذكّر وضع attribute على كل دالة:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Files;\nusing DonationHub.Infrastructure.Email;\nusing DonationHub.Infrastructure.Files;\nusing DonationHub.Infrastructure.Jobs;\nusing DonationHub.Infrastructure.Options;\nusing DonationHub.Infrastructure.Receipts;\nusing Hangfire;\nusing Microsoft.Extensions.Configuration;\nusing Microsoft.Extensions.DependencyInjection;\nusing Microsoft.Extensions.Logging;\n\nnamespace DonationHub.Infrastructure;\n\npublic static class Sprint4ServiceRegistration\n{\n    public static IServiceCollection AddNotificationsFilesAndJobs(\n        this IServiceCollection services, IConfiguration configuration)\n    {\n        services.AddOptions<EmailOptions>()\n            .BindConfiguration(EmailOptions.SectionName)\n            .ValidateDataAnnotations()\n            .ValidateOnStart();\n\n        services.AddOptions<FileStorageOptions>()\n            .BindConfiguration(FileStorageOptions.SectionName)\n            .ValidateDataAnnotations()\n            .ValidateOnStart();\n\n        services.AddOptions<HangfireDashboardOptions>()\n            .BindConfiguration(HangfireDashboardOptions.SectionName)\n            .ValidateDataAnnotations()\n            .ValidateOnStart();\n\n        var connectionString = configuration.GetConnectionString(\"Default\")\n            ?? throw new InvalidOperationException(\"ConnectionStrings:Default is missing.\");\n\n        services.AddHangfire((sp, config) => config\n            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)\n            .UseSimpleAssemblyNameTypeSerializer()\n            .UseRecommendedSerializerSettings()\n            .UseSqlServerStorage(connectionString)\n            .UseFilter(new AutomaticRetryAttribute { Attempts = 3 })                       // NTF-04\n            .UseFilter(new JobFailureLoggingFilter(sp.GetRequiredService<ILoggerFactory>())));\n\n        services.AddHangfireServer();\n\n        services.AddScoped<IEmailService, MailKitEmailService>();\n        services.AddSingleton<IReceiptPdfGenerator, QuestPdfReceiptGenerator>();\n        services.AddSingleton<IFileStorage, LocalFileStorage>();\n        services.AddScoped<IBackgroundJobScheduler, HangfireJobScheduler>();\n        services.AddScoped<IDonationNotificationService, DonationNotificationService>();\n        services.AddScoped<DonationMaintenanceJobs>();\n        services.AddScoped<ExpireCampaignsJob>();\n\n        return services;\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Sprint4ServiceRegistration.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "Hangfire يضيف افتراضيًا فلتر `AutomaticRetry` عامًا بـ 10 محاولات. إضافة `AutomaticRetryAttribute { Attempts = 3 }` كفلتر عام (وهو النمط الموثّق في Hangfire) تجعل الإعداد الأخير هو الفعّال لأن الفلتر لا يقبل التكرار. **تحقّق بنفسك:** اجعل job يرمي استثناءً وراقب في اللوحة أنه يُجدوَل لإعادة المحاولة 3 مرات ثم ينتقل إلى `Failed`."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "فلتر الخادم يسجّل بداية ونهاية كل job، وكل محاولة فاشلة بمستوى `Error` — فيتحقق شرط «كل فشل يُسجَّل» مرة واحدة لكل الـ jobs الحالية والمستقبلية:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using Hangfire.Server;\nusing Microsoft.Extensions.Logging;\n\nnamespace DonationHub.Infrastructure.Jobs;\n\npublic sealed class JobFailureLoggingFilter(ILoggerFactory loggerFactory) : IServerFilter\n{\n    private readonly ILogger _logger = loggerFactory.CreateLogger(\"DonationHub.Jobs\");\n\n    public void OnPerforming(PerformingContext context) =>\n        _logger.LogInformation(\"Job {JobId} ({JobName}) started\",\n            context.BackgroundJob.Id, JobName(context));\n\n    public void OnPerformed(PerformedContext context)\n    {\n        if (context.Exception is null)\n        {\n            _logger.LogInformation(\"Job {JobId} ({JobName}) succeeded\",\n                context.BackgroundJob.Id, JobName(context));\n            return;\n        }\n\n        // كل محاولة فاشلة = Error. AutomaticRetry يقرر بعدها إعادة الجدولة أو Failed.\n        _logger.LogError(context.Exception, \"Job {JobId} ({JobName}) failed\",\n            context.BackgroundJob.Id, JobName(context));\n    }\n\n    private static string JobName(PerformContext context) =>\n        $\"{context.BackgroundJob.Job.Type.Name}.{context.BackgroundJob.Job.Method.Name}\";\n}",
+   "filename": "DonationHub.Infrastructure/Jobs/JobFailureLoggingFilter.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**حماية اللوحة (JOB-05):** المتصفح لا يرسل JWT عند فتح `/hangfire`، لذلك نستخدم basic auth. الفلتر يُرجع `false` مع ترويسة `WWW-Authenticate` فيُظهر المتصفح نافذة تسجيل الدخول (Hangfire يضع 401 بنفسه). المقارنة تتم على hash ثابت الطول بـ `FixedTimeEquals` لتجنّب هجمات التوقيت:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Net.Http.Headers;\nusing System.Security.Cryptography;\nusing System.Text;\nusing DonationHub.Infrastructure.Options;\nusing Hangfire.Dashboard;\n\nnamespace DonationHub.Api.Infrastructure;\n\npublic sealed class BasicAuthDashboardFilter(HangfireDashboardOptions options) : IDashboardAuthorizationFilter\n{\n    public bool Authorize(DashboardContext context)\n    {\n        var http = context.GetHttpContext();\n        var header = http.Request.Headers.Authorization.ToString();\n\n        if (AuthenticationHeaderValue.TryParse(header, out var auth)\n            && string.Equals(auth.Scheme, \"Basic\", StringComparison.OrdinalIgnoreCase)\n            && auth.Parameter is not null\n            && CredentialsMatch(auth.Parameter))\n        {\n            return true;\n        }\n\n        http.Response.Headers.WWWAuthenticate = \"Basic realm=\\\"DonationHub Jobs\\\"\";\n        return false;\n    }\n\n    private bool CredentialsMatch(string encoded)\n    {\n        string decoded;\n        try\n        {\n            decoded = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));\n        }\n        catch (FormatException)\n        {\n            return false;\n        }\n\n        var separator = decoded.IndexOf(':');\n        if (separator < 0)\n            return false;\n\n        // & وليس && حتى نقارن الاثنين دائمًا (زمن ثابت)\n        return SecureEquals(decoded[..separator], options.Username)\n             & SecureEquals(decoded[(separator + 1)..], options.Password);\n    }\n\n    private static bool SecureEquals(string actual, string expected) =>\n        CryptographicOperations.FixedTimeEquals(\n            SHA256.HashData(Encoding.UTF8.GetBytes(actual)),\n            SHA256.HashData(Encoding.UTF8.GetBytes(expected)));\n}",
+   "filename": "DonationHub.Api/Infrastructure/BasicAuthDashboardFilter.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// Program.cs — بعد UseAuthentication/UseAuthorization\nvar dashboardOptions = app.Services.GetRequiredService<IOptions<HangfireDashboardOptions>>().Value;\n\napp.UseHangfireDashboard(\"/hangfire\", new DashboardOptions\n{\n    Authorization = [new BasicAuthDashboardFilter(dashboardOptions)],\n    DashboardTitle = \"DonationHub Jobs\",\n    DisplayStorageConnectionString = false\n});",
+   "filename": "DonationHub.Api/Program.Dashboard.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "تمرير `Authorization` **يستبدل** الفلتر الافتراضي `LocalRequestsOnlyAuthorizationFilter` — وهذا ما نريده. لكن لا تنسَ أن basic auth بدون HTTPS ترسل كلمة المرور شبه مكشوفة؛ أبقِ `UseHttpsRedirection()` مفعّلًا."
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "cd src/DonationHub.Api\ndotnet user-secrets set \"HangfireDashboard:Username\" \"jobs-admin\"\ndotnet user-secrets set \"HangfireDashboard:Password\" \"<long random password>\"\n# في الإنتاج: HangfireDashboard__Username و HangfireDashboard__Password كمتغيرات بيئة",
+   "filename": "hangfire-secrets.sh"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**البديل المقبول:** سياسة تشترط دور `Admin`. لكن لاحظ أنها تحتاج مصادقة يفهمها المتصفح (cookie)؛ مع JWT فقط سيظهر 401 دائمًا للمتصفح. لهذا basic auth هي الأبسط لمشروع API خالص."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 2 — IEmailService مع MailKit و Mailpit",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الـ Application يعرّف عقدًا صغيرًا لا يعرف MailKit. نمرّر المرفقات كـ `byte[]` لأن الإيصال صغير (بضعة KB)، وهذا يجعل الرسالة سهلة الاختبار:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Application.Abstractions;\n\npublic sealed record EmailAttachment(string FileName, byte[] Content, string ContentType);\n\npublic sealed record EmailMessage(\n    string ToEmail,\n    string ToName,\n    string Subject,\n    string HtmlBody,\n    IReadOnlyList<EmailAttachment> Attachments);\n\npublic interface IEmailService\n{\n    Task SendAsync(EmailMessage message, CancellationToken ct = default);\n}",
+   "filename": "DonationHub.Application/Abstractions/IEmailService.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Infrastructure.Options;\nusing MailKit.Security;\nusing Microsoft.Extensions.Logging;\nusing Microsoft.Extensions.Options;\nusing MimeKit;\n\nnamespace DonationHub.Infrastructure.Email;\n\npublic sealed class MailKitEmailService(\n    IOptions<EmailOptions> options,\n    ILogger<MailKitEmailService> logger) : IEmailService\n{\n    public async Task SendAsync(EmailMessage message, CancellationToken ct = default)\n    {\n        var settings = options.Value;\n\n        var mime = new MimeMessage();\n        mime.From.Add(new MailboxAddress(settings.SenderName, settings.SenderEmail));\n        mime.To.Add(new MailboxAddress(message.ToName, message.ToEmail));\n        mime.Subject = message.Subject;\n\n        var body = new BodyBuilder { HtmlBody = message.HtmlBody };\n        foreach (var attachment in message.Attachments)\n            body.Attachments.Add(attachment.FileName, attachment.Content, ContentType.Parse(attachment.ContentType));\n        mime.Body = body.ToMessageBody();\n\n        using var smtp = new MailKit.Net.Smtp.SmtpClient();\n        var security = settings.UseStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.None;\n        await smtp.ConnectAsync(settings.Host, settings.Port, security, ct);\n\n        if (!string.IsNullOrWhiteSpace(settings.Username))\n            await smtp.AuthenticateAsync(settings.Username, settings.Password, ct);\n\n        await smtp.SendAsync(mime, ct);\n        await smtp.DisconnectAsync(true, ct);\n\n        // لا نسجّل العنوان الكامل ولا بيانات SMTP — الموضوع وعدد المرفقات يكفيان للتتبع\n        logger.LogInformation(\"Email \\\"{Subject}\\\" sent with {AttachmentCount} attachment(s)\",\n            message.Subject, message.Attachments.Count);\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Email/MailKitEmailService.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "لا تلتقط الاستثناء داخل `SendAsync` وتبتلعه! إذا فشل SMTP يجب أن **يصل الاستثناء إلى Hangfire** حتى يُعاد الـ job ويُسجَّل الفشل. ابتلاع الخطأ يعني أن الـ job «ينجح» والمتبرع لا يستلم شيئًا."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**NTF-05:** القوالب حسب `PreferredLanguage`، والعربية بـ `dir=\"rtl\"`. نستخدم `ar-EG` للتنسيق (تقويم ميلادي) ونرمّز كل قيمة يُدخلها المستخدم بـ `HtmlEncode` لمنع حقن HTML في البريد:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Globalization;\nusing System.Net;\n\nnamespace DonationHub.Infrastructure.Email;\n\npublic sealed record EmailContent(string Subject, string HtmlBody);\n\npublic static class EmailTemplates\n{\n    public static EmailContent DonationReceipt(string language, string donorName, string campaignTitle,\n        string receiptNumber, decimal amount, string currency)\n    {\n        var ar = IsArabic(language);\n        var money = FormatMoney(amount, currency, ar);\n\n        return ar\n            ? new EmailContent($\"إيصال تبرعك رقم {receiptNumber}\", Layout(ar,\n                $\"<p>مرحبًا {E(donorName)}،</p><p>شكرًا لتبرعك بمبلغ <strong>{money}</strong> لحملة «{E(campaignTitle)}». تجد الإيصال مرفقًا بهذه الرسالة.</p>\"))\n            : new EmailContent($\"Your donation receipt {receiptNumber}\", Layout(ar,\n                $\"<p>Hello {E(donorName)},</p><p>Thank you for donating <strong>{money}</strong> to \\\"{E(campaignTitle)}\\\". Your receipt is attached.</p>\"));\n    }\n\n    public static EmailContent GoalReached(string language, string ownerName, string campaignTitle,\n        decimal goalAmount, string currency)\n    {\n        var ar = IsArabic(language);\n        var money = FormatMoney(goalAmount, currency, ar);\n\n        return ar\n            ? new EmailContent(\"🎉 حملتك وصلت إلى هدفها\", Layout(ar,\n                $\"<p>مرحبًا {E(ownerName)}،</p><p>حملة «{E(campaignTitle)}» وصلت إلى هدفها ({money}). شكرًا لك!</p>\"))\n            : new EmailContent(\"🎉 Your campaign reached its goal\", Layout(ar,\n                $\"<p>Hello {E(ownerName)},</p><p>\\\"{E(campaignTitle)}\\\" reached its goal of {money}. Thank you!</p>\"));\n    }\n\n    private static string Layout(bool ar, string content)\n    {\n        var dir = ar ? \"rtl\" : \"ltr\";\n        var lang = ar ? \"ar\" : \"en\";\n        var align = ar ? \"right\" : \"left\";\n\n        return $\"\"\"\n            <!DOCTYPE html>\n            <html dir=\"{dir}\" lang=\"{lang}\">\n            <head><meta charset=\"utf-8\"></head>\n            <body style=\"font-family: Tahoma, Arial, sans-serif; text-align: {align};\">\n            {content}\n            <hr><p style=\"color:#888;font-size:12px\">DonationHub</p>\n            </body>\n            </html>\n            \"\"\";\n    }\n\n    private static bool IsArabic(string language) =>\n        string.Equals(language, \"ar\", StringComparison.OrdinalIgnoreCase);\n\n    private static string FormatMoney(decimal amount, string currency, bool ar) =>\n        $\"{amount.ToString(\"N2\", CultureInfo.GetCultureInfo(ar ? \"ar-EG\" : \"en-US\"))} {currency}\";\n\n    private static string E(string value) => WebUtility.HtmlEncode(value);\n}",
+   "filename": "DonationHub.Infrastructure/Email/EmailTemplates.cs"
+  },
+  {
+   "type": "Code",
+   "language": "json",
+   "code": "{\n  \"Email\": {\n    \"Host\": \"localhost\",\n    \"Port\": 1025,\n    \"UseStartTls\": false,\n    \"SenderEmail\": \"no-reply@donationhub.local\",\n    \"SenderName\": \"DonationHub\"\n  }\n}",
+   "filename": "appsettings.Development.Email.json"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**NTF-06:** الإعداد أعلاه في `appsettings.Development.json` فقط، فيستحيل أن يرسل التطوير بريدًا حقيقيًا. في الإنتاج تُضبط `Email__Host` و `Email__Username` و `Email__Password` كمتغيرات بيئة. افتح `http://localhost:8025` بعد تجربة التبرع وتأكد من وجود المرفق `DN-2026-000001.pdf` وأن الرسالة العربية تظهر من اليمين."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 3 — إيصال QuestPDF والتحميل المحمي",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "المولِّد لا يعرف قاعدة البيانات: يستقبل `ReceiptData` جاهزة (بلغة المتبرع) ويُرجع `byte[]`. هذا يفصل «ماذا يُكتب» عن «كيف يُرسم» ويجعل المولِّد Singleton آمنًا:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Application.Abstractions;\n\npublic sealed record ReceiptData(\n    string ReceiptNumber,\n    DateTime TransactionDateUtc,\n    string CampaignTitle,\n    string CategoryName,\n    string DonorName,\n    decimal Amount,\n    string Currency,\n    string Language);\n\npublic interface IReceiptPdfGenerator\n{\n    byte[] Generate(ReceiptData data);\n}",
+   "filename": "DonationHub.Application/Abstractions/IReceiptPdfGenerator.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Globalization;\nusing DonationHub.Application.Abstractions;\nusing QuestPDF.Fluent;\nusing QuestPDF.Helpers;\nusing QuestPDF.Infrastructure;\n\nnamespace DonationHub.Infrastructure.Receipts;\n\npublic sealed class QuestPdfReceiptGenerator : IReceiptPdfGenerator\n{\n    public byte[] Generate(ReceiptData data)\n    {\n        var ar = data.Language == \"ar\";\n        var culture = CultureInfo.GetCultureInfo(ar ? \"ar-EG\" : \"en-US\");\n        var t = ar ? Arabic : English;\n\n        return Document.Create(container =>\n        {\n            container.Page(page =>\n            {\n                page.Size(PageSizes.A4);\n                page.Margin(2, Unit.Centimetre);\n                page.DefaultTextStyle(x => x.FontSize(11).FontFamily(ar ? \"Noto Naskh Arabic\" : \"Lato\"));\n                if (ar)\n                    page.ContentFromRightToLeft();\n\n                page.Header().Column(column =>\n                {\n                    column.Item().Text(\"DonationHub\").FontSize(22).Bold().FontColor(Colors.Blue.Darken2);\n                    column.Item().Text(t.VerifiedOrganization).FontSize(10).FontColor(Colors.Grey.Darken1);\n                    column.Item().PaddingTop(8).LineHorizontal(1).LineColor(Colors.Grey.Lighten1);\n                });\n\n                page.Content().PaddingVertical(20).Column(column =>\n                {\n                    column.Spacing(12);\n                    column.Item().Text(t.Title).FontSize(18).SemiBold();\n\n                    column.Item().Table(table =>\n                    {\n                        table.ColumnsDefinition(columns =>\n                        {\n                            columns.ConstantColumn(160);\n                            columns.RelativeColumn();\n                        });\n\n                        void Row(string label, string value)\n                        {\n                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingVertical(6).Text(label).SemiBold();\n                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingVertical(6).Text(value);\n                        }\n\n                        Row(t.ReceiptNumber, data.ReceiptNumber);\n                        Row(t.Date, data.TransactionDateUtc.ToString(\"dd MMMM yyyy, HH:mm 'UTC'\", culture));\n                        Row(t.Campaign, data.CampaignTitle);\n                        Row(t.Category, data.CategoryName);\n                        Row(t.Donor, data.DonorName);\n                        Row(t.Amount, $\"{data.Amount.ToString(\"N2\", culture)} {data.Currency}\");\n                    });\n\n                    column.Item().PaddingTop(10).Text(t.ThankYou).Italic();\n                });\n\n                page.Footer().Column(column =>\n                {\n                    column.Item().AlignCenter().Text(t.Footer).FontSize(9).FontColor(Colors.Grey.Darken1);\n                    column.Item().AlignCenter().Text(text =>\n                    {\n                        text.CurrentPageNumber();\n                        text.Span(\" / \");\n                        text.TotalPages();\n                    });\n                });\n            });\n        }).GeneratePdf();\n    }\n\n    private sealed record Labels(string Title, string VerifiedOrganization, string ReceiptNumber, string Date,\n        string Campaign, string Category, string Donor, string Amount, string ThankYou, string Footer);\n\n    private static readonly Labels English = new(\"Donation Receipt\", \"Verified non-profit organization\",\n        \"Receipt number\", \"Transaction date\", \"Campaign\", \"Category\", \"Donor\", \"Amount\",\n        \"Thank you for your generosity.\", \"This receipt was generated electronically by DonationHub and needs no signature.\");\n\n    private static readonly Labels Arabic = new(\"إيصال تبرع\", \"منظمة غير ربحية موثّقة\",\n        \"رقم الإيصال\", \"تاريخ المعاملة\", \"الحملة\", \"التصنيف\", \"المتبرع\", \"المبلغ\",\n        \"شكرًا لكرمك وعطائك.\", \"صدر هذا الإيصال إلكترونيًا من DonationHub ولا يحتاج إلى توقيع.\");\n}",
+   "filename": "DonationHub.Infrastructure/Receipts/QuestPdfReceiptGenerator.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**الخط العربي:** الخط الافتراضي لا يحتوي الحروف العربية، فتظهر مربعات فارغة. ضع ملف خط (مثل `NotoNaskhArabic-Regular.ttf` بترخيص OFL) في المشروع مع `CopyToOutputDirectory`، وسجّله مرة واحدة عند بدء التشغيل: `FontManager.RegisterFont(File.OpenRead(Path.Combine(AppContext.BaseDirectory, \"Fonts\", \"NotoNaskhArabic-Regular.ttf\")));`. **تحقّق** من أن اسم العائلة المستخدم في `FontFamily(...)` يطابق اسم الخط المسجَّل، ومن ظهور الأرقام والنص اللاتيني (رقم الإيصال) بشكل صحيح."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**فخ التقويم:** الثقافة `ar` المحايدة تُعامَل كـ `ar-SA` وتقويمها الافتراضي **هجري (Um Al-Qura)**، فيظهر تاريخ المعاملة بتاريخ هجري غير متوقع. لهذا نستخدم `ar-EG` (ميلادي). نفس الملاحظة للبريد."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**FIL-07:** التحميل استعلام قراءة عادي. شرط الملكية **داخل الـ query نفسه**، فتبرع مستخدم آخر يبدو «غير موجود» (404) ولا نكشف وجوده:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common;            // Roles\nusing DonationHub.Application.Common.Files;\nusing DonationHub.Domain.Common;\nusing MediatR;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Application.Features.Donations.GetReceipt;\n\npublic sealed record GetDonationReceiptQuery(Guid DonationId) : IRequest<Result<ReceiptFile>>;\n\npublic sealed record ReceiptFile(Stream Content, string FileName);\n\npublic sealed class GetDonationReceiptQueryHandler(\n    IReadDbContext readDb, IFileStorage fileStorage, ICurrentUser currentUser)\n    : IRequestHandler<GetDonationReceiptQuery, Result<ReceiptFile>>\n{\n    public async Task<Result<ReceiptFile>> Handle(GetDonationReceiptQuery request, CancellationToken ct)\n    {\n        var userId = currentUser.UserId;                       // ICurrentUser من Sprint 3\n        var isAdmin = currentUser.IsInRole(Roles.Admin);\n\n        var donation = await readDb.Donations\n            .Where(d => d.Id == request.DonationId && (isAdmin || d.DonorUserId == userId))\n            .Select(d => new { d.ReceiptNumber, d.ReceiptFileName })\n            .SingleOrDefaultAsync(ct);\n\n        if (donation is null)\n            return Result<ReceiptFile>.Failure(DonationErrors.NotFound);       // ليس لك = غير موجود\n\n        if (donation.ReceiptFileName is null)\n            return Result<ReceiptFile>.Failure(DonationErrors.ReceiptNotReady); // الـ job لم ينتهِ بعد\n\n        var stream = await fileStorage.OpenReadAsync(FileFolders.Receipts, donation.ReceiptFileName, ct);\n        return stream is null\n            ? Result<ReceiptFile>.Failure(DonationErrors.ReceiptNotReady)\n            : Result<ReceiptFile>.Success(new ReceiptFile(stream, $\"{donation.ReceiptNumber}.pdf\"));\n    }\n}\n\n// إضافة إلى كتالوج DonationErrors:\n// public static readonly Error ReceiptNotReady =\n//     new(\"Donation.ReceiptNotReady\", \"The receipt is not ready yet. Try again shortly.\", ErrorType.Conflict);",
+   "filename": "DonationHub.Application/Features/Donations/GetReceipt/GetDonationReceiptQuery.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// داخل DonationsController من Sprint 3: [Route(\"api/v{version:apiVersion}\")] و [Authorize] على الكلاس (بدون توكن ← 401)\n[HttpGet(\"donations/{id:guid}/receipt\")]\npublic async Task<IActionResult> DownloadReceipt(Guid id, CancellationToken ct)\n{\n    var result = await sender.Send(new GetDonationReceiptQuery(id), ct);\n\n    // FileStreamResult يغلق الـ stream تلقائيًا بعد إرسال الاستجابة\n    return result.IsSuccess\n        ? File(result.Value.Content, \"application/pdf\", result.Value.FileName)\n        : ProblemFrom(result.Error);\n}",
+   "filename": "DonationHub.Api/Controllers/DonationsController.Receipt.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**قرار تصميمي:** إيصال لم يُولَّد بعد (الـ job ما زال في الطابور) يُرجع هنا `409 Donation.ReceiptNotReady` بدل 404، لأن التبرع موجود فعلًا لكن حالته غير جاهزة. أي اختيار مقبول طالما وثّقته في الـ README واختبرته."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 4 — رفع صورة الحملة بأمان",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "القاعدة الذهبية: **الامتداد و `ContentType` قادمان من العميل، أي يمكن تزويرهما بالكامل**. الشيء الوحيد الذي نثق به هو محتوى الملف نفسه. نضع فاحص التوقيع في Application كدالة نقية (pure) بدون أي I/O، فيصبح اختباره سطرًا واحدًا:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Application.Common.Files;\n\npublic static class FileSignatureValidator\n{\n    public const int HeaderLength = 12;\n\n    private static ReadOnlySpan<byte> Jpeg => [0xFF, 0xD8, 0xFF];\n    private static ReadOnlySpan<byte> Png => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];\n    private static ReadOnlySpan<byte> Riff => \"RIFF\"u8;\n    private static ReadOnlySpan<byte> Webp => \"WEBP\"u8;\n\n    /// <summary>يُرجع الامتداد الحقيقي حسب المحتوى، أو null إذا لم يكن صورة مسموحة.</summary>\n    public static string? DetectImageExtension(ReadOnlySpan<byte> header)\n    {\n        if (header.StartsWith(Jpeg))\n            return \".jpg\";\n\n        if (header.StartsWith(Png))\n            return \".png\";\n\n        // RIFF <4 bytes size> WEBP\n        if (header.Length >= HeaderLength\n            && header[..4].SequenceEqual(Riff)\n            && header.Slice(8, 4).SequenceEqual(Webp))\n            return \".webp\";\n\n        return null;\n    }\n}",
+   "filename": "DonationHub.Application/Common/Files/FileSignatureValidator.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "لاحظ أن الامتداد المحفوظ يأتي من **نتيجة الفحص** وليس من اسم الملف المرفوع. ملف اسمه `cat.png` ومحتواه JPEG يُحفظ كـ `.jpg` — فيقدّمه الخادم بـ `Content-Type` الصحيح."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Application.Abstractions;\n\npublic interface IFileStorage\n{\n    /// <returns>اسم الملف المولَّد (Guid + extension) — وليس اسم المستخدم أبدًا.</returns>\n    Task<string> SaveAsync(string folder, Stream content, string extension, CancellationToken ct = default);\n    Task<Stream?> OpenReadAsync(string folder, string fileName, CancellationToken ct = default);\n    Task DeleteAsync(string folder, string fileName, CancellationToken ct = default);\n    string GetPublicUrl(string folder, string fileName);\n}",
+   "filename": "DonationHub.Application/Abstractions/IFileStorage.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Files;\nusing Microsoft.Extensions.Hosting;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Infrastructure.Files;\n\npublic sealed class LocalFileStorage : IFileStorage\n{\n    private readonly FileStorageOptions _options;\n    private readonly string _root;\n\n    public LocalFileStorage(IOptions<FileStorageOptions> options, IHostEnvironment environment)\n    {\n        _options = options.Value;\n        _root = Path.GetFullPath(Path.Combine(environment.ContentRootPath, _options.RootPath));\n    }\n\n    public async Task<string> SaveAsync(string folder, Stream content, string extension, CancellationToken ct = default)\n    {\n        var fileName = $\"{Guid.NewGuid():N}{extension}\";               // FIL-03\n        var path = ResolvePath(folder, fileName);\n        Directory.CreateDirectory(Path.GetDirectoryName(path)!);\n\n        await using var file = new FileStream(path, FileMode.CreateNew, FileAccess.Write,\n            FileShare.None, bufferSize: 81920, useAsync: true);\n        await content.CopyToAsync(file, ct);\n        return fileName;\n    }\n\n    public Task<Stream?> OpenReadAsync(string folder, string fileName, CancellationToken ct = default)\n    {\n        var path = ResolvePath(folder, fileName);\n        Stream? stream = File.Exists(path)\n            ? new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 81920, useAsync: true)\n            : null;\n        return Task.FromResult(stream);\n    }\n\n    public Task DeleteAsync(string folder, string fileName, CancellationToken ct = default)\n    {\n        var path = ResolvePath(folder, fileName);\n        if (File.Exists(path))\n            File.Delete(path);\n        return Task.CompletedTask;\n    }\n\n    public string GetPublicUrl(string folder, string fileName) =>\n        folder == FileFolders.Banners\n            ? $\"{_options.PublicBannersPath}/{fileName}\"\n            : throw new InvalidOperationException($\"Folder '{folder}' is not public.\");\n\n    private string ResolvePath(string folder, string fileName)\n    {\n        // يمنع path traversal مثل ../../appsettings.json حتى لو وصل اسم من مصدر غير متوقع\n        if (fileName != Path.GetFileName(fileName))\n            throw new ArgumentException(\"Invalid file name.\", nameof(fileName));\n\n        return Path.Combine(_root, folder, fileName);\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Files/LocalFileStorage.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "نضيف للكيان `Campaign` دالتين صغيرتين حتى يبقى تغيير `BannerFileName` داخل الكيان (setters خاصة كما في Sprint 1):"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// إضافة إلى DonationHub.Domain/Campaigns/Campaign.cs\npublic void SetBanner(string fileName, DateTime utcNow)\n{\n    BannerFileName = fileName;\n    UpdatedAt = utcNow;\n}\n\npublic void RemoveBanner(DateTime utcNow)\n{\n    BannerFileName = null;\n    UpdatedAt = utcNow;\n}",
+   "filename": "DonationHub.Domain/Campaigns/Campaign.Banner.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الـ handler: الملكية أولًا (عبر `ICampaignAuthorizer` من Sprint 3، لا فحص يدوي جديد)، ثم الحجم، ثم التوقيع، ثم الحفظ. لاحظ ترتيب الملفات: نحفظ الملف الجديد، ثم نحفظ قاعدة البيانات، ثم **فقط بعد النجاح** نحذف القديم (FIL-04). لو فشل الحفظ نحذف الجديد ونترك القديم سليمًا:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Caching;\nusing DonationHub.Application.Common.Files;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing MediatR;\nusing Microsoft.Extensions.Logging;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Application.Features.Campaigns.UploadBanner;\n\npublic sealed record UploadCampaignBannerCommand(\n    Guid CampaignId, Stream Content, long Length) : IRequest<Result<string>>;\n\npublic sealed class UploadCampaignBannerCommandHandler(\n    IUnitOfWork unitOfWork,\n    ICampaignAuthorizer campaignAuthorizer,        // Sprint 3: Admin أو المالك\n    IFileStorage fileStorage,\n    ICacheService cache,\n    IOptions<FileStorageOptions> options,\n    TimeProvider timeProvider,\n    ILogger<UploadCampaignBannerCommandHandler> logger)\n    : IRequestHandler<UploadCampaignBannerCommand, Result<string>>\n{\n    public async Task<Result<string>> Handle(UploadCampaignBannerCommand request, CancellationToken ct)\n    {\n        var campaign = await unitOfWork.Repository<Campaign>().GetByIdAsync(request.CampaignId, ct);\n        if (campaign is null || !await campaignAuthorizer.CanManageAsync(campaign))\n            return Result<string>.Failure(CampaignErrors.NotFound);              // ليست لك = غير موجودة\n\n        var maxBytes = options.Value.MaxBannerSizeBytes;\n        if (request.Length > maxBytes)\n            return Result<string>.Failure(FileErrors.TooLarge);                  // 413\n\n        using var buffer = new MemoryStream(capacity: (int)request.Length);\n        await request.Content.CopyToAsync(buffer, ct);\n        if (buffer.Length > maxBytes)                                             // لا نثق بـ Length أيضًا\n            return Result<string>.Failure(FileErrors.TooLarge);\n\n        var extension = FileSignatureValidator.DetectImageExtension(\n            buffer.GetBuffer().AsSpan(0, (int)buffer.Length));\n        if (extension is null)\n        {\n            logger.LogWarning(\"Rejected banner for campaign {CampaignId}: invalid file signature\", request.CampaignId);\n            return Result<string>.Failure(FileErrors.InvalidType);                // 400\n        }\n\n        buffer.Position = 0;\n        var newFileName = await fileStorage.SaveAsync(FileFolders.Banners, buffer, extension, ct);\n        var oldFileName = campaign.BannerFileName;\n        campaign.SetBanner(newFileName, timeProvider.GetUtcNow().UtcDateTime);\n\n        try\n        {\n            await unitOfWork.SaveChangesAsync(ct);\n        }\n        catch\n        {\n            await fileStorage.DeleteAsync(FileFolders.Banners, newFileName, CancellationToken.None);\n            throw;\n        }\n\n        if (oldFileName is not null)\n            await fileStorage.DeleteAsync(FileFolders.Banners, oldFileName, ct);   // FIL-04\n\n        await cache.InvalidateCampaignAsync(campaign.Id, ct);                     // Sprint 3: bannerUrl تغيّر\n\n        logger.LogInformation(\"Banner {FileName} set for campaign {CampaignId}\", newFileName, campaign.Id);\n        return Result<string>.Success(fileStorage.GetPublicUrl(FileFolders.Banners, newFileName));\n    }\n}",
+   "filename": "DonationHub.Application/Features/Campaigns/UploadBanner/UploadCampaignBannerCommand.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using Asp.Versioning;\nusing DonationHub.Application.Common;            // Roles\nusing DonationHub.Application.Features.Campaigns.DeleteBanner;\nusing DonationHub.Application.Features.Campaigns.UploadBanner;\nusing MediatR;\nusing Microsoft.AspNetCore.Authorization;\nusing Microsoft.AspNetCore.Mvc;\n\nnamespace DonationHub.Api.Controllers;\n\n[ApiVersion(\"1.0\")]\n[Route(\"api/v{version:apiVersion}/campaigns/{id:guid}/banner\")]\n[Authorize(Roles = $\"{Roles.Admin},{Roles.CampaignManager}\")]\npublic sealed class CampaignBannerController(ISender sender) : ApiControllerBase\n{\n    [HttpPost]\n    [Consumes(\"multipart/form-data\")]\n    [RequestSizeLimit(10 * 1024 * 1024)] // سقف حماية للطلب كله؛ حد الـ 2MB الحقيقي يُفحص في الـ handler\n    public async Task<IActionResult> Upload(Guid id, IFormFile file, CancellationToken ct)\n    {\n        await using var content = file.OpenReadStream();\n        var result = await sender.Send(new UploadCampaignBannerCommand(id, content, file.Length), ct);\n\n        return result.IsSuccess ? Ok(new { bannerUrl = result.Value }) : ProblemFrom(result.Error);\n    }\n\n    [HttpDelete]\n    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)\n    {\n        var result = await sender.Send(new DeleteCampaignBannerCommand(id), ct);\n\n        return result.IsSuccess ? NoContent() : ProblemFrom(result.Error);\n    }\n}",
+   "filename": "DonationHub.Api/Controllers/CampaignBannerController.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "لماذا `RequestSizeLimit` أكبر من 2MB؟ إذا تجاوز الطلب حد Kestrel يُرفض قبل الوصول للـ handler برسالة عامة، وليس `File.TooLarge` بالصيغة الموحّدة. السقف الأكبر يحمي الخادم من طلبات ضخمة، والـ handler يُرجع الخطأ الصحيح (413) لكل ما بينهما. الحذف (`DeleteCampaignBannerCommand(Guid CampaignId)`) بنفس فحص الملكية (`ICampaignAuthorizer`): يستدعي `RemoveBanner` ويحفظ، ثم **بعد نجاح الحفظ فقط** يحذف الملف ويُبطل الكاش — نفس ترتيب الرفع."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**FIL-05:** مجلد الصور فقط يُقدَّم كملفات ثابتة، والإيصالات تبقى خارج أي مسار عام. ونضيف `nosniff` حتى لا يحاول المتصفح «تخمين» نوع المحتوى:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// Program.cs\nvar storage = app.Services.GetRequiredService<IOptions<FileStorageOptions>>().Value;\nvar bannersPath = Path.Combine(app.Environment.ContentRootPath, storage.RootPath, FileFolders.Banners);\nDirectory.CreateDirectory(bannersPath);\n\napp.UseStaticFiles(new StaticFileOptions\n{\n    FileProvider = new PhysicalFileProvider(bannersPath),   // banners فقط — وليس storage كله\n    RequestPath = storage.PublicBannersPath,\n    OnPrepareResponse = ctx => ctx.Context.Response.Headers.XContentTypeOptions = \"nosniff\"\n});",
+   "filename": "DonationHub.Api/Program.StaticFiles.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "في استجابة الحملة نُسقط `BannerFileName` ثم نحوّله لرابط بعد التنفيذ (الاستعلام يبقى SQL نظيفًا):"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// مخطط مبسّط: استجابات الحملة العامة (Sprint 2–3) تُرجع الآن string? BannerUrl بدل BannerFileName\nvar items = await query.Select(c => new { c.Id, c.TitleAr, c.TitleEn, c.BannerFileName /* ... */ }).ToListAsync(ct);\n\nvar response = items.Select(c => new CampaignResponse(\n    c.Id,\n    localizedTitle: isArabic ? c.TitleAr : c.TitleEn,\n    bannerUrl: c.BannerFileName is null ? null : fileStorage.GetPublicUrl(FileFolders.Banners, c.BannerFileName)));",
+   "filename": "DonationHub.Application/Features/Campaigns/GetCampaignById/BannerUrlMapping.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**لا تنسَ الكاش من Sprint 3:** لهذا يستدعي الـ handler `cache.InvalidateCampaignAsync(campaign.Id, ct)` بعد نجاح الحفظ (والحذف كذلك) فتُبطَل مفاتيح الحملة وقوائم الحملات في Redis، وإلا سيستمر الـ `bannerUrl` القديم — الذي حُذف ملفه — في الظهور. وأضف `storage/` إلى `.gitignore`."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 5 — الـ Jobs: بعد الـ commit، بالمعرّفات فقط، و idempotent",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الإضافات على الـ Domain:** لكي يكون الـ job قابلًا للإعادة بأمان نحتاج «ذاكرة» دائمة لما تمّ. نضيف علامات زمنية صغيرة إلى الكيانات (مع migration). العلامة لا تتغيّر إلا مرة واحدة، فالكيان نفسه يحمي من التكرار:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// إضافة إلى Donation\npublic DateTime? ReceiptSentAt { get; private set; }\n\npublic void AttachReceipt(string fileName)\n{\n    if (Status != DonationStatus.Succeeded)\n        throw new DomainException(\"Donation.InvalidState\", \"Only a succeeded donation has a receipt.\");\n    ReceiptFileName ??= fileName;              // أول ملف فقط\n}\n\npublic void MarkReceiptSent(DateTime utcNow) => ReceiptSentAt ??= utcNow;\n\n// إضافة إلى Campaign\npublic DateTime? GoalEmailSentAt { get; private set; }\n\npublic void MarkGoalEmailSent(DateTime utcNow) => GoalEmailSentAt ??= utcNow;",
+   "filename": "DonationHub.Domain/Sprint4.Additions.cs"
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "dotnet ef migrations add Sprint4_ReceiptsAndNotifications --project src/DonationHub.Infrastructure --startup-project src/DonationHub.Api\ndotnet ef database update --project src/DonationHub.Infrastructure --startup-project src/DonationHub.Api",
+   "filename": "sprint4-migration.sh"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**التجريدات في Application:** الـ handlers لا تعرف Hangfire. هي تقول «جدوِل إرسال الإيصال لهذا التبرع» فقط، وهذا يجعل اختبار الـ handlers ممكنًا بـ Moq بدون خادم Hangfire:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Application.Abstractions;\n\npublic interface IBackgroundJobScheduler\n{\n    void EnqueueDonationReceipt(Guid donationId);   // JOB-01\n    void EnqueueGoalReachedEmail(Guid campaignId);  // JOB-02\n    void ScheduleStalePendingCheck(Guid donationId); // JOB-03\n}\n\n// الدوال التي ينفّذها عامل Hangfire — وسائطها معرّفات فقط\npublic interface IDonationNotificationService\n{\n    Task SendReceiptAsync(Guid donationId, CancellationToken ct);\n    Task SendGoalReachedAsync(Guid campaignId, CancellationToken ct);\n}",
+   "filename": "DonationHub.Application/Abstractions/IBackgroundJobScheduler.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Options;     // DonationOptions (Sprint 3)\nusing Hangfire;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Infrastructure.Jobs;\n\npublic sealed class HangfireJobScheduler(\n    IBackgroundJobClient jobs,\n    IOptions<DonationOptions> donationOptions) : IBackgroundJobScheduler\n{\n    public void EnqueueDonationReceipt(Guid donationId) =>\n        jobs.Enqueue<IDonationNotificationService>(s => s.SendReceiptAsync(donationId, CancellationToken.None));\n\n    public void EnqueueGoalReachedEmail(Guid campaignId) =>\n        jobs.Enqueue<IDonationNotificationService>(s => s.SendGoalReachedAsync(campaignId, CancellationToken.None));\n\n    public void ScheduleStalePendingCheck(Guid donationId) =>\n        jobs.Schedule<DonationMaintenanceJobs>(\n            j => j.FailStalePendingAsync(donationId, CancellationToken.None),\n            TimeSpan.FromMinutes(donationOptions.Value.PendingTimeoutMinutes));\n}",
+   "filename": "DonationHub.Infrastructure/Jobs/HangfireJobScheduler.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**لماذا `CancellationToken.None`؟** الـ expression trees لا تسمح بحذف وسيط اختياري (خطأ CS0854)، فنمرّره صراحة. Hangfire يستبدل `CancellationToken.None` تلقائيًا بـ token حقيقي يُلغى عند إيقاف الخادم — فيتوقف الـ job بأمان ويُعاد لاحقًا."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**مسار النجاح (DON-07) — التعديل الوحيد على `DonationSuccessFlow` من Sprint 3:** نحفظ أولًا، ثم نجدول. ونحدد «اكتملت الحملة **للتو**» بمقارنة الحالة قبل وبعد، حتى لا نرسل بريد الهدف مع كل دفعة متأخرة على حملة مكتملة أصلًا. الجدولة تقع بعد `SaveChangesAsync` الناجح داخل نفس حلقة إعادة المحاولة، فالمحاولة التي تفشل بتعارض `RowVersion` لا تُجدوِل شيئًا. لأن الـ constructor تغيّر، حدّث اختبار `DonationSuccessFlow` من Sprint 3 ليمرّر `Mock<IBackgroundJobScheduler>`:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// DonationSuccessFlow (Sprint 3) — نفس الكلاس ونفس حلقة إعادة المحاولة على RowVersion.\n// الجديد فقط (مُعلَّم بـ «Sprint 4»): IBackgroundJobScheduler في الـ constructor، و wasActive، والجدولة بعد الـ commit.\npublic sealed class DonationSuccessFlow(\n    IUnitOfWork unitOfWork,\n    IReceiptNumberGenerator receiptNumbers,\n    ICacheService cache,\n    IBackgroundJobScheduler jobs,                                         // Sprint 4\n    TimeProvider clock,\n    ILogger<DonationSuccessFlow> logger) : IDonationSuccessFlow\n{\n    private const int MaxAttempts = 3;\n\n    public async Task<Result<DonationResponse>> ExecuteAsync(Guid donationId, CancellationToken ct)\n    {\n        string? receiptNumber = null;\n\n        for (var attempt = 1; attempt <= MaxAttempts; attempt++)\n        {\n            var donation = await unitOfWork.Repository<Donation>().GetByIdAsync(donationId, ct);\n            if (donation is null) return DonationErrors.NotFound;\n            if (donation.Status != DonationStatus.Pending) return DonationErrors.InvalidState;   // 409\n\n            var campaign = await unitOfWork.Repository<Campaign>().GetByIdAsync(donation.CampaignId, ct);\n            if (campaign is null) return CampaignErrors.NotFound;\n\n            var now = clock.GetUtcNow().UtcDateTime;\n            if (campaign.Status != CampaignStatus.Active || campaign.EndDate <= now)\n            {\n                logger.LogWarning(\n                    \"Late payment: donation {DonationId} succeeded after campaign {CampaignId} became {Status}\",\n                    donation.Id, campaign.Id, campaign.Status);\n            }\n\n            var wasActive = campaign.Status == CampaignStatus.Active;           // Sprint 4: لنعرف «اكتملت للتو»\n            receiptNumber ??= await receiptNumbers.NextAsync(now, ct);          // رقم واحد يُعاد استخدامه في المحاولات\n            donation.MarkSucceeded(campaign, receiptNumber, now);\n\n            try\n            {\n                await unitOfWork.SaveChangesAsync(ct);                          // ← الـ commit\n            }\n            catch (DbUpdateConcurrencyException)\n            {\n                logger.LogInformation(\"Concurrency conflict on campaign {CampaignId}, attempt {Attempt}\",\n                    campaign.Id, attempt);\n                unitOfWork.ClearChangeTracker();\n                continue;                                                       // لم يُحفظ شيء ← لم يُجدوَل شيء\n            }\n\n            // ===== Sprint 4: بعد الـ commit فقط، والوسائط معرّفات فقط =====\n            jobs.EnqueueDonationReceipt(donation.Id);                           // JOB-01\n            if (wasActive && campaign.Status == CampaignStatus.Completed)\n                jobs.EnqueueGoalReachedEmail(campaign.Id);                      // JOB-02\n\n            logger.LogInformation(\"Donation {DonationId} succeeded with receipt {ReceiptNumber}\",\n                donation.Id, receiptNumber);\n            await cache.InvalidateCampaignAsync(campaign.Id, ct);               // كما في Sprint 3\n            return DonationResponse.From(donation);\n        }\n\n        return CampaignErrors.ConcurrencyConflict;                              // 409 بعد استنفاد المحاولات\n    }\n}",
+   "filename": "DonationHub.Application/Features/Donations/Common/DonationSuccessFlow.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**المقايضة (trade-off):** إذا نجح الـ commit ثم سقط التطبيق قبل `Enqueue`، يضيع الإيصال. هذا مقبول في هذا السبرنت لكن يجب أن تعرفه. الحل الكامل هو **Transactional Outbox**: تكتب «رسالة» في جدول داخل نفس الـ transaction، و job دوري ينقلها إلى Hangfire (راجع فيديو الإثراء). لا تحل المشكلة بوضع `Enqueue` **قبل** الـ commit — هذا أسوأ لأنه قد يرسل إيصالًا لتبرع لم يُحفظ."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**JOB-03 (DON-09):** عند إنشاء التبرع، بعد الحفظ مباشرة. المهلة هي `DonationOptions.PendingTimeoutMinutes` (الافتراضي 30) الموجودة منذ Sprint 1، فلا نضيف إعدادًا جديدًا. الـ handler يستقبل `IBackgroundJobScheduler jobs` إضافيًا في الـ constructor (حدّث اختبار Sprint 3 بـ mock له):"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// CreateDonationCommandHandler (Sprint 3) — بعد إنشاء التبرع؛ الجديد: IBackgroundJobScheduler jobs في الـ constructor\nawait unitOfWork.Repository<Donation>().AddAsync(donation, ct);\nawait unitOfWork.SaveChangesAsync(ct);\n\njobs.ScheduleStalePendingCheck(donation.Id);   // يعمل بعد PendingTimeoutMinutes (30)",
+   "filename": "DonationHub.Application/Features/Donations/Create/CreateDonationCommandHandler.Excerpt.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "منطق الـ job نفسه command عادي في Application — قابل للاختبار بالكامل. التبرع غير الموجود أو الذي لم يعد `Pending` ليس خطأً بل **حالة طبيعية** (دُفع أو فشل قبل المهلة)، فيُرجع نجاحًا بدون تغيير:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing MediatR;\nusing Microsoft.Extensions.Logging;\n\nnamespace DonationHub.Application.Features.Donations.FailStalePending;\n\npublic sealed record FailStalePendingDonationCommand(Guid DonationId) : IRequest<Result>;\n\npublic sealed class FailStalePendingDonationCommandHandler(\n    IUnitOfWork unitOfWork,\n    TimeProvider timeProvider,\n    ILogger<FailStalePendingDonationCommandHandler> logger)\n    : IRequestHandler<FailStalePendingDonationCommand, Result>\n{\n    public const string TimeoutReason = \"PendingTimeout\";\n\n    public async Task<Result> Handle(FailStalePendingDonationCommand request, CancellationToken ct)\n    {\n        var donation = await unitOfWork.Repository<Donation>().GetByIdAsync(request.DonationId, ct);\n\n        if (donation is null)\n        {\n            logger.LogWarning(\"Stale-pending check: donation {DonationId} not found\", request.DonationId);\n            return Result.Success();\n        }\n\n        if (donation.Status != DonationStatus.Pending)\n        {\n            logger.LogInformation(\"Stale-pending check: donation {DonationId} is already {Status}; nothing to do\",\n                donation.Id, donation.Status);\n            return Result.Success();                         // idempotent\n        }\n\n        donation.MarkFailed(TimeoutReason, timeProvider.GetUtcNow().UtcDateTime);\n        await unitOfWork.SaveChangesAsync(ct);\n\n        logger.LogInformation(\"Donation {DonationId} failed after the pending timeout\", donation.Id);\n        return Result.Success();\n    }\n}",
+   "filename": "DonationHub.Application/Features/Donations/FailStalePending/FailStalePendingDonationCommand.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Features.Donations.FailStalePending;\nusing MediatR;\nusing Microsoft.Extensions.Logging;\n\nnamespace DonationHub.Infrastructure.Jobs;\n\n// غلاف رفيع: Hangfire يستدعي هذه الدالة، وهي تمرّر العمل لـ MediatR (فيمر عبر نفس الـ pipeline)\npublic sealed class DonationMaintenanceJobs(ISender sender, ILogger<DonationMaintenanceJobs> logger)\n{\n    public async Task FailStalePendingAsync(Guid donationId, CancellationToken ct)\n    {\n        var result = await sender.Send(new FailStalePendingDonationCommand(donationId), ct);\n        if (!result.IsSuccess)\n            logger.LogWarning(\"Stale-pending job for {DonationId} returned {ErrorCode}\", donationId, result.Error.Code);\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Jobs/DonationMaintenanceJobs.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**سباق (race condition) يجب أن تفكر فيه:** ماذا لو وصل `mark-succeeded` في نفس اللحظة التي يعمل فيها الـ job؟ كلاهما يقرأ `Pending`، وأحدهما يكتب `Succeeded` والآخر `Failed`. الحل: أضف `RowVersion` (concurrency token) إلى `Donation` كما فعلت مع `Campaign` في DON-08؛ الكتابة الثانية تفشل بـ `DbUpdateConcurrencyException`، والـ job يُعاد فيجد الحالة النهائية ولا يفعل شيئًا."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**JOB-01 و JOB-02:** خدمة الإشعارات تعيش في Infrastructure لأنها تجمع بيانات Identity (البريد، `PreferredLanguage`) مع التخزين و PDF و SMTP. لاحظ **الخطوتين المحفوظتين**: الـ PDF يُولَّد ويُحفظ مرة واحدة (`ReceiptFileName`)، والبريد يُعلَّم بعد الإرسال (`ReceiptSentAt`). إعادة المحاولة بعد فشل SMTP لا تولّد ملفًا جديدًا:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Files;\nusing DonationHub.Application.Common.Options;     // DonationOptions (Sprint 3)\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Donations;\nusing DonationHub.Infrastructure.Email;\nusing DonationHub.Infrastructure.Persistence;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.Extensions.Logging;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Infrastructure.Jobs;\n\npublic sealed class DonationNotificationService(\n    AppDbContext db,\n    IReceiptPdfGenerator pdfGenerator,\n    IFileStorage fileStorage,\n    IEmailService emailService,\n    IOptions<DonationOptions> donationOptions,\n    TimeProvider timeProvider,\n    ILogger<DonationNotificationService> logger) : IDonationNotificationService\n{\n    public async Task SendReceiptAsync(Guid donationId, CancellationToken ct)\n    {\n        var donation = await db.Donations.SingleOrDefaultAsync(d => d.Id == donationId, ct);\n        if (donation is null || donation.Status != DonationStatus.Succeeded)\n        {\n            logger.LogWarning(\"Receipt job skipped: donation {DonationId} is missing or not succeeded\", donationId);\n            return;\n        }\n\n        if (donation.ReceiptSentAt is not null)\n        {\n            logger.LogInformation(\"Receipt for donation {DonationId} was already sent; skipping\", donationId);\n            return;                                                         // idempotent\n        }\n\n        var info = await (\n            from c in db.Campaigns.IgnoreQueryFilters()                      // الحملة قد تكون محذوفة ناعمًا\n            join cat in db.Categories on c.CategoryId equals cat.Id\n            from u in db.Users\n            where c.Id == donation.CampaignId && u.Id == donation.DonorUserId\n            select new { u.Email, u.FullName, u.PreferredLanguage, c.TitleAr, c.TitleEn, cat.NameAr, cat.NameEn })\n            .AsNoTracking()\n            .SingleAsync(ct);\n\n        var ar = info.PreferredLanguage == \"ar\";\n        var currency = donationOptions.Value.DefaultCurrency;\n        var campaignTitle = ar ? info.TitleAr : info.TitleEn;\n\n        // الخطوة 1: PDF مرة واحدة فقط (FIL-06)\n        if (donation.ReceiptFileName is null)\n        {\n            var pdf = pdfGenerator.Generate(new ReceiptData(\n                donation.ReceiptNumber!, donation.CompletedAt!.Value, campaignTitle,\n                ar ? info.NameAr : info.NameEn, info.FullName, donation.Amount, currency, info.PreferredLanguage));\n\n            using var pdfStream = new MemoryStream(pdf);\n            var fileName = await fileStorage.SaveAsync(FileFolders.Receipts, pdfStream, \".pdf\", ct);\n            donation.AttachReceipt(fileName);\n            await db.SaveChangesAsync(ct);\n        }\n\n        // الخطوة 2: البريد مع المرفق (NTF-02, NTF-05)\n        byte[] attachment;\n        await using (var stored = await fileStorage.OpenReadAsync(FileFolders.Receipts, donation.ReceiptFileName!, ct)\n            ?? throw new InvalidOperationException($\"Receipt file for donation {donationId} is missing.\"))\n        {\n            using var buffer = new MemoryStream();\n            await stored.CopyToAsync(buffer, ct);\n            attachment = buffer.ToArray();\n        }\n\n        var content = EmailTemplates.DonationReceipt(info.PreferredLanguage, info.FullName, campaignTitle,\n            donation.ReceiptNumber!, donation.Amount, currency);\n\n        await emailService.SendAsync(new EmailMessage(info.Email!, info.FullName, content.Subject, content.HtmlBody,\n            [new EmailAttachment($\"{donation.ReceiptNumber}.pdf\", attachment, \"application/pdf\")]), ct);\n\n        donation.MarkReceiptSent(timeProvider.GetUtcNow().UtcDateTime);\n        await db.SaveChangesAsync(ct);\n\n        logger.LogInformation(\"Receipt {ReceiptNumber} emailed for donation {DonationId}\",\n            donation.ReceiptNumber, donationId);\n    }\n\n    public async Task SendGoalReachedAsync(Guid campaignId, CancellationToken ct)\n    {\n        var campaign = await db.Campaigns.IgnoreQueryFilters().SingleOrDefaultAsync(c => c.Id == campaignId, ct);\n        if (campaign is null || campaign.Status != CampaignStatus.Completed || campaign.GoalEmailSentAt is not null)\n        {\n            logger.LogInformation(\"Goal-reached email for campaign {CampaignId} not needed; skipping\", campaignId);\n            return;                                                         // idempotent\n        }\n\n        var owner = await db.Users.AsNoTracking()\n            .Where(u => u.Id == campaign.CreatedByUserId)\n            .Select(u => new { u.Email, u.FullName, u.PreferredLanguage })\n            .SingleAsync(ct);\n\n        var content = EmailTemplates.GoalReached(owner.PreferredLanguage, owner.FullName,\n            owner.PreferredLanguage == \"ar\" ? campaign.TitleAr : campaign.TitleEn,\n            campaign.GoalAmount, donationOptions.Value.DefaultCurrency);\n\n        await emailService.SendAsync(new EmailMessage(owner.Email!, owner.FullName, content.Subject, content.HtmlBody, []), ct);\n\n        campaign.MarkGoalEmailSent(timeProvider.GetUtcNow().UtcDateTime);\n        await db.SaveChangesAsync(ct);\n\n        logger.LogInformation(\"Goal-reached email sent for campaign {CampaignId}\", campaignId);\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Jobs/DonationNotificationService.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**«مرة واحدة بالضبط» مستحيلة مع SMTP:** إذا أُرسل البريد ثم انقطع الاتصال بقاعدة البيانات قبل حفظ `ReceiptSentAt`، ستُرسل إعادة المحاولة بريدًا ثانيًا. ما نضمنه هو **at-least-once مع نافذة تكرار صغيرة جدًا**، وتشغيل الـ job مرة ثانية بعد نجاحه لا يرسل شيئًا. هذه إجابة ممتازة لسؤال «ماذا لو شُغّل الـ job مرتين؟». لمنع تشغيلين متوازيين لنفس التبرع يمكن إضافة `[DisableConcurrentExecution]` (مع ملاحظة أنه attribute من Hangfire)."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**JOB-04:** الـ job الدوري يمر عبر دالة الـ Domain `MarkExpiredIfDue` (لا `ExecuteUpdate` يتجاوز القواعد و `RowVersion`)، ويعمل على دفعات حتى لا يحمّل آلاف الحملات في الذاكرة. الاستعلام نفسه يجعله idempotent: التشغيل الثاني لا يجد حملات `Active` منتهية:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Common.Caching;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Infrastructure.Persistence;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.Extensions.Logging;\n\nnamespace DonationHub.Infrastructure.Jobs;\n\npublic sealed class ExpireCampaignsJob(\n    AppDbContext db, ICacheService cache, TimeProvider timeProvider, ILogger<ExpireCampaignsJob> logger)\n{\n    private const int BatchSize = 200;\n\n    public async Task RunAsync(CancellationToken ct)\n    {\n        var utcNow = timeProvider.GetUtcNow().UtcDateTime;\n        var expiredCount = 0;\n\n        while (!ct.IsCancellationRequested)\n        {\n            var batch = await db.Campaigns\n                .Where(c => c.Status == CampaignStatus.Active && c.EndDate <= utcNow)\n                .OrderBy(c => c.EndDate)\n                .Take(BatchSize)\n                .ToListAsync(ct);\n\n            if (batch.Count == 0)\n                break;\n\n            foreach (var campaign in batch)\n                campaign.MarkExpiredIfDue(utcNow);\n\n            try\n            {\n                await db.SaveChangesAsync(ct);\n                expiredCount += batch.Count;\n\n                // CMP-09: تغيّر الحالة إلى Expired يُبطل كاش الحملة والقوائم — بعد نجاح الحفظ فقط\n                foreach (var campaign in batch)\n                    await cache.InvalidateCampaignAsync(campaign.Id, ct);\n            }\n            catch (DbUpdateConcurrencyException ex)\n            {\n                // تبرع نجح على إحدى الحملات في نفس اللحظة — التشغيل القادم (بعد ساعة) يكمل\n                logger.LogWarning(ex, \"Concurrency conflict while expiring campaigns; remaining ones will be retried next run\");\n                break;\n            }\n            finally\n            {\n                db.ChangeTracker.Clear();\n            }\n        }\n\n        logger.LogInformation(\"Expire-campaigns job marked {ExpiredCount} campaign(s) as Expired\", expiredCount);\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Jobs/ExpireCampaignsJob.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// Program.cs — بعد app.Build(). AddOrUpdate بنفس الـ id لا يكرّر الـ job عند كل تشغيل\napp.Services.GetRequiredService<IRecurringJobManager>()\n    .AddOrUpdate<ExpireCampaignsJob>(\n        \"expire-campaigns\",\n        job => job.RunAsync(CancellationToken.None),\n        Cron.Hourly());                       // 0 * * * *",
+   "filename": "DonationHub.Api/Program.RecurringJobs.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "بعد انتهاء الحملات أبطِل كاش قوائم الحملات (Sprint 3)، وإلا ستظهر حملات `Expired` كـ `Active` حتى انتهاء مدة الكاش. ويمكن تشغيل الـ job يدويًا من اللوحة (Recurring Jobs ← Trigger now) لاختباره بدون انتظار ساعة."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 6 — Serilog: تسجيل منظّم من أول سطر",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "نستخدم نمط **bootstrap logger**: logger مؤقت يلتقط أخطاء بدء التشغيل (مثل فشل `ValidateOnStart`)، ثم يُستبدل بالـ logger الكامل المقروء من الإعدادات. هذا `Program.cs` بعد السبرنت (أجزاء Sprints 1–3 مختصرة بتعليق):"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Diagnostics;\nusing DonationHub.Api.Controllers;         // GetUserId()\nusing DonationHub.Api.Infrastructure;\nusing DonationHub.Application;\nusing DonationHub.Application.Common.Files;\nusing DonationHub.Infrastructure;\nusing DonationHub.Infrastructure.Jobs;\nusing DonationHub.Infrastructure.Options;\nusing DonationHub.Infrastructure.Persistence;\nusing Hangfire;\nusing Microsoft.Extensions.FileProviders;\nusing Microsoft.Extensions.Options;\nusing QuestPDF.Infrastructure;\nusing Scalar.AspNetCore;\nusing Serilog;\n\nLog.Logger = new LoggerConfiguration()\n    .WriteTo.Console()\n    .CreateBootstrapLogger();\n\ntry\n{\n    QuestPDF.Settings.License = LicenseType.Community;\n\n    var builder = WebApplication.CreateBuilder(args);\n\n    builder.Services.AddSerilog((services, configuration) => configuration\n        .ReadFrom.Configuration(builder.Configuration)\n        .ReadFrom.Services(services)\n        .Enrich.FromLogContext());\n\n    builder.Services\n        .AddApplicationServices()\n        .AddInfrastructureServices(builder.Configuration)\n        .AddNotificationsFilesAndJobs(builder.Configuration);\n\n    // ... Controllers, ProblemDetails, OpenAPI, Versioning, RateLimiter, CORS, Caching, Localization (Sprints 1–3)\n\n    var app = builder.Build();\n\n    app.UseSerilogRequestLogging(options =>\n    {\n        // يُستدعى في نهاية الطلب: المصادقة تمت فنعرف المستخدم\n        options.EnrichDiagnosticContext = (diagnostics, http) =>\n        {\n            diagnostics.Set(\"TraceId\", Activity.Current?.TraceId.ToString() ?? http.TraceIdentifier);\n            if (http.User.Identity?.IsAuthenticated == true)\n                diagnostics.Set(\"UserId\", http.User.GetUserId());\n        };\n    });\n\n    app.UseExceptionHandler();\n    app.UseHttpsRedirection();\n\n    // ... UseStaticFiles للـ banners (المهمة 4)، MapOpenApi/Scalar، CORS، RateLimiter\n\n    app.UseAuthentication();\n    app.UseAuthorization();\n    app.UseMiddleware<LogEnrichmentMiddleware>();\n\n    // ... UseHangfireDashboard (المهمة 1)\n\n    app.MapControllers();\n\n    // ... AddOrUpdate للـ recurring job (المهمة 5)\n\n    await DbSeeder.SeedAsync(app.Services, app.Environment.IsDevelopment());\n\n    app.Run();\n}\ncatch (Exception ex) when (ex is not HostAbortedException)   // HostAbortedException: أدوات EF عند التصميم\n{\n    Log.Fatal(ex, \"DonationHub terminated unexpectedly\");\n}\nfinally\n{\n    Log.CloseAndFlush();\n}",
+   "filename": "DonationHub.Api/Program.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "سطر «اكتمل الطلب» يُثرى عبر `EnrichDiagnosticContext`، أما **كل** الـ logs الأخرى داخل الطلب (handlers، EF، ...) فتحتاج middleware يضع الخصائص في `LogContext` بعد المصادقة:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Diagnostics;\nusing DonationHub.Api.Controllers;         // ClaimsPrincipalExtensions.GetUserId() من Sprint 1\nusing Serilog.Context;\n\nnamespace DonationHub.Api.Infrastructure;\n\npublic sealed class LogEnrichmentMiddleware(RequestDelegate next)\n{\n    public async Task InvokeAsync(HttpContext context)\n    {\n        var traceId = Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;\n        var userId = context.User.Identity?.IsAuthenticated == true\n            ? context.User.GetUserId().ToString()\n            : \"anonymous\";\n\n        using (LogContext.PushProperty(\"TraceId\", traceId))\n        using (LogContext.PushProperty(\"UserId\", userId))\n        {\n            await next(context);\n        }\n    }\n}",
+   "filename": "DonationHub.Api/Infrastructure/LogEnrichmentMiddleware.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "استخدم نفس مصدر `traceId` الذي يظهر في ProblemDetails (Sprint 2). عندما يرسل لك مستخدم رد خطأ فيه `traceId`، تبحث به في ملف الـ log فتجد كل ما حدث في ذلك الطلب بالضبط."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الإعدادات كلها في `appsettings.json` (لا أسرار هنا). الملف بصيغة JSON مضغوطة (CLEF) ليكون قابلًا للبحث بالأدوات، والـ Console بقالب مقروء يعرض الخصائص:"
+  },
+  {
+   "type": "Code",
+   "language": "json",
+   "code": "{\n  \"Serilog\": {\n    \"Using\": [ \"Serilog.Sinks.Console\", \"Serilog.Sinks.File\" ],\n    \"MinimumLevel\": {\n      \"Default\": \"Information\",\n      \"Override\": {\n        \"Microsoft.AspNetCore\": \"Warning\",\n        \"Microsoft.EntityFrameworkCore.Database.Command\": \"Warning\",\n        \"Hangfire\": \"Information\"\n      }\n    },\n    \"WriteTo\": [\n      {\n        \"Name\": \"Console\",\n        \"Args\": {\n          \"outputTemplate\": \"[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}\"\n        }\n      },\n      {\n        \"Name\": \"File\",\n        \"Args\": {\n          \"path\": \"logs/donationhub-.log\",\n          \"rollingInterval\": \"Day\",\n          \"retainedFileCountLimit\": 14,\n          \"formatter\": \"Serilog.Formatting.Compact.CompactJsonFormatter, Serilog.Formatting.Compact\"\n        }\n      }\n    ],\n    \"Enrich\": [ \"FromLogContext\" ]\n  },\n  \"FileStorage\": {\n    \"RootPath\": \"storage\",\n    \"MaxBannerSizeBytes\": 2097152,\n    \"PublicBannersPath\": \"/files/banners\"\n  },\n  \"HangfireDashboard\": {\n    \"Username\": \"\",\n    \"Password\": \"\"\n  }\n}",
+   "filename": "appsettings.json"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "احذف قسم `\"Logging\"` القديم من `appsettings*.json` لأنه لم يعد مستخدمًا. حزمة `Serilog.AspNetCore` تجلب معها `Serilog.Sinks.Console` و `Serilog.Sinks.File` و `Serilog.Settings.Configuration` و `Serilog.Formatting.Compact`؛ إذا لم يُعثر على أي منها في مشروعك أضفه صراحة. أضف `logs/` إلى `.gitignore`."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**القوالب المنظّمة ومستويات الـ log** — الفرق يظهر عند البحث لاحقًا:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// ❌ نص مسطّح: لا يمكن الفلترة بـ DonationId، ويُنشئ قالبًا جديدًا لكل قيمة\nlogger.LogInformation(\"Donation \" + donation.Id + \" succeeded\");\nlogger.LogInformation($\"Donation {donation.Id} succeeded\");\n\n// ✅ قالب ثابت + خاصية منظّمة\nlogger.LogInformation(\"Donation {DonationId} succeeded\", donation.Id);          // Information: حدث عمل\nlogger.LogWarning(\"Late payment for donation {DonationId}\", donation.Id);       // Warning: شذوذ قابل للتعافي\nlogger.LogError(ex, \"Job {JobId} failed\", jobId);                               // Error: فشل\n\n// ❌ ممنوع تمامًا\nlogger.LogInformation(\"Login {Email} with password {Password}\", email, password);\nlogger.LogDebug(\"Issued token {AccessToken}\", token);\nlogger.LogInformation(\"SMTP settings {@Email}\", emailOptions);                 // يفرّغ Username/Password!",
+   "filename": "LoggingExamples.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "انتبه لـ `{@Object}` (destructuring): تسجيل كائن options أو request كامل قد يسرّب كلمة مرور SMTP أو refresh token دون أن تنتبه. سجّل خصائص محددة فقط."
+  },
+  {
+   "type": "Heading",
+   "text": "Unit Tests للسلوك الجديد",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الـ DoD يطلب اختبار التحقق من التوقيع ومنطق job التبرع المعلّق والـ idempotency. لأن الفاحص دالة نقية والـ job command عادي، الاختبارات بسيطة وسريعة (xUnit + FluentAssertions 7.0.0 + Moq 4.18.4):"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Common.Files;\nusing FluentAssertions;\n\nnamespace DonationHub.UnitTests.Files;\n\npublic class FileSignatureValidatorTests\n{\n    [Theory]\n    [InlineData(new byte[] { 0xFF, 0xD8, 0xFF, 0xE0, 0, 0x10, 0x4A, 0x46, 0x49, 0x46, 0, 1 }, \".jpg\")]\n    [InlineData(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0x0D }, \".png\")]\n    [InlineData(new byte[] { 0x52, 0x49, 0x46, 0x46, 0x24, 0, 0, 0, 0x57, 0x45, 0x42, 0x50 }, \".webp\")]\n    public void Valid_images_are_detected_by_content(byte[] header, string expected) =>\n        FileSignatureValidator.DetectImageExtension(header).Should().Be(expected);\n\n    [Fact]\n    public void Exe_renamed_to_jpg_is_rejected()\n    {\n        byte[] exe = [0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00]; // \"MZ\"\n\n        FileSignatureValidator.DetectImageExtension(exe).Should().BeNull();\n    }\n\n    [Fact]\n    public void Riff_file_that_is_not_webp_is_rejected()\n    {\n        byte[] wav = [0x52, 0x49, 0x46, 0x46, 0x24, 0, 0, 0, 0x57, 0x41, 0x56, 0x45]; // RIFF....WAVE\n\n        FileSignatureValidator.DetectImageExtension(wav).Should().BeNull();\n    }\n\n    [Fact]\n    public void Too_short_header_is_rejected() =>\n        FileSignatureValidator.DetectImageExtension([0xFF, 0xD8]).Should().BeNull();\n}",
+   "filename": "tests/DonationHub.UnitTests/Files/FileSignatureValidatorTests.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Features.Donations.FailStalePending;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Donations;\nusing FluentAssertions;\nusing Microsoft.Extensions.Logging.Abstractions;\nusing Microsoft.Extensions.Time.Testing;\nusing Moq;\n\nnamespace DonationHub.UnitTests.Donations;\n\npublic class FailStalePendingDonationCommandHandlerTests\n{\n    private static readonly DateTime Now = new(2026, 12, 10, 12, 0, 0, DateTimeKind.Utc);\n\n    private readonly Mock<IUnitOfWork> _unitOfWork = new();\n    private readonly Mock<IGenericRepository<Donation>> _donations = new();\n    private readonly Campaign _campaign =\n        Campaign.Create(\"عنوان\", \"Title\", \"وصف\", \"Description\", 1_000m, Now.AddDays(30), Guid.NewGuid(), Guid.NewGuid(), Now);\n\n    public FailStalePendingDonationCommandHandlerTests() =>\n        _unitOfWork.Setup(u => u.Repository<Donation>()).Returns(_donations.Object);\n\n    private FailStalePendingDonationCommandHandler CreateSut() => new(\n        _unitOfWork.Object,\n        new FakeTimeProvider(new DateTimeOffset(Now.AddMinutes(31))),\n        NullLogger<FailStalePendingDonationCommandHandler>.Instance);\n\n    private Donation Arrange()\n    {\n        var donation = Donation.Create(_campaign, Guid.NewGuid(), 50m, 1m, 10_000m, Now);\n        _donations.Setup(r => r.GetByIdAsync(donation.Id, It.IsAny<CancellationToken>())).ReturnsAsync(donation);\n        return donation;\n    }\n\n    [Fact]\n    public async Task Pending_donation_becomes_failed()\n    {\n        var donation = Arrange();\n\n        await CreateSut().Handle(new FailStalePendingDonationCommand(donation.Id), CancellationToken.None);\n\n        donation.Status.Should().Be(DonationStatus.Failed);\n        donation.FailureReason.Should().Be(FailStalePendingDonationCommandHandler.TimeoutReason);\n        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);\n    }\n\n    [Fact]\n    public async Task Running_the_job_twice_changes_state_once()\n    {\n        var donation = Arrange();\n        var sut = CreateSut();\n\n        await sut.Handle(new FailStalePendingDonationCommand(donation.Id), CancellationToken.None);\n        var second = await sut.Handle(new FailStalePendingDonationCommand(donation.Id), CancellationToken.None);\n\n        second.IsSuccess.Should().BeTrue();\n        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);\n    }\n\n    [Fact]\n    public async Task Succeeded_donation_is_left_untouched()\n    {\n        var donation = Arrange();\n        donation.MarkSucceeded(_campaign, \"DN-2026-000001\", Now.AddMinutes(5));\n\n        await CreateSut().Handle(new FailStalePendingDonationCommand(donation.Id), CancellationToken.None);\n\n        donation.Status.Should().Be(DonationStatus.Succeeded);\n        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);\n    }\n}",
+   "filename": "tests/DonationHub.UnitTests/Donations/FailStalePendingDonationCommandHandlerTests.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Donations;\nusing FluentAssertions;\n\nnamespace DonationHub.UnitTests.Donations;\n\npublic class DonationReceiptMarkersTests\n{\n    private static readonly DateTime Now = new(2026, 12, 10, 12, 0, 0, DateTimeKind.Utc);\n\n    [Fact]\n    public void Receipt_markers_are_set_only_once()\n    {\n        var campaign = Campaign.Create(\"عنوان\", \"Title\", \"وصف\", \"Description\", 1_000m, Now.AddDays(30), Guid.NewGuid(), Guid.NewGuid(), Now);\n        var donation = Donation.Create(campaign, Guid.NewGuid(), 50m, 1m, 10_000m, Now);\n        donation.MarkSucceeded(campaign, \"DN-2026-000001\", Now);\n\n        donation.AttachReceipt(\"first.pdf\");\n        donation.AttachReceipt(\"second.pdf\");\n        donation.MarkReceiptSent(Now);\n        donation.MarkReceiptSent(Now.AddHours(1));\n\n        donation.ReceiptFileName.Should().Be(\"first.pdf\");\n        donation.ReceiptSentAt.Should().Be(Now);\n    }\n}",
+   "filename": "tests/DonationHub.UnitTests/Donations/DonationReceiptMarkersTests.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "`FakeTimeProvider` من حزمة `Microsoft.Extensions.TimeProvider.Testing` (namespace `Microsoft.Extensions.Time.Testing`). خدمة الإشعارات نفسها (DB + SMTP) تُختبر بشكل أنسب باختبارات التكامل في Sprint 5؛ هنا نختبر قرارات الـ idempotency الموجودة في الـ Domain والـ handlers."
+  },
+  {
+   "type": "Heading",
+   "text": "تحديث README",
+   "level": 2
+  },
+  {
+   "type": "Code",
+   "language": "markdown",
+   "code": "# DonationHub API — Sprint 4\n\n## What was added\n- Hangfire (SQL Server storage) with a basic-auth protected dashboard at /hangfire (JOB-05)\n- Receipt PDF (QuestPDF, Community license) generated in a background job, downloadable via\n  GET /api/v1/donations/{id}/receipt (owner or Admin)\n- Receipt and goal-reached emails via MailKit, localized by PreferredLanguage (Arabic is RTL)\n- Campaign banner upload/delete with magic-bytes validation (JPG/PNG/WEBP, max 2 MB)\n- Jobs: stale pending donation (delayed, 30 min), expire campaigns (hourly)\n- Serilog: console + rolling file (logs/donationhub-.log) enriched with TraceId and UserId\n\n## Run locally\n    docker run -d --name mailpit -p 8025:8025 -p 1025:1025 axllent/mailpit\n    cd src/DonationHub.Api\n    dotnet user-secrets set \"HangfireDashboard:Username\" \"jobs-admin\"\n    dotnet user-secrets set \"HangfireDashboard:Password\" \"<long random password>\"\n    cd ../..\n    dotnet ef database update --project src/DonationHub.Infrastructure --startup-project src/DonationHub.Api\n    dotnet run --project src/DonationHub.Api\n\n## Try it\n1. Create a donation, then call POST /api/v1/admin/donations/{id}/mark-succeeded as Admin.\n2. Open http://localhost:8025 and check the email with the PDF receipt attached.\n3. Open /hangfire (browser asks for the dashboard credentials) to see the processed jobs.\n4. Upload an .exe renamed to .jpg to POST /api/v1/campaigns/{id}/banner and expect 400 File.InvalidType.\n\n## Decisions\n- Jobs are enqueued only after the transaction commits and receive IDs only.\n- Idempotency markers: Donation.ReceiptFileName, Donation.ReceiptSentAt, Campaign.GoalEmailSentAt.\n- Email delivery is at-least-once (SMTP cannot be exactly-once); a successful job never resends.\n- Receipts are stored outside any public folder; only banners are served as static files.\n- Receipt not generated yet returns 409 Donation.ReceiptNotReady.\n- Known trade-off: a crash between commit and enqueue loses the job (Outbox pattern would fix it).",
+   "filename": "README.md"
+  },
+  {
+   "type": "Divider"
+  },
+  {
+   "type": "Heading",
+   "text": "أخطاء شائعة تخسّر نقاطًا",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "إرسال البريد أو توليد PDF داخل الـ controller أو الـ handler مباشرة (حتى لو بـ `Task.Run`) بدل Hangfire.",
+    "استدعاء `Enqueue` قبل `SaveChangesAsync` / الـ commit، أو داخل الـ transaction.",
+    "تمرير كيان `Donation` كامل أو `DbContext` كوسيط للـ job بدل `Guid`.",
+    "job غير idempotent: إعادة المحاولة ترسل بريدًا ثانيًا أو تولّد PDF جديدًا في كل مرة.",
+    "ابتلاع استثناء SMTP داخل `try/catch` فيبدو الـ job ناجحًا ولا تحدث إعادة محاولة.",
+    "لوحة `/hangfire` مفتوحة، أو محمية بـ `LocalRequestsOnly` فقط، أو كلمة مرورها في `appsettings.json`.",
+    "التحقق من نوع الملف عبر `Path.GetExtension` أو `file.ContentType` فقط.",
+    "حفظ الملف باسم المستخدم (`file.FileName`) أو حفظ الإيصالات داخل `wwwroot`.",
+    "حذف الصورة القديمة **قبل** نجاح حفظ قاعدة البيانات، أو عدم حذفها إطلاقًا.",
+    "endpoint الإيصال يُرجع 403 بدل 404 لتبرع شخص آخر، أو لا يتحقق من الملكية أصلًا.",
+    "رسائل log بدمج النصوص (`$\"...\"`) بدل القوالب المنظّمة، أو تسجيل كلمات مرور/توكنات.",
+    "استخدام `DateTime.UtcNow` داخل الـ jobs أو الـ handlers بدل `TimeProvider`.",
+    "بريد الوصول للهدف يُرسل مع كل دفعة متأخرة لأن الشرط `Status == Completed` بدل «اكتملت للتو».",
+    "نسيان إبطال الكاش بعد تغيير الصورة أو انتهاء الحملات."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "أسئلة استعد لها في المراجعة",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "ماذا يحدث لو شُغّل job الإيصال مرتين؟ وماذا لو فشل SMTP بعد توليد الـ PDF؟",
+    "لماذا نضيف الـ job بعد الـ commit وليس قبله؟ وما الذي قد يضيع في هذا التصميم، وكيف يحلّه نمط Outbox؟",
+    "لماذا نمرّر `Guid` فقط للـ job؟ ماذا يحدث لو مرّرت الكيان كاملًا ثم تغيّر قبل التنفيذ؟",
+    "لماذا لا يكفي فحص الامتداد أو `ContentType`؟ ما هي أول بايتات ملفات JPEG و PNG و WebP؟",
+    "ماذا يحدث لو وصل `mark-succeeded` في نفس لحظة تنفيذ JOB-03؟ كيف تمنع التعارض؟",
+    "لماذا اخترت basic auth للوحة Hangfire؟ ولماذا لا يعمل JWT هنا؟",
+    "ما الفرق بين Fire-and-forget و Delayed و Recurring؟ ولماذا `AddOrUpdate` لا يكرّر الـ job عند كل إعادة تشغيل؟",
+    "ما الفرق بين `$\"Donation {id}\"` و `\"Donation {DonationId}\"` في Serilog؟",
+    "كيف تجد كل الـ logs الخاصة بطلب واحد فشل عند مستخدم؟",
+    "لماذا تُخزَّن الإيصالات خارج `wwwroot` بينما الصور عامة؟",
+    "لماذا يظهر التاريخ هجريًا إذا استخدمت الثقافة `ar`؟"
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "تلميحات للمهام الإضافية",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**NTF-07 (بريد الترحيب):** نفس النمط تمامًا — بعد نجاح `CreateAsync` للمستخدم أضف `jobs.EnqueueWelcomeEmail(user.Id)`، والـ job يقرأ المستخدم ولغته ويرسل. للـ idempotency أضف `WelcomeEmailSentAt` إلى `ApplicationUser`."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**NTF-08 (انتهاء الحملة بدون الوصول للهدف):** داخل `ExpireCampaignsJob` اجمع معرّفات الحملات التي انتهت في الدفعة، وبعد `SaveChangesAsync` الناجح أضف لكل منها job بريد (مع علامة `ExpiredEmailSentAt`)."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**Seq sink:** شغّل Seq محليًا وأضف الحزمة `Serilog.Sinks.Seq` ووجهة جديدة في الإعدادات:"
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "docker run -d --name seq -e ACCEPT_EULA=Y -e SEQ_FIRSTRUN_NOAUTHENTICATION=true -p 5341:80 datalust/seq\ndotnet add src/DonationHub.Api package Serilog.Sinks.Seq\n# ثم أضف إلى Serilog:WriteTo:  { \"Name\": \"Seq\", \"Args\": { \"serverUrl\": \"http://localhost:5341\" } }",
+   "filename": "seq-bonus.sh"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "متغيرات بيئة أول تشغيل في صورة `datalust/seq` تغيّرت بين الإصدارات (المصادقة أصبحت مفعّلة افتراضيًا في الإصدارات الحديثة). تحقّق من توثيق الصورة إذا رفضت الحاوية البدء."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**FIL-08 (تصدير CSV):** query للـ Admin يبني الملف بـ `StringBuilder` ويُرجع `File(bytes, \"text/csv\", \"donations.csv\")`. انتبه لـ **CSV injection**: أي قيمة تبدأ بـ `=` أو `+` أو `-` أو `@` تُسبق بعلامة `'`:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "private static string Csv(string? value)\n{\n    value ??= string.Empty;\n    if (value.Length > 0 && \"=+-@\".Contains(value[0]))\n        value = \"'\" + value;                                   // يمنع تنفيذ صيغة في Excel\n    return $\"\\\"{value.Replace(\"\\\"\", \"\\\"\\\"\")}\\\"\";\n}",
+   "filename": "DonationHub.Application/Features/Donations/Export/CsvEscaping.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**JOB-06 (ملخص يومي للـ Admin):** recurring job ثانٍ بنفس الأسلوب: `AddOrUpdate<DailySummaryJob>(\"daily-admin-summary\", j => j.RunAsync(CancellationToken.None), Cron.Daily(6))` — يجمع تبرعات آخر 24 ساعة ويرسلها. **DON-11:** في `ReceiptData` مرّر `\"Anonymous Donor\"` (أو «متبرع مجهول» بالعربية) بدل الاسم عندما `IsAnonymous = true`. **FIL-09:** إن استخدمت مكتبة صور، تأكد أن ترخيصها يناسبك قبل إضافتها."
+  },
+  {
+   "type": "Callout",
+   "variant": "Success",
+   "markdown": "لو حلّك يحقق نفس **المبادئ** — طلب HTTP سريع لا ينتظر PDF أو SMTP، jobs تُضاف بعد الـ commit وتستقبل معرّفات فقط وتتحمّل التشغيل مرتين، ملفات يُتحقق منها بالمحتوى وتُخزَّن بأسماء عشوائية، لوحة محمية وأسرار خارج Git، و logs منظّمة يمكن البحث فيها بـ `traceId` — فأنت على الطريق الصحيح حتى لو اختلفت التفاصيل."
+  }
+ ]
+}

@@ -1,0 +1,1243 @@
+{
+ "title": "Sprint 3 — نواة التبرعات، التفويض على الموارد، وهندسة API للإنتاج",
+ "summary": "نواة التبرعات بمعاملات ذرّية، تفويض الملكية، الكاش و Redis، التوطين، الإصدارات، تحديد المعدل و CORS.",
+ "isGraded": true,
+ "basePoints": 100,
+ "lateMultiplier": 0.4,
+ "allowedSubmissionTypes": [
+  "Link"
+ ],
+ "allowResubmission": true,
+ "briefBlocks": [
+  {
+   "type": "Heading",
+   "text": "Sprint 3 — نواة التبرعات، التفويض على الموارد، وهندسة API للإنتاج",
+   "level": 1
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "في هذا السبرنت تنقل **DonationHub** — منصّة إدارة التبرعات والحملات الخيرية — من مرحلة الـ CRUD الأساسي إلى منصّة **جاهزة للإنتاج**. ستبني **نواة التبرعات (Donations Core)** محميّة بـ **معاملات قاعدة بيانات ذرّية (EF Core Database Transactions)** لأن أي خطأ هنا يعني خطأً في أموال حقيقية، وتفرض **تفويضًا على مستوى المورد (Resource-Based Authorization)** يضمن أن مدير الحملة لا يلمس إلا حملاته، ثم تضيف مزايا الـ API الاحترافية: الكاش (في الذاكرة ثم **Redis**)، التوطين ثنائي اللغة، إصدارات الـ API، تحديد معدل الطلبات، وسياسة CORS صارمة."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "- **المدة:** 15 يومًا (من 22/11/2026 إلى 06/12/2026)\n- **Stand-up 1 (اليوم 5):** 26/11/2026 — يقودها **Kareem Zein**\n- **Stand-up 2 (اليوم 10):** 01/12/2026 — يقودها **Mohamed Atef**\n- **الختام وآخر موعد للتسليم (اليوم 15):** 06/12/2026 — تقودها **Asma ELhadidy**\n- **المراجعة والتصحيح (الأيام 16–18):** من 07/12/2026 إلى 09/12/2026\n- **التقييم:** 100 نقطة"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**الإطار المستهدف:** .NET 10 (`net10.0`) بصيغة الحل `.slnx`، ومتوافق بالكامل مع .NET 8 و .NET 9. نكمل على نفس الحل من Sprint 2: SQL Server + EF Core + **Controllers رفيعة** + MediatR `[12.5.0]`."
+  },
+  {
+   "type": "Heading",
+   "text": "🎯 هدف السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "تطوير DonationHub إلى ما بعد الـ CRUD الأساسي عبر بناء وحدة **نواة التبرعات** المدعومة بـ **معاملات EF Core ذرّية** لحماية الاتساق المالي. فرض **تفويض دقيق على مستوى المورد** (قواعد الملكية)، وتجهيز المنصّة بمزايا API بمستوى الإنتاج:\n\n- **الكاش:** في الذاكرة أولًا، ثم كاش موزَّع عبر **Redis** يعمل داخل Docker.\n- **التوطين (Localization):** ثنائي اللغة (`ar` / `en`).\n- **إصدارات الـ API (API Versioning).**\n- **تحديد معدل الطلبات (Rate Limiting)** لمنع إساءة الاستخدام.\n- **سياسات CORS** صارمة."
+  },
+  {
+   "type": "Code",
+   "language": "text",
+   "code": "POST /api/v1/campaigns/{id}/donations  ──►  Donation (Pending)\n                                                 │\nPOST /api/v1/admin/donations/{id}/mark-succeeded │  (stub مؤقت حتى Sprint 5)\n                                                 ▼\n        ┌──────────── transaction واحدة ────────────┐\n        │ 1. Donation → Succeeded + CompletedAt      │\n        │    + ReceiptNumber (DN-2026-000042)        │\n        │ 2. Campaign.RaisedAmount += Amount         │\n        │ 3. RaisedAmount >= GoalAmount → Completed  │\n        │ 4. Commit                                  │\n        └────────────────────────────────────────────┘\n                                                 │\n                                                 ▼\n                 إبطال الكاش (تفاصيل الحملة + القوائم العامة)",
+   "filename": "sprint-3-flow.txt"
+  },
+  {
+   "type": "Heading",
+   "text": "📌 المتطلبات المسبقة",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "⭐ تعني مصدرًا **أساسيًّا مطلوبًا**، و🔄 تعني مصدرًا **بديلًا أو للتعمّق**."
+  },
+  {
+   "type": "Heading",
+   "text": "أساسيات حاويات Docker (إلزامي لتشغيل Redis)",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "يجب أن تكون قادرًا على تشغيل حاويات Docker ومراقبتها وفحص سجلاتها وإيقافها محليًّا **قبل** البدء في مهام Sprint 3:"
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "إتقان الأوامر: `docker run -d -p` و `docker ps` و `docker logs` و `docker stop`.",
+    "تشغيل حاوية Redis محليًّا بالأمر التالي (أو البديل مفتوح المصدر `valkey/valkey:alpine`)."
+   ]
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "docker run -d --name redis -p 6379:6379 redis:alpine\n# أو البديل مفتوح المصدر:\n# docker run -d --name redis -p 6379:6379 valkey/valkey:alpine\n\ndocker ps            # تأكد أن الحاوية تعمل\ndocker logs redis    # يجب أن ترى: Ready to accept connections\ndocker stop redis    # إيقافها عند الانتهاء",
+   "filename": "run-redis.sh"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/cB7Qx13YOFM",
+   "title": "⭐1 Basic Commands in Docker Part 5 — Codographia (15:20)"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "يغطي: `pull` و `run` و `ps` و `stop`."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/w_fnmXy9ZEk",
+   "title": "⭐2 Basic Commands Part 6 — Codographia (20:29)"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "يغطي: الوضع المنفصل `-d`، وربط المنافذ `-p`، وعرض السجلات."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Docker in 5 Minutes — Yehia Tech [Arabic]",
+   "url": "https://youtu.be/yRkE-1Lq0qo",
+   "kind": "video",
+   "description": "مقدمة سريعة بالعربية عن فكرة Docker والحاويات."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Docker For Developers Ep 1 — Ramy Hakam [Arabic]",
+   "url": "https://youtu.be/dTZZ-4PibHg",
+   "kind": "video",
+   "description": "سلسلة عربية لـ Docker موجّهة للمطوّرين — الحلقة الأولى."
+  },
+  {
+   "type": "Heading",
+   "text": "🧰 الحزم والأدوات في هذا السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| الغرض | الأداة / الحزمة | ملاحظة |\n|---|---|---|\n| الكاش الموزَّع | `Microsoft.Extensions.Caching.StackExchangeRedis` + صورة `redis:alpine` | `AddStackExchangeRedisCache` خلف `IDistributedCache` |\n| إصدارات الـ API | `Asp.Versioning.Mvc` + `Asp.Versioning.Mvc.ApiExplorer` | URL segment: `/api/v1/...` |\n| تحديد المعدل | الـ Rate Limiter المدمج في ASP.NET Core | لا يحتاج حزمة إضافية |\n| التوطين | `IStringLocalizer` + ملفات `.resx` | مدمج في ASP.NET Core |\n| CQRS | MediatR `[12.5.0]` | ثابت كما في Sprint 2 (الإصدار 13 وما بعده تجاري) |\n| الاختبارات | FluentAssertions `[7.0.0]` + Moq `[4.18.4]` | `FakeTimeProvider` من `Microsoft.Extensions.TimeProvider.Testing` |"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**لا تحدّث الحزم المثبّتة:** MediatR يبقى `[12.5.0]` و FluentAssertions يبقى `[7.0.0]` و Moq يبقى `[4.18.4]`. الوقت الحالي يأتي دائمًا من `TimeProvider` — لا `DateTime.UtcNow` داخل الـ Domain أو الـ handlers."
+  },
+  {
+   "type": "Heading",
+   "text": "🛠️ مهام السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "كل المهام التالية **أساسية (CORE)** ما لم يُذكر أنها BONUS."
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "📘 **مراجع مكتوبة:** الروابط المعلَّمة بـ 📘 من كورس [.NET Web API Zero to Hero](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) المجاني (مقالات .NET 10 مع الكود المصدري). أمثلته تستخدم **PostgreSQL** و **Minimal APIs** — طبّق نفس الأفكار على **SQL Server** و **Controllers رفيعة** كما في مشروعنا، وحافظ على الإصدارات المثبّتة."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 1 — التفويض على مستوى المورد وسياسات الملكية",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "طبّق قواعد الملكية وحدود الوصول حسب المتطلب **CMP-07** في الـ SRS. الفكرة: الدور وحده لا يكفي — كون المستخدم `CampaignManager` لا يعني أنه يستطيع تعديل **أي** حملة، بل حملاته هو فقط. هذا قرار لا يمكن اتخاذه إلا بعد تحميل المورد نفسه، ولذلك نحتاج **Resource-Based Authorization**."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "`CampaignManager` يستطيع إنشاء الحملات، وتعديل أو حذف **حملاته فقط**.",
+    "`Admin` له صلاحية كاملة لإدارة كل الحملات في النظام.",
+    "تنفيذ `CampaignOwnershipRequirement : IAuthorizationRequirement`.",
+    "تنفيذ `CampaignOwnershipHandler : AuthorizationHandler<CampaignOwnershipRequirement, Campaign>` واستدعاؤه عبر `IAuthorizationService`.",
+    "**قاعدة أمنية:** عندما يحاول مستخدم مسجّل جلب أو تعديل مورد خاص يملكه مستخدم آخر، أرجِع **404 Not Found** (`Campaign.NotFound` / `Donation.NotFound`، وليس 403 Forbidden) حتى لا تكشف وجود معرّف المورد لغير المصرّح لهم.",
+    "الطلبات غير المصادَق عليها (بدون توكن) إلى endpoints محمية تُرجع **401**.",
+    "**الدفاع في العمق (SRS §6.3):** افرض التفويض في الـ API (سياسات/أدوار) **وأعد** فحص الملكية داخل الـ handler للموارد المملوكة (الحملات والتبرعات).",
+    "`GET /campaigns/mine` يُرجع حملات المدير نفسه **بكل حالاتها** (مقسّمة على صفحات)، مع الحقول باللغتين."
+   ]
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| Endpoint | Campaign Manager | Admin |\n|---|---|---|\n| `POST /campaigns` | ✅ ينشئ حملة مملوكة له | ✅ ينشئ حملات |\n| `PUT /campaigns/{id}` | ✅ حملاته فقط | ✅ كل الحملات |\n| `DELETE /campaigns/{id}` | ✅ حملاته فقط | ✅ كل الحملات |\n| `GET /campaigns/mine` | ✅ يجلب حملاته (كل الحالات) | — |"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**404 وليس 403:** لو أرجعت 403 لحملة مدير آخر، فأنت أخبرت المهاجم أن هذا الـ `id` **موجود**. الرد يجب أن يكون مطابقًا تمامًا لرد «الحملة غير موجودة»."
+  },
+  {
+   "type": "Resource",
+   "title": "⭐1 Resource-based authorization — Microsoft Learn",
+   "url": "https://learn.microsoft.com/en-us/aspnet/core/security/authorization/resourcebased",
+   "kind": "doc",
+   "description": "المرجع الرسمي: AuthorizationHandler مع مورد، واستدعاء AuthorizeAsync يدويًا بعد تحميل المورد."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/29x5WmcUNtM",
+   "title": "⭐2 Who Owns This Order? — Code Story (01:46)"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "بناء الـ handler واستدعاء `AuthorizeAsync`."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 ASP.NET Web API 8 Identity — Fullstack Dev",
+   "url": "https://youtu.be/tXUtSGvHMeg",
+   "kind": "video",
+   "description": "جزء التفويض على الموارد يبدأ عند 02:19:44."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 14- Create Policy Part 1 — Mahmoud Hamza [Arabic]",
+   "url": "https://youtu.be/tdMrNKPO39U",
+   "kind": "video",
+   "description": "شرح عربي لإنشاء الـ Policies في ASP.NET Core."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Custom Authorization Handler — Milan Jovanović",
+   "url": "https://youtu.be/SZtZuvcMBA0",
+   "kind": "video",
+   "description": "كتابة Authorization Handler مخصّص خطوة بخطوة."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 Policy-Based Authorization in ASP.NET Core — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/policy-based-authorization-in-aspnet-core/",
+   "kind": "article",
+   "description": "السياسات والـ Requirements والـ Handlers مع أمثلة .NET 10."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 Claims-Based Authorization in ASP.NET Core — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/claims-based-authorization-in-aspnet-core/",
+   "kind": "article",
+   "description": "التفويض المبني على الـ Claims وقراءة معرّف المستخدم من التوكن."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 2 — نواة التبرعات والمعاملات الذرّية في قاعدة البيانات",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "طبّق متطلبات تدفق التبرع من SRS §5.4. انتبه: هذه أول وحدة في المشروع تتعامل مع **المال**، لذلك الاتساق والتزامن هنا ليسا تحسينًا اختياريًّا بل جوهر المهمة."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**DON-01:** المستخدم المسجّل (Donor أو Campaign Manager أو Admin) ينشئ تبرعًا لحملة نشطة عبر `POST /campaigns/{campaignId}/donations` بجسم `{ \"amount\": 25.00 }`. التبرع يبدأ بحالة `Pending`. أرجِع **201 Created** مع ترويسة `Location`.",
+    "**DON-02:** ارفض التبرع إذا لم تكن الحملة `Active` أو مرّ `EndDate` (`Campaign.NotActive`، 409)، أو كان المبلغ خارج النطاق المضبوط في `DonationOptions` (الافتراضي: الحد الأدنى **1.00** والأقصى **10,000.00**) (`Donation.AmountOutOfRange`، 422). هاتان هما القاعدتان الثابتتان 3 و 4.",
+    "**DON-03:** `GET /donations/mine` — المستخدم الحالي يعرض تبرعاته **هو** (مقسّمة على صفحات) مع المبلغ والتاريخ والحالة وعنوان الحملة.",
+    "**DON-04:** `GET /donations/{id}` — المالك (أو Admin) يجلب تبرعًا واحدًا. الوصول إلى تبرع شخص آخر يُرجع **404** `Donation.NotFound` (لا تكشف أنه موجود).",
+    "**DON-05:** `GET /admin/donations` (Admin فقط) — عرض كل التبرعات مقسّمة على صفحات مع فلاتر: `status` و `campaignId` و `donorId` ونطاق تاريخ (`from` و `to`).",
+    "**DON-06 (Stub مؤقت، Sprints 3–4):** `POST /admin/donations/{id}/mark-succeeded` (**Admin فقط**) يحاكي دفعًا ناجحًا حتى تختبر التدفق كاملًا قبل Stripe. التبرع الذي ليس `Pending` يُرجع `Donation.InvalidState` (409). **هذا الـ endpoint يُحذف في Sprint 5.**",
+    "**DON-07 (تدفق النجاح في transaction واحدة — SRS §5.5):** تحويل التبرع إلى ناجح يجري داخل **transaction واحدة** في قاعدة البيانات (مثلًا `await dbContext.Database.BeginTransactionAsync()` أو `SaveChangesAsync` واحد عبر الـ Unit of Work).",
+    "**DON-08 (`RaisedAmount` آمن تحت التزامن):** تبرعان ينجحان في نفس اللحظة يجب أن **يُحتسبا كلاهما**. استخدم `RowVersion` الخاص بالحملة مع إعادة المحاولة عند `DbUpdateConcurrencyException`، أو تحديثًا ذرّيًّا في قاعدة البيانات (`ExecuteUpdateAsync(... RaisedAmount + amount ...)`). كن مستعدًا لشرح اختيارك."
+   ]
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**خطوات تدفق النجاح (DON-07) بالترتيب:**\n\n1. اضبط حالة التبرع إلى `Succeeded`، واضبط `CompletedAt` (من `TimeProvider`)، وولّد `ReceiptNumber` بالصيغة `DN-{year}-{6-digit sequence}` (مثلًا `DN-2026-000042`). يجب أن يكون التسلسل **فريدًا حتى تحت تدفقات نجاح متزامنة** (Database Sequence، أو Unique Index مع إعادة المحاولة — SRS §9.4).\n2. أضف المبلغ إلى `RaisedAmount` الخاص بالحملة.\n3. إذا أصبح `RaisedAmount >= GoalAmount`، اضبط حالة الحملة إلى `Completed`.\n4. Commit. (من Sprint 4 تُضاف الـ background jobs إلى الطابور **بعد** الـ commit فقط، وليس أبدًا داخل الـ transaction.)"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**حالة الدفع المتأخر:** إذا نجح الدفع بعد أن انتهت صلاحية الحملة أو اكتملت، **اقبل المال وسجّل التبرع كـ `Succeeded`** (المتبرع خُصم منه المبلغ بالفعل)، وسجّل تحذيرًا (warning) عبر `ILogger`. الاسترداد (Refund) مهمة إضافية BONUS."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**اختبارات الوحدة (SRS §6.13):** أضف اختبارات للقواعد الجديدة الخاصة بالتبرع (نطاق المبلغ، الحملة يجب أن تكون نشطة، الحالات النهائية لا تتغيّر، الحملة تكتمل عند بلوغ الهدف)، وللـ handlers الخاصة بالتبرعات (الإنشاء، جلب تبرعك / 404 لتبرعات الآخرين، mark-succeeded)، مع تزييف (fake) الـ repository و `TimeProvider`."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| Method | Path | الصلاحية |\n|---|---|---|\n| `POST` | `/campaigns/{campaignId}/donations` | Donor, Campaign Manager, Admin |\n| `GET` | `/donations/mine` | أي مستخدم مسجّل |\n| `GET` | `/donations/{id}` | المالك، Admin |\n| `GET` | `/admin/donations` | Admin |\n| `POST` | `/admin/donations/{id}/mark-succeeded` | Admin (مؤقت، يُحذف في Sprint 5) |"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/m2RDSxGPuhs",
+   "title": "⭐ #020 DB Transaction EF Core — Essam Abdelnabi [Arabic] (32:57)"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "`BeginTransaction` عند 19:15، و Rollback عند 24:40، و Savepoints عند 28:50."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Transactions in EF Core — Milan Jovanović",
+   "url": "https://youtu.be/25H84BXcr9M",
+   "kind": "video",
+   "description": "متى يكفي SaveChanges الواحد ومتى تحتاج transaction صريحة."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Avoid EF Core Transaction Mistakes — Milan",
+   "url": "https://youtu.be/cUszBUYSFzw",
+   "kind": "video",
+   "description": "أخطاء شائعة في استخدام الـ transactions مع EF Core وكيف تتجنّبها."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 3 — التقسيم على صفحات، والفلترة، والترتيب",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "طبّق استعلامات قابلة للتوسّع على قوائم الـ endpoints العامة والإدارية: `GET /campaigns` و `GET /campaigns/success-stories` و `GET /campaigns/mine` و `GET /donations/mine` و `GET /admin/donations`."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "أنشئ `PagedList<T>` قابلًا لإعادة الاستخدام، يُرجَع بشكل SRS §6.8: `{ \"items\": [], \"page\": 1, \"pageSize\": 20, \"totalCount\": 0, \"totalPages\": 0 }`. حجم الصفحة الافتراضي **20** والأقصى **50**.",
+    "نفّذ التقسيم على مستوى قاعدة البيانات عبر `Skip()` و `Take()` على `IQueryable` **قبل** تنفيذ الاستعلام.",
+    "**CMP-08 (قائمة الحملات العامة):** البحث في عنوان الحملة **بلغة الطلب الحالية** (`search` ← `TitleAr` أو `TitleEn`).",
+    "**CMP-08:** الفلترة حسب التصنيف (`categoryId`) والحالة (`status`).",
+    "**CMP-08:** ترتيب ديناميكي آمن (قائمة بيضاء فقط) حسب **تاريخ الانتهاء** أو **المبلغ المجموع** أو **تاريخ الإنشاء**، تصاعديًّا أو تنازليًّا.",
+    "فلاتر تبرعات الـ Admin (DON-05): `status` و `campaignId` و `donorId` و `from` و `to`."
+   ]
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**الترتيب الديناميكي بقائمة بيضاء فقط:** لا تبنِ اسم العمود من نص المستخدم مباشرة (لا Reflection على أي اسم يصل، ولا SQL نصّي). اربط كل قيمة مسموحة بـ expression معروف، وأي قيمة أخرى تُرفض أو تأخذ الترتيب الافتراضي."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/XDkUliEyPms",
+   "title": "⭐1 15. Pagination in Web Api Part 1 — Coding-Future (27:51)"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/X8zRvXbirMU",
+   "title": "⭐2 Filtering, Sorting And Pagination — Milan Jovanović (24:02)"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الفلترة بـ `Where` عند 03:25، والترتيب عند 08:20، و `PagedList` عند 18:00."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 16. Pagination Part 2 — Coding-Future",
+   "url": "https://youtu.be/8vum4WH8PVs",
+   "kind": "video",
+   "description": "الجزء الثاني من شرح التقسيم على صفحات في Web API."
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Paging Math and Implementation — Essam Abdelnabi",
+   "url": "https://youtu.be/fb8j6CjyWWw",
+   "kind": "video",
+   "description": "حسابات الصفحات وتنفيذها — ابدأ من 56:35."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 Pagination, Sorting & Searching in ASP.NET Core Web API — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/pagination-sorting-searching-aspnet-core-webapi/",
+   "kind": "article",
+   "description": "PagedList والبحث والترتيب الآمن مع EF Core على .NET 10."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 4 — الكاش: في الذاكرة أولًا، ثم Redis و IDistributedCache (CMP-09)",
+   "level": 3
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الهدف أن تفهم **لماذا** ننتقل من كاش الذاكرة إلى كاش موزَّع: كاش الذاكرة سريع لكنه يعيش داخل عملية واحدة، فإذا شغّلت نسختين من الـ API أصبح لكل نسخة بيانات مختلفة، والإبطال في نسخة لا يصل للأخرى. لذلك نبني **تجريدًا خاصًّا بنا** في Application حتى يكون التبديل تغيير تسجيل فقط."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**الخطوة 1 — في الذاكرة:** طبّق نمط cache-aside باستخدام `IMemoryCache` خلف تجريد الكاش الخاص بك في طبقة Application.",
+    "**الخطوة 2 — موزَّع:** بدّل التنفيذ إلى `IDistributedCache` مدعومًا بحاوية **Redis** محلية (`AddStackExchangeRedisCache`)، مع مدد صلاحية من `CacheOptions`.",
+    "اعمل كاش للقراءات العامة عالية التكرار (SRS §6.6): قائمة التصنيفات.",
+    "اعمل كاش لصفحات قائمة الحملات العامة وقصص النجاح (success stories).",
+    "اعمل كاش لتفاصيل الحملة `GET /campaigns/{id}` مع انتهاء صلاحية منزلق (sliding) ومطلق (absolute).",
+    "**تسمية المفاتيح:** يجب أن تتضمّن المفاتيح **اللغة** و **معاملات الاستعلام** (مثلًا `campaigns:list:en:page=1:size=20:cat=…:status=…:search=…:sort=…`)، وإلا سيستلم المستخدم العربي بيانات إنجليزية.",
+    "**إبطال الكاش (CMP-09):** احذف المفاتيح المرتبطة فورًا عند تغيّر **حملة** (إنشاء، تعديل، حذف، تغيّر حالة)، وعند تغيّر **تصنيف**، وعند نجاح تبرع (تغيّر المبلغ المجموع). وثّق استراتيجية الإبطال في الـ README.",
+    "**لا** تعمل كاش أبدًا لبيانات خاصة بمستخدم (مثل `GET /donations/mine`) تحت مفتاح مشترك."
+   ]
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "ابدأ بالخطوة 1 واختبرها، ثم انتقل للخطوة 2 بتغيير **تسجيل الخدمة فقط** في Infrastructure. إذا احتجت لتعديل أي handler عند الانتقال إلى Redis فالتجريد الذي صمّمته يسرّب تفاصيل التنفيذ."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/AIBOcH_dAX8",
+   "title": "⭐ Caching Explained: In-Memory vs Redis — Amr Mohamed [Arabic] (21:11)"
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Distributed Caching With Redis in ASP.NET Core — Milan Jovanović",
+   "url": "https://youtu.be/Tt5zIKVMMbs",
+   "kind": "video",
+   "description": "IDistributedCache مع Redis في ASP.NET Core عمليًّا."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 In-Memory Caching in ASP.NET Core — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/in-memory-caching-in-aspnet-core/",
+   "kind": "article",
+   "description": "للخطوة 1: IMemoryCache ونمط cache-aside وخيارات انتهاء الصلاحية."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 Distributed Caching in ASP.NET Core with Redis — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/distributed-caching-in-aspnet-core-with-redis/",
+   "kind": "article",
+   "description": "للخطوة 2: الانتقال إلى IDistributedCache و Redis."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 5 — دعم التوطين (ar / en)",
+   "level": 3
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "اضبط التوطين في ASP.NET Core باستخدام `IStringLocalizer` وملفات الموارد `.resx`. النصوص تعيش في ملفات الموارد، وليست نصوصًا ثابتة داخل الـ handlers.",
+    "الثقافات المدعومة: `en` (**الافتراضية**) و `ar`، تُحدَّد من ترويسة الطلب `Accept-Language: ar` أو `Accept-Language: en`، مع الرجوع إلى `en` عند غياب الترويسة أو عدم دعمها.",
+    "ترجم رسائل التحقق (validation) ورسائل كتالوج الأخطاء (الـ `Message` لكل `Error`).",
+    "**CMP-11:** استجابات الحملات والتصنيفات العامة تُرجع الحقول المترجمة (`Title` و `Name` و `Description`) حسب الثقافة المطلوبة. endpoints الـ Admin والمدير تُرجع اللغتين معًا.",
+    "البيانات المخزّنة تبقى ثنائية اللغة (أعمدة Ar/En) ولا تُترجم آليًّا أبدًا."
+   ]
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/PyCGEO4b6F0",
+   "title": "⭐1 Globalization and Localization Part 1 — Mohamed El-Helaly [Arabic] (08:38)"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/YzOarEJDdrY",
+   "title": "⭐2 16. Use Localization In APIs — Mohamed El-Helaly [Arabic] (04:37)"
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Microsoft Learn — Localization in ASP.NET Core",
+   "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/localization",
+   "kind": "doc",
+   "description": "المرجع الرسمي: RequestLocalizationOptions و IStringLocalizer وتسمية ملفات resx."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 6 — إصدارات الـ API وتحديد معدل الطلبات",
+   "level": 3
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**API Versioning:** طبّق الإصدارات عبر مقطع في الرابط (`/api/v1/...`) باستخدام `Asp.Versioning.Mvc`. توثيق OpenAPI (Scalar) يعرض **مستندًا واحدًا لكل إصدار**.",
+    "**Rate Limiting (SRS §6.4):** استخدم الـ Rate Limiter المدمج في ASP.NET Core مع **سياسات مسمّاة** تأتي حدودها من `RateLimitOptions`.",
+    "endpoint الـ Stripe webhook (Sprint 5) **مستثنى** من تحديد المعدل.",
+    "الطلبات المرفوضة تُرجع **429 Too Many Requests** مع ترويسة `Retry-After` وجسم ProblemDetails (`code: Common.RateLimited`)."
+   ]
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| السياسة | تُطبَّق على | الافتراضي |\n|---|---|---|\n| `global` | كل الـ endpoints، مقسّمة حسب IP العميل | 100 طلب / دقيقة |\n| `auth` | `login` و `register` و `refresh` | 10 طلبات / دقيقة لكل IP |\n| `donations` | إنشاء التبرع (و checkout من Sprint 5) | 20 طلبًا / دقيقة لكل مستخدم |"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/DkZd-5z0CeI",
+   "title": "⭐1 .NET 9: ASP.NET Core Web API Versioning — Mohamad Lawand (12:55)"
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/1tPVVDEDGtE",
+   "title": "⭐2 How To Implement Rate Limiting In .NET — Milan Jovanović (09:42)"
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Rate Limiting Algorithms — Mohamad Lawand",
+   "url": "https://youtu.be/bOfOo3Zsfx0",
+   "kind": "video",
+   "description": "مقارنة خوارزميات Fixed Window و Sliding Window و Token Bucket و Concurrency."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 API Versioning in ASP.NET Core (.NET 10, Asp.Versioning + Scalar) — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/api-versioning-in-aspnet-core/",
+   "kind": "article",
+   "description": "Asp.Versioning مع OpenAPI المدمج و Scalar ومستند لكل إصدار."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 Rate Limiting in ASP.NET Core — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/rate-limiting-aspnet-core/",
+   "kind": "article",
+   "description": "السياسات المسمّاة والتقسيم (partitioning) والرد المخصّص عند الرفض."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 7 — إعداد سياسة CORS",
+   "level": 3
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "اضبط Cross-Origin Resource Sharing (CORS) في `Program.cs` بـ **سياسة مسمّاة واحدة**.",
+    "الـ Origins المسموحة تأتي من `CorsOptions` (يُتحقَّق منها عند بدء التشغيل)، مع تحديد صريح لطرق HTTP والترويسات المسموحة لتطبيقات الواجهة الأمامية المستقبلية.",
+    "**لا** تجمع أبدًا بين `AllowAnyOrigin()` و `AllowCredentials()`."
+   ]
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "تذكّر أن CORS **ليس آلية حماية للخادم**؛ هو تعليمات للمتصفح فقط. أدوات مثل Postman و curl تتجاهله تمامًا، لذلك لا يغني أبدًا عن المصادقة والتفويض."
+  },
+  {
+   "type": "Video",
+   "provider": "youtube",
+   "url": "https://youtu.be/_YXcxm-O06I",
+   "title": "⭐ 6. Enable CORS (Updated) — Mohamed El-Helaly [Arabic] (05:39)"
+  },
+  {
+   "type": "Resource",
+   "title": "🔄 Microsoft Learn — Enable CORS",
+   "url": "https://learn.microsoft.com/en-us/aspnet/core/security/cors",
+   "kind": "doc",
+   "description": "المرجع الرسمي: السياسات المسمّاة، الـ preflight، وترتيب الـ middleware."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 CORS in ASP.NET Core (.NET 10) — Cross-Origin Done Right — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/cors-in-aspnet-core/",
+   "kind": "article",
+   "description": "الـ preflight، والـ origins من الإعدادات، وفخ الجمع بين AllowAnyOrigin و AllowCredentials."
+  },
+  {
+   "type": "Divider"
+  },
+  {
+   "type": "Heading",
+   "text": "📦 مخرجات السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "تفويض على مستوى المورد يحمي موارد مدير الحملة الخاصة (CMP-07، و 404 لغير المالك) مع `GET /campaigns/mine`.",
+    "وحدة التبرعات DON-01 إلى DON-08 مع التحقق من الحدود، وقائمتي «تبرعاتي» والـ Admin، والـ stub `mark-succeeded` الخاص بالـ Admin فقط.",
+    "Database transaction تغلّف تدفق النجاح (الحالة، `ReceiptNumber`، المبلغ المجموع، اكتمال الحملة)، وآمنة تحت التزامن.",
+    "`PagedList<T>` عام مع تقسيم على مستوى قاعدة البيانات، وبحث وترتيب وفلترة (CMP-08) في القوائم العامة والإدارية.",
+    "كاش في الذاكرة أولًا، ثم Redis عبر `IDistributedCache`، بمفاتيح تراعي اللغة وإبطال عند تغيّر الحملات/التصنيفات (CMP-09).",
+    "توطين ثنائي اللغة (`ar` / `en`) لرسائل التحقق ورسائل الأخطاء والاستجابات العامة.",
+    "API Versioning عبر مسار الرابط، مع مستند OpenAPI واحد لكل إصدار.",
+    "سياسات Rate Limiting مسمّاة (`global` و `auth` و `donations`) من `RateLimitOptions`، تُرجع HTTP 429 مع `Retry-After`.",
+    "سياسة CORS مسمّاة بـ origins من `CorsOptions`.",
+    "اختبارات وحدة للقواعد الجديدة للتبرعات وللـ handlers."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "✅ تعريف الإنجاز (Definition of Done)",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "حاوية Redis تعمل وتتصل بسلاسة دون أي استثناءات وقت التشغيل.",
+    "التبرع الناجح يزيد أموال الحملة داخل transaction ذرّية، ونجاح تبرعين متزامنين يُحتسب كلاهما.",
+    "لكل تبرع ناجح `ReceiptNumber` فريد بالصيغة `DN-{year}-{6 digits}`.",
+    "الطلبات غير المصادَق عليها إلى endpoints محمية تُرجع **401**؛ وطلب مورد مستخدم آخر (تبرع، أو حملة مدير آخر) يُرجع **404**.",
+    "الاستعلامات لا تحمّل جداول كاملة إلى الذاكرة؛ التقسيم يستخدم `Skip` و `Take` ويُرجع الشكل `{ items, page, pageSize, totalCount, totalPages }`.",
+    "الترويسة `Accept-Language: ar` تُخرج رسائل وحقولًا عربية، و `Accept-Language: en` (أو بدون ترويسة) تُخرج الإنجليزية.",
+    "تجاوز معدل الطلبات يُطلق HTTP 429 Too Many Requests مع ترويسة `Retry-After`.",
+    "اختبارات الوحدة للقواعد الجديدة للتبرعات وللـ handlers تنجح بـ `dotnet test`.",
+    "الـ tag `sprint-3` موجود ويشير إلى آخر commit.",
+    "الـ README محدَّث لهذا السبرنت (ما أُضيف، كيف تجرّبه، القرارات)، ومنها **استراتيجية إبطال الكاش**.",
+    "لا أسرار في تاريخ المستودع (connection strings والمفاتيح في user-secrets أو متغيّرات البيئة، وليست في `appsettings`)."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "⭐ مهام إضافية (BONUS)",
+   "level": 2
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "اختيارية — تُحتسب فقط بعد اجتياز **كل** المهام الأساسية (CORE)."
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "**DON-11:** علامة التبرع المجهول (`IsAnonymous`) — اسم المتبرع يُخفى من العروض العامة.",
+    "**DON-12:** قائمة عامة بآخر المتبرعين لحملة (مع احترام علامة المجهول).",
+    "**CMP-12:** حالة `Cancelled` للحملة يضبطها الـ Admin أو المالك.",
+    "**CMP-13:** نمط Specification لفلاتر قائمة الحملات.",
+    "**الإصدار v2 لـ endpoint واحد** (SRS §6.8)، يظهر كمستند OpenAPI منفصل."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "📤 التسليم",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "سلّم رابط المستودع على **tawjeh.net** قبل **الساعة 23:59 يوم 06/12/2026** (اليوم 15). اعمل commit لآخر عمل، ثم ضع الـ tag على الـ commit النهائي وارفعه:"
+  },
+  {
+   "type": "Code",
+   "language": "bash",
+   "code": "git tag sprint-3\ngit push origin sprint-3",
+   "filename": "submit-sprint-3.sh"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "التصحيحات مسموحة خلال نافذة المراجعة والتصحيح (**07/12/2026 إلى 09/12/2026**). **لا تحرّك** الـ tag `sprint-3` ولا تعمل له force-push؛ ضع tag جديد `sprint-3-fix` على الـ commit المصحَّح وارفعه: `git tag sprint-3-fix && git push origin sprint-3-fix`."
+  },
+  {
+   "type": "Heading",
+   "text": "🧮 التقييم (100 نقطة)",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "| الجزء | النقاط | الطريقة |\n|---|---|---|\n| تلقائي | 40 | البناء ينجح، `dotnet test` ينجح، الـ tag `sprint-3` موجود، والـ endpoints الأساسية تستجيب كما هو مطلوب (فحص سريع من المنتور) |\n| قائمة التحقق | 40 | بنود «تعريف الإنجاز» أعلاه (الهيكل، القواعد، الأمان، README) |\n| الشرح | 20 | سؤال قصير عن أحد قراراتك التصميمية (مثلًا: كيف جعلت `RaisedAmount` آمنًا تحت التزامن؟)، أو مراجعة كود للقرارات المكتوبة في الـ README |\n\nالمهام الإضافية تضيف نقاطًا زائدة فوق الـ 100 (بحد أقصى)، وتُحتسب فقط عند اجتياز كل المهام الأساسية."
+  },
+  {
+   "type": "Heading",
+   "text": "💡 إثراء بعد السبرنت",
+   "level": 2
+  },
+  {
+   "type": "Resource",
+   "title": "Cursor-Based Pagination in .NET",
+   "url": "https://youtu.be/U3LcKY19z_4",
+   "kind": "video",
+   "description": "بديل أسرع من Skip/Take للجداول الكبيرة والتمرير اللانهائي."
+  },
+  {
+   "type": "Resource",
+   "title": "Distributed Caching with Redis — Mohamad Lawand",
+   "url": "https://youtu.be/6HZVu3kGOrg",
+   "kind": "video",
+   "description": "زاوية أخرى للكاش الموزَّع مع Redis."
+  },
+  {
+   "type": "Resource",
+   "title": "Minimal APIs vs Controllers in ASP.NET Core — Milan Jovanović",
+   "url": "https://youtu.be/gsAuFIhXz3g",
+   "kind": "video",
+   "description": "مقارنة بين الأسلوبين ولماذا اخترنا Controllers رفيعة."
+  },
+  {
+   "type": "Resource",
+   "title": "Minimal API Versioning in ASP.NET Core",
+   "url": "https://youtu.be/F9j3X6KuIpw",
+   "kind": "video",
+   "description": "كيف تُطبَّق الإصدارات مع Minimal APIs لو احتجتها لاحقًا."
+  },
+  {
+   "type": "Resource",
+   "title": "Building High-Performance APIs with FastEndpoints — Nick Chapsas",
+   "url": "https://youtu.be/oqNu0xavAyc",
+   "kind": "video",
+   "description": "مكتبة FastEndpoints كبديل ثالث لبناء الـ APIs."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 HybridCache in ASP.NET Core — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/hybridcache-in-aspnet-core/",
+   "kind": "article",
+   "description": "كاش بمستويين (ذاكرة + موزَّع) مع حماية من الـ cache stampede."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 Permission-Based Authorization in ASP.NET Core — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/permission-based-authorization-in-aspnet-core/",
+   "kind": "article",
+   "description": "تفويض مبني على الصلاحيات الدقيقة بدل الأدوار فقط."
+  },
+  {
+   "type": "Resource",
+   "title": "📘 Filtering by a Large List — Contains and the 2,100 Parameter Wall — codewithmukesh",
+   "url": "https://codewithmukesh.com/blog/ef-core-contains-large-list/",
+   "kind": "article",
+   "description": "ماذا يحدث عند الفلترة بقائمة كبيرة عبر Contains وحد الـ 2,100 معامل في SQL Server."
+  }
+ ],
+ "solutionBlocks": [
+  {
+   "type": "Heading",
+   "text": "الحل النموذجي — Sprint 3",
+   "level": 1
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "هذا حل مرجعي يوضّح **طريقة تفكير** صحيحة لكل مهمة، وليس الطريقة الوحيدة. هو امتداد مباشر لحلّي Sprint 1 و Sprint 2: نفس الكيانات (`Campaign` و `Donation`)، ونفس `IUnitOfWork` و `IReadDbContext`، ونفس `Result` و `Error` وكتالوج الأخطاء، ونفس MediatR `[12.5.0]`. ركّز على **سبب** كل قرار — سؤال الشرح (20 نقطة) سيكون عن «لماذا» وليس «ماذا»."
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "لتقليل الطول، لم تُكتب كل الكلاسات كاملة: الـ use cases المتشابهة (مثل `DeleteCampaign` و `GetSuccessStories` و `GetMyDonations`) تتبع نفس النمط المعروض. أسماء الـ namespaces تقريبية — طابقها مع مشروعك. الأجزاء المهمة (الملكية، تدفق النجاح، التزامن، الكاش، الـ Rate Limiter) معروضة كاملة."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "تذكير: `Result` و `Result<T>` و `Error` هي نفسها التي عرّفناها في Sprint 2 داخل `DonationHub.Domain.Common` — لا نعيد تعريفها هنا. الكود التالي يعتمد على التحويلات الضمنية من `T` ومن `Error` إلى `Result<T>`:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// تذكير مختصر من Sprint 2 — الملفان الكاملان: DonationHub.Domain/Common/Error.cs و Result.cs\nnamespace DonationHub.Domain.Common;\n\npublic enum ErrorType\n{\n    Validation, Unauthorized, Forbidden, NotFound, Conflict,\n    PayloadTooLarge, UnprocessableEntity, TooManyRequests, Failure\n}\n\npublic record Error(string Code, string Message, ErrorType Type)\n{\n    public static readonly Error None = new(string.Empty, string.Empty, ErrorType.Failure);\n}\n// + ValidationError (أخطاء الحقول) و IResultFactory<TSelf> كما في Sprint 2\n\npublic class Result : IResultFactory<Result>\n{\n    // الـ constructor المحمي وفحوصه كما في Sprint 2\n    public bool IsSuccess { get; }\n    public bool IsFailure => !IsSuccess;\n    public Error Error { get; }                      // Error.None عند النجاح\n\n    public static Result Success() => new(true, Error.None);\n    public static Result Failure(Error error) => new(false, error);\n    public static implicit operator Result(Error error) => Failure(error);\n}\n\npublic sealed class Result<TValue> : Result, IResultFactory<Result<TValue>>\n{\n    // الـ constructor الخاص والحقل _value كما في Sprint 2\n    public TValue Value => IsSuccess ? _value! : throw new InvalidOperationException(\"Cannot access the value of a failed result.\");\n\n    public static Result<TValue> Success(TValue value) => new(value, true, Error.None);\n    public static new Result<TValue> Failure(Error error) => new(default, false, error);\n    public static implicit operator Result<TValue>(TValue value) => Success(value);\n    public static implicit operator Result<TValue>(Error error) => Failure(error);\n}",
+   "filename": "DonationHub.Domain/Common/Result.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// موجود من Sprint 2 (ErrorCatalogue.cs) — لا نعيد تعريفه في Application. هذا السبرنت يستخدم:\nnamespace DonationHub.Domain.Common;\n\npublic static class DonationErrors   // أُضيف إلى الكتالوج مسبقًا بعلامة Sprint 3\n{\n    public static readonly Error NotFound = new(\"Donation.NotFound\", \"Donation was not found.\", ErrorType.NotFound);\n    public static readonly Error AmountOutOfRange = new(\"Donation.AmountOutOfRange\", \"Donation amount is outside the allowed range.\", ErrorType.UnprocessableEntity);\n    public static readonly Error InvalidState = new(\"Donation.InvalidState\", \"Donation is already in a final state.\", ErrorType.Conflict);\n}\n\n// وأيضًا من نفس الملف: CommonErrors.RateLimited (429)، و CampaignErrors.NotFound / NotActive / ConcurrencyConflict، و CategoryErrors.NotFound",
+   "filename": "DonationHub.Domain/Common/ErrorCatalogue.cs"
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 1 — التفويض على مستوى المورد والملكية",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**لماذا لا يكفي `[Authorize(Roles = ...)]`؟** لأن الدور يُفحص **قبل** تحميل أي بيانات، بينما سؤال «هل هذه حملتك؟» لا يُجاب إلا بعد تحميل الحملة ومقارنة `CreatedByUserId` بمعرّف المستخدم. لذلك نقسم التفويض إلى طبقتين (الدفاع في العمق):\n\n1. **في الـ Controller:** سياسة مبنية على الدور (`Admin` أو `CampaignManager`) — ترفض مبكرًا من لا علاقة له أصلًا (401/403).\n2. **في الـ Handler:** بعد تحميل الحملة، نستدعي `IAuthorizationService.AuthorizeAsync(user, campaign, policy)`؛ وإذا فشل نُرجع **نفس** خطأ «غير موجودة» (404)."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Security.Claims;\nusing DonationHub.Application.Common;            // Roles\nusing DonationHub.Domain.Campaigns;\nusing Microsoft.AspNetCore.Authorization;\n\nnamespace DonationHub.Api.Authorization;\n\npublic static class Policies\n{\n    public const string CampaignManagement = \"CampaignManagement\"; // دور: Admin أو CampaignManager\n    public const string CampaignOwner = \"CampaignOwner\";           // مورد: Admin أو مالك الحملة\n}\n\npublic sealed class CampaignOwnershipRequirement : IAuthorizationRequirement { }\n\npublic sealed class CampaignOwnershipHandler\n    : AuthorizationHandler<CampaignOwnershipRequirement, Campaign>\n{\n    protected override Task HandleRequirementAsync(\n        AuthorizationHandlerContext context,\n        CampaignOwnershipRequirement requirement,\n        Campaign resource)\n    {\n        if (context.User.IsInRole(Roles.Admin))\n        {\n            context.Succeed(requirement);          // الـ Admin يدير كل الحملات\n            return Task.CompletedTask;\n        }\n\n        var isOwner = context.User.IsInRole(Roles.CampaignManager)\n            && Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)\n            && resource.CreatedByUserId == userId;\n\n        if (isOwner)\n            context.Succeed(requirement);\n\n        // لا نستدعي context.Fail(): عدم النجاح يكفي، ويسمح لـ handlers أخرى بالنجاح لو أُضيفت لاحقًا\n        return Task.CompletedTask;\n    }\n}",
+   "filename": "DonationHub.Api/Authorization/CampaignOwnershipHandler.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الـ handler في Application لا يجب أن يعرف `HttpContext`. لذلك **نوسّع** `ICurrentUser` من Sprint 2 بـ `IsAuthenticated` و `IsInRole` (و `UserId` كما هو)، ونضيف `ICampaignAuthorizer`. ننقل `CurrentUser` من `Api/Infrastructure/CurrentUser.cs` إلى `Api/Authorization` (احذف الملف القديم)، وننقل تسجيله من `Program.cs` إلى `AddApiAuthorization`:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Domain.Campaigns;\n\nnamespace DonationHub.Application.Abstractions;\n\npublic interface ICurrentUser\n{\n    bool IsAuthenticated { get; }\n    Guid UserId { get; }                 // يرمي InvalidOperationException إن لم يكن هناك مستخدم\n    bool IsInRole(string role);\n}\n\npublic interface ICampaignAuthorizer\n{\n    Task<bool> CanManageAsync(Campaign campaign);\n}",
+   "filename": "DonationHub.Application/Abstractions/ICurrentUser.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Security.Claims;\nusing DonationHub.Api.Controllers;         // ClaimsPrincipalExtensions.GetUserId() من Sprint 1\nusing DonationHub.Application.Abstractions;\nusing DonationHub.Domain.Campaigns;\nusing Microsoft.AspNetCore.Authorization;\n\nnamespace DonationHub.Api.Authorization;\n\ninternal sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser\n{\n    private ClaimsPrincipal? User => accessor.HttpContext?.User;\n\n    public bool IsAuthenticated => User?.Identity?.IsAuthenticated == true;\n\n    public Guid UserId => IsAuthenticated\n        ? User!.GetUserId()\n        : throw new InvalidOperationException(\"There is no authenticated user.\");\n\n    public bool IsInRole(string role) => User?.IsInRole(role) == true;\n}\n\ninternal sealed class CampaignAuthorizer(\n    IAuthorizationService authorizationService,\n    IHttpContextAccessor accessor) : ICampaignAuthorizer\n{\n    public async Task<bool> CanManageAsync(Campaign campaign)\n    {\n        var user = accessor.HttpContext?.User;\n        if (user is null) return false;\n\n        var result = await authorizationService.AuthorizeAsync(user, campaign, Policies.CampaignOwner);\n        return result.Succeeded;\n    }\n}",
+   "filename": "DonationHub.Api/Authorization/CampaignAuthorizer.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Api.Authorization;\nusing DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common;            // Roles\nusing Microsoft.AspNetCore.Authorization;\n\nnamespace DonationHub.Api.Extensions;\n\npublic static class AuthorizationExtensions\n{\n    public static IServiceCollection AddApiAuthorization(this IServiceCollection services)\n    {\n        services.AddAuthorizationBuilder()\n            .AddPolicy(Policies.CampaignManagement, policy =>\n                policy.RequireRole(Roles.Admin, Roles.CampaignManager))\n            .AddPolicy(Policies.CampaignOwner, policy =>\n                policy.RequireAuthenticatedUser()\n                      .AddRequirements(new CampaignOwnershipRequirement()));\n\n        services.AddSingleton<IAuthorizationHandler, CampaignOwnershipHandler>(); // بلا حالة ← Singleton\n        services.AddHttpContextAccessor();\n        services.AddScoped<ICurrentUser, CurrentUser>();\n        services.AddScoped<ICampaignAuthorizer, CampaignAuthorizer>();\n        return services;\n    }\n}",
+   "filename": "DonationHub.Api/Extensions/AuthorizationExtensions.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "الآن الـ handler: غير موجودة **أو** ليست ملكك ← نفس الرد حرفيًّا. لاحظ أيضًا إبطال الكاش بعد الحفظ (المهمة 4):"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Caching;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Categories;\nusing DonationHub.Domain.Common;\nusing MediatR;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Application.Features.Campaigns.UpdateCampaign;\n\n// نفس عقد Sprint 2 (يُرجع CampaignAdminResponse مع RowVersion الجديد)؛ الجديد: فحص الملكية وإبطال الكاش\n\npublic sealed record UpdateCampaignCommand(\n    Guid Id, string TitleAr, string TitleEn, string DescriptionAr, string DescriptionEn,\n    decimal GoalAmount, DateTime EndDate, Guid CategoryId, byte[] RowVersion) : IRequest<Result<CampaignAdminResponse>>;\n\npublic sealed class UpdateCampaignCommandHandler(\n    IUnitOfWork unitOfWork,\n    ICampaignAuthorizer authorizer,\n    ICacheService cache,\n    TimeProvider clock) : IRequestHandler<UpdateCampaignCommand, Result<CampaignAdminResponse>>\n{\n    public async Task<Result<CampaignAdminResponse>> Handle(UpdateCampaignCommand command, CancellationToken ct)\n    {\n        var campaign = await unitOfWork.Repository<Campaign>().GetByIdAsync(command.Id, ct);\n\n        // الدفاع في العمق: الـ Controller فحص الدور، وهنا نفحص الملكية على المورد نفسه\n        if (campaign is null || !await authorizer.CanManageAsync(campaign))\n            return CampaignErrors.NotFound;   // 404 في الحالتين — لا نكشف الوجود\n\n        if (campaign.CategoryId != command.CategoryId &&\n            !await unitOfWork.Repository<Category>().AnyAsync(c => c.Id == command.CategoryId, ct))\n            return CategoryErrors.NotFound;\n\n        // القواعد 2 و 7 و 8 من الكيان نفسه كما في Sprint 2 — لا نتجاهل الـ Result\n        var update = campaign.Update(command.TitleAr, command.TitleEn, command.DescriptionAr, command.DescriptionEn,\n            command.GoalAmount, command.EndDate, command.CategoryId, clock.GetUtcNow().UtcDateTime);\n        if (update.IsFailure)\n            return update.Error;\n\n        unitOfWork.SetOriginalRowVersion(campaign, command.RowVersion);   // CMP-10 كما في Sprint 2\n\n        try\n        {\n            await unitOfWork.SaveChangesAsync(ct);\n        }\n        catch (DbUpdateConcurrencyException)\n        {\n            return CampaignErrors.ConcurrencyConflict;   // 409 — الكاتب الثاني\n        }\n\n        await cache.InvalidateCampaignAsync(campaign.Id, ct);   // بعد نجاح الحفظ فقط\n        return CampaignAdminResponse.From(campaign);            // يحمل RowVersion الجديد\n    }\n}",
+   "filename": "DonationHub.Application/Features/Campaigns/UpdateCampaign/UpdateCampaign.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "`CreateCampaignCommandHandler` يأخذ المالك من `currentUser.UserId` — **لا تقبل أبدًا `createdByUserId` من جسم الطلب**، وإلا يستطيع أي مدير إنشاء حملة باسم مدير آخر. و `DeleteCampaignCommandHandler` يتبع نفس نمط التحميل ثم `CanManageAsync` ثم 404."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "`GET /campaigns/mine`: الفلترة بالمالك تحدث **داخل الاستعلام** نفسه، فلا تصل حملات الآخرين إلى الذاكرة أصلًا. الرد باللغتين لأنه endpoint إداري (CMP-11)، ولا يُعمل له كاش لأنه خاص بمستخدم:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Paging;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing MediatR;\n\nnamespace DonationHub.Application.Features.Campaigns.GetMine;\n\npublic sealed record GetMyCampaignsQuery(int Page, int PageSize)\n    : IRequest<Result<PagedList<ManagerCampaignResponse>>>;\n\npublic sealed record ManagerCampaignResponse(\n    Guid Id, string TitleAr, string TitleEn, decimal GoalAmount, decimal RaisedAmount,\n    DateTime EndDate, CampaignStatus Status, DateTime CreatedAt);\n\npublic sealed class GetMyCampaignsQueryHandler(IReadDbContext db, ICurrentUser currentUser)\n    : IRequestHandler<GetMyCampaignsQuery, Result<PagedList<ManagerCampaignResponse>>>\n{\n    public async Task<Result<PagedList<ManagerCampaignResponse>>> Handle(GetMyCampaignsQuery query, CancellationToken ct)\n    {\n        var ownerId = currentUser.UserId;\n\n        var campaigns = db.Campaigns\n            .Where(c => c.CreatedByUserId == ownerId)           // كل الحالات، بلا فلتر Status\n            .OrderByDescending(c => c.CreatedAt).ThenBy(c => c.Id)\n            .Select(c => new ManagerCampaignResponse(\n                c.Id, c.TitleAr, c.TitleEn, c.GoalAmount, c.RaisedAmount, c.EndDate, c.Status, c.CreatedAt));\n\n        return await PagedList<ManagerCampaignResponse>.CreateAsync(campaigns, query.Page, query.PageSize, ct);\n    }\n}",
+   "filename": "DonationHub.Application/Features/Campaigns/GetMine/GetMyCampaignsQuery.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using Asp.Versioning;\nusing DonationHub.Api.Authorization;\nusing DonationHub.Application.Common;            // Roles\nusing DonationHub.Application.Common.Paging;\nusing DonationHub.Application.Features.Campaigns.GetMine;\nusing DonationHub.Application.Features.Campaigns.List;\nusing DonationHub.Application.Features.Campaigns.UpdateCampaign;\nusing MediatR;\nusing Microsoft.AspNetCore.Authorization;\nusing Microsoft.AspNetCore.Mvc;\n\nnamespace DonationHub.Api.Controllers;\n\n[ApiController]\n[ApiVersion(\"1.0\")]\n[Route(\"api/v{version:apiVersion}/campaigns\")]\npublic sealed class CampaignsController(ISender sender) : ApiControllerBase\n{\n    [HttpGet]\n    [AllowAnonymous]\n    public async Task<IActionResult> List([FromQuery] GetCampaignsQuery query, CancellationToken ct) =>\n        FromResult(await sender.Send(query, ct));\n\n    [HttpGet(\"mine\")]\n    [Authorize(Roles = Roles.CampaignManager)]\n    public async Task<IActionResult> Mine(\n        [FromQuery] int page = 1,\n        [FromQuery] int pageSize = PagingDefaults.DefaultPageSize,\n        CancellationToken ct = default) =>\n        FromResult(await sender.Send(new GetMyCampaignsQuery(page, pageSize), ct));\n\n    [HttpPut(\"{id:guid}\")]\n    [Authorize(Policy = Policies.CampaignManagement)]   // الطبقة الأولى: الدور\n    public async Task<IActionResult> Update(Guid id, UpdateCampaignRequest request, CancellationToken ct) =>\n        FromResult(await sender.Send(request.ToCommand(id), ct));   // 200 + RowVersion الجديد، أو ProblemDetails\n\n    // POST و DELETE بـ Policies.CampaignManagement (بدل Roles.Admin في Sprint 2)؛ GET {id:guid} و success-stories بنفس الأسلوب\n}\n\n// UpdateCampaignRequest و ToCommand(id) كما في Sprint 2",
+   "filename": "DonationHub.Api/Controllers/CampaignsController.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "استخدم القيد `{id:guid}` في المسارات. بدونه قد يتعارض `GET campaigns/mine` مع `GET campaigns/{id}` وتحصل على 400 لأن «mine» ليست Guid."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 2 — نواة التبرعات وتدفق النجاح الذرّي",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**القرار الأهم في هذا السبرنت: كيف نجعل `RaisedAmount` آمنًا تحت التزامن؟** هناك خياران مقبولان:\n\n| | Optimistic: `RowVersion` + إعادة المحاولة | تحديث ذرّي: `ExecuteUpdateAsync` |\n|---|---|---|\n| القواعد | تبقى داخل الكيان (`MarkSucceeded` ← `ApplySucceededDonation`) | تخرج إلى SQL، ويجب تكرار قاعدة «Completed» يدويًّا |\n| التزامن | التعارض يُكتشف بـ `WHERE RowVersion = @original` ثم نعيد المحاولة | قاعدة البيانات تجمع بنفسها: `RaisedAmount = RaisedAmount + @amount` |\n| التكلفة | إعادة قراءة عند التعارض (نادر) | تتجاوز الـ Change Tracker والـ Interceptors |\n\nاخترنا **RowVersion + إعادة المحاولة** لأن `Campaign` لديها `RowVersion` أصلًا (CMP-10)، ولأنه يحافظ على **النموذج الغني** الذي بنيناه في Sprint 1: الـ Domain هو من يقرر متى تصبح الحملة `Completed`."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "أولًا: `DonationOptions` لا يعتمد على أي شيء من Infrastructure، لذلك ننقله إلى `DonationHub.Application/Common/Options/` حتى يقرأه الـ handler (التسجيل يبقى في Infrastructure كما هو). البديل تجريد مثل `IDonationLimits`، لكن نقل الكلاس أبسط ولا يكسر قاعدة الاعتماد:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Options;\nusing DonationHub.Application.Resources;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing FluentValidation;\nusing MediatR;\nusing Microsoft.Extensions.Localization;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Application.Features.Donations.Create;\n\npublic sealed record CreateDonationCommand(Guid CampaignId, decimal Amount) : IRequest<Result<DonationResponse>>;\n\npublic sealed class CreateDonationCommandValidator : AbstractValidator<CreateDonationCommand>\n{\n    public CreateDonationCommandValidator(IStringLocalizer<ValidationMessages> localizer)\n    {\n        RuleFor(x => x.CampaignId).NotEmpty();\n        RuleFor(x => x.Amount)\n            .GreaterThan(0).WithMessage(_ => localizer[\"Donation.AmountMustBePositive\"])\n            .PrecisionScale(18, 2, ignoreTrailingZeros: true).WithMessage(_ => localizer[\"Donation.AmountPrecision\"]);\n        // النطاق [Min, Max] قاعدة عمل (422) وليس تحققًا شكليًّا (400) ← يُفحص في الـ handler/Domain\n    }\n}\n\npublic sealed class CreateDonationCommandHandler(\n    IUnitOfWork unitOfWork,\n    ICurrentUser currentUser,\n    IOptions<DonationOptions> options,\n    TimeProvider clock) : IRequestHandler<CreateDonationCommand, Result<DonationResponse>>\n{\n    public async Task<Result<DonationResponse>> Handle(CreateDonationCommand command, CancellationToken ct)\n    {\n        var campaign = await unitOfWork.Repository<Campaign>().GetByIdAsync(command.CampaignId, ct);\n        if (campaign is null)\n            return CampaignErrors.NotFound;\n\n        var now = clock.GetUtcNow().UtcDateTime;\n        var limits = options.Value;\n\n        // الأخطاء المتوقعة تُرجَع كـ Result (SRS §6.1)؛ والـ Domain يبقى خط الدفاع الأخير\n        if (campaign.Status != CampaignStatus.Active || campaign.EndDate <= now)\n            return CampaignErrors.NotActive;                  // القاعدة 3 ← 409\n\n        if (command.Amount < limits.MinAmount || command.Amount > limits.MaxAmount)\n            return DonationErrors.AmountOutOfRange;           // القاعدة 4 ← 422\n\n        var donation = Donation.Create(campaign, currentUser.UserId, command.Amount,\n            limits.MinAmount, limits.MaxAmount, now);\n\n        await unitOfWork.Repository<Donation>().AddAsync(donation, ct);\n        await unitOfWork.SaveChangesAsync(ct);\n\n        return DonationResponse.From(donation);\n    }\n}",
+   "filename": "DonationHub.Application/Features/Donations/Create/CreateDonationCommand.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Domain.Donations;\n\nnamespace DonationHub.Application.Features.Donations;\n\npublic sealed record DonationResponse(\n    Guid Id, Guid CampaignId, decimal Amount, DonationStatus Status,\n    DateTime CreatedAt, DateTime? CompletedAt, string? ReceiptNumber)\n{\n    public static DonationResponse From(Donation d) =>\n        new(d.Id, d.CampaignId, d.Amount, d.Status, d.CreatedAt, d.CompletedAt, d.ReceiptNumber);\n}\n\npublic sealed record DonationDetailsResponse(\n    Guid Id, Guid CampaignId, string CampaignTitle, decimal Amount, DonationStatus Status,\n    DateTime CreatedAt, DateTime? CompletedAt, string? ReceiptNumber);",
+   "filename": "DonationHub.Application/Features/Donations/DonationResponse.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**DON-04 — جلب تبرع واحد:** الشرط «مالك أو Admin» يُفحص داخل الـ handler (الدفاع في العمق)، وغير المالك يرى **نفس** خطأ غير الموجود:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common;            // Roles\nusing DonationHub.Application.Common.Localization;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing MediatR;\n\nnamespace DonationHub.Application.Features.Donations.GetById;\n\npublic sealed record GetDonationByIdQuery(Guid Id) : IRequest<Result<DonationDetailsResponse>>;\n\npublic sealed class GetDonationByIdQueryHandler(IUnitOfWork unitOfWork, ICurrentUser currentUser)\n    : IRequestHandler<GetDonationByIdQuery, Result<DonationDetailsResponse>>\n{\n    public async Task<Result<DonationDetailsResponse>> Handle(GetDonationByIdQuery query, CancellationToken ct)\n    {\n        var donation = await unitOfWork.Repository<Donation>().GetByIdAsync(query.Id, ct);\n\n        var canSee = donation is not null\n            && (donation.DonorUserId == currentUser.UserId || currentUser.IsInRole(Roles.Admin));\n        if (!canSee)\n            return DonationErrors.NotFound;                       // 404 — لا نكشف أنه موجود\n\n        var campaign = await unitOfWork.Repository<Campaign>().GetByIdAsync(donation!.CampaignId, ct);\n        var title = campaign is null ? \"—\" : (CurrentLanguage.IsArabic ? campaign.TitleAr : campaign.TitleEn);\n\n        return new DonationDetailsResponse(donation.Id, donation.CampaignId, title, donation.Amount,\n            donation.Status, donation.CreatedAt, donation.CompletedAt, donation.ReceiptNumber);\n    }\n}",
+   "filename": "DonationHub.Application/Features/Donations/GetById/GetDonationByIdQuery.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "استخدمنا الـ repository عمدًا ليكون اختبار «404 لتبرع شخص آخر» اختبار وحدة بسيطًا بـ Moq. الإسقاط عبر `IReadDbContext` مع `(isAdmin || d.DonorUserId == userId)` داخل `Where` صحيح وأخف، لكن اختباره يحتاج قاعدة بيانات (Integration tests في Sprint 5)."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**رقم الإيصال:** نستخدم **Database Sequence** في SQL Server — قاعدة البيانات تضمن أن كل `NEXT VALUE FOR` يُرجع رقمًا مختلفًا حتى لو طلبته مئة عملية في نفس اللحظة، دون أي أقفال من جهتنا:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Globalization;\nusing DonationHub.Application.Abstractions;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Infrastructure.Persistence;\n\n// في Application:  public interface IReceiptNumberGenerator { Task<string> NextAsync(DateTime utcNow, CancellationToken ct); }\n// في AppDbContext.OnModelCreating:  builder.HasSequence<long>(\"ReceiptNumbers\", schema: \"dbo\").StartsAt(1).IncrementsBy(1);\n// ثم: dotnet ef migrations add AddReceiptNumberSequence\ninternal sealed class SqlReceiptNumberGenerator(AppDbContext db) : IReceiptNumberGenerator\n{\n    public async Task<string> NextAsync(DateTime utcNow, CancellationToken ct)\n    {\n        // ToListAsync وليس SingleAsync: الأخيرة تلفّ الـ SQL في subquery،\n        // و SQL Server يمنع NEXT VALUE FOR داخل الـ derived tables\n        var values = await db.Database\n            .SqlQuery<long>($\"SELECT NEXT VALUE FOR dbo.ReceiptNumbers AS [Value]\")\n            .ToListAsync(ct);\n\n        return string.Create(CultureInfo.InvariantCulture, $\"DN-{utcNow.Year}-{values[0]:D6}\");\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Persistence/SqlReceiptNumberGenerator.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "الـ Sequence لا يتراجع عند rollback، فقد تظهر **فجوات** في الأرقام — هذا مقبول (المطلوب التفرّد وليس التتابع بلا فجوات). والـ Unique Index المفلتر على `ReceiptNumber` من Sprint 1 يبقى شبكة أمان ثانية."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**تدفق النجاح** في خدمة مستقلة يستدعيها الـ stub الآن؛ وفي Sprint 5 يطبّق الـ webhook نفس ضماناته داخل معاملته (ثم يُحذف هذا الكلاس). نضيف لـ `IUnitOfWork` دالة `ClearChangeTracker()` (تنفيذها `db.ChangeTracker.Clear()`) لنبدأ كل محاولة بقيم حديثة:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Caching;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.Extensions.Logging;\n\nnamespace DonationHub.Application.Features.Donations.Common;\n\npublic interface IDonationSuccessFlow\n{\n    Task<Result<DonationResponse>> ExecuteAsync(Guid donationId, CancellationToken ct);\n}\n\npublic sealed class DonationSuccessFlow(\n    IUnitOfWork unitOfWork,\n    IReceiptNumberGenerator receiptNumbers,\n    ICacheService cache,\n    TimeProvider clock,\n    ILogger<DonationSuccessFlow> logger) : IDonationSuccessFlow\n{\n    private const int MaxAttempts = 3;\n\n    public async Task<Result<DonationResponse>> ExecuteAsync(Guid donationId, CancellationToken ct)\n    {\n        string? receiptNumber = null;\n\n        for (var attempt = 1; attempt <= MaxAttempts; attempt++)\n        {\n            var donation = await unitOfWork.Repository<Donation>().GetByIdAsync(donationId, ct);\n            if (donation is null) return DonationErrors.NotFound;\n            if (donation.Status != DonationStatus.Pending) return DonationErrors.InvalidState;   // 409\n\n            var campaign = await unitOfWork.Repository<Campaign>().GetByIdAsync(donation.CampaignId, ct);\n            if (campaign is null) return CampaignErrors.NotFound;\n\n            var now = clock.GetUtcNow().UtcDateTime;\n            if (campaign.Status != CampaignStatus.Active || campaign.EndDate <= now)\n            {\n                // دفع متأخر: نقبل المال (المتبرع خُصم منه) ونسجّل تحذيرًا\n                logger.LogWarning(\n                    \"Late payment: donation {DonationId} succeeded after campaign {CampaignId} became {Status}\",\n                    donation.Id, campaign.Id, campaign.Status);\n            }\n\n            receiptNumber ??= await receiptNumbers.NextAsync(now, ct);   // رقم واحد يُعاد استخدامه في المحاولات\n\n            // 1) Succeeded + CompletedAt + ReceiptNumber   2) RaisedAmount += Amount   3) Completed عند بلوغ الهدف\n            donation.MarkSucceeded(campaign, receiptNumber, now);\n\n            try\n            {\n                // 4) Commit: SaveChanges واحد = transaction واحدة تحدّث التبرع والحملة معًا،\n                //    و UPDATE الحملة يحمل WHERE [RowVersion] = @original\n                await unitOfWork.SaveChangesAsync(ct);\n            }\n            catch (DbUpdateConcurrencyException)\n            {\n                // تبرع آخر للحملة نفسها نجح بيننا وبين الحفظ ← لا شيء حُفظ؛ نعيد من البداية بقيم حديثة\n                logger.LogInformation(\"Concurrency conflict on campaign {CampaignId}, attempt {Attempt}\",\n                    campaign.Id, attempt);\n                unitOfWork.ClearChangeTracker();\n                continue;\n            }\n\n            logger.LogInformation(\"Donation {DonationId} succeeded with receipt {ReceiptNumber}\",\n                donation.Id, receiptNumber);\n            await cache.InvalidateCampaignAsync(campaign.Id, ct);    // بعد الـ commit فقط (المبلغ تغيّر)\n            return DonationResponse.From(donation);\n        }\n\n        return CampaignErrors.ConcurrencyConflict;                   // 409 بعد استنفاد المحاولات\n    }\n}",
+   "filename": "DonationHub.Application/Features/Donations/Common/DonationSuccessFlow.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Features.Donations.Common;\nusing DonationHub.Domain.Common;\nusing MediatR;\n\nnamespace DonationHub.Application.Features.Donations.MarkSucceeded;\n\n// TEMPORARY (DON-06): يُحذف في Sprint 5 مع الـ endpoint (PAY-09)، ومعه DonationSuccessFlow.\npublic sealed record MarkDonationSucceededCommand(Guid DonationId) : IRequest<Result<DonationResponse>>;\n\npublic sealed class MarkDonationSucceededCommandHandler(IDonationSuccessFlow successFlow)\n    : IRequestHandler<MarkDonationSucceededCommand, Result<DonationResponse>>\n{\n    public Task<Result<DonationResponse>> Handle(MarkDonationSucceededCommand command, CancellationToken ct) =>\n        successFlow.ExecuteAsync(command.DonationId, ct);\n}",
+   "filename": "DonationHub.Application/Features/Donations/MarkSucceeded/MarkDonationSucceededCommand.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "**لماذا يكفي `SaveChangesAsync` واحد؟** لأن EF Core يلفّ كل أوامر `SaveChanges` الواحد في transaction تلقائيًّا: إما يُحفظ تحديث التبرع وتحديث الحملة معًا، أو لا شيء. نحتاج transaction **صريحة** فقط عندما يكون لدينا أكثر من `SaveChanges` أو `ExecuteUpdate` يجب أن تنجح معًا."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "إذا احتجت transaction صريحة (مثلًا مع `ExecuteUpdateAsync`)، أضفها في الـ UoW مع **Execution Strategy**؛ لأن `EnableRetryOnFailure` يرفض الـ transactions التي يبدأها المستخدم خارجها:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "public void ClearChangeTracker() => db.ChangeTracker.Clear();\n\npublic async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, CancellationToken ct = default)\n{\n    var strategy = db.Database.CreateExecutionStrategy();\n\n    await strategy.ExecuteAsync(async () =>\n    {\n        await using var transaction = await db.Database.BeginTransactionAsync(ct);\n        await action(ct);\n        await db.SaveChangesAsync(ct);\n        await transaction.CommitAsync(ct);   // أي استثناء قبل هذا السطر ← rollback تلقائي عند الـ Dispose\n    });\n}\n\n// الخيار الثاني لـ DON-08 (تحديث ذرّي) — لاحظ أنه يتجاوز الكيان والـ Change Tracker:\n// await db.Campaigns.Where(c => c.Id == campaignId)\n//     .ExecuteUpdateAsync(s => s.SetProperty(c => c.RaisedAmount, c => c.RaisedAmount + amount), ct);",
+   "filename": "DonationHub.Infrastructure/Persistence/Repositories/UnitOfWork.Transactions.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**حملة محذوفة حذفًا ناعمًا وعليها تبرع Pending:** الـ Global Query Filter يخفيها، فـ `GetByIdAsync` يُرجع `null`. قرّر سياستك ووثّقها: إمّا منع حذف حملة عليها تبرعات `Pending`، أو تحميلها بـ `IgnoreQueryFilters()` في تدفق النجاح لأن المال وصل فعلًا."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using Asp.Versioning;\nusing DonationHub.Api.Extensions;                 // RateLimitPolicies\nusing DonationHub.Application.Common;            // Roles\nusing DonationHub.Application.Features.Donations.Create;\nusing DonationHub.Application.Features.Donations.GetById;\nusing DonationHub.Application.Features.Donations.GetMine;\nusing DonationHub.Application.Features.Donations.MarkSucceeded;\nusing DonationHub.Application.Features.Donations.AdminList;\nusing MediatR;\nusing Microsoft.AspNetCore.Authorization;\nusing Microsoft.AspNetCore.Mvc;\nusing Microsoft.AspNetCore.RateLimiting;\n\nnamespace DonationHub.Api.Controllers;\n\n[ApiController]\n[ApiVersion(\"1.0\")]\n[Route(\"api/v{version:apiVersion}\")]\n[Authorize]                                                   // بدون توكن ← 401\npublic sealed class DonationsController(ISender sender) : ApiControllerBase\n{\n    [HttpPost(\"campaigns/{campaignId:guid}/donations\")]\n    [Authorize(Roles = $\"{Roles.Donor},{Roles.CampaignManager},{Roles.Admin}\")]\n    [EnableRateLimiting(RateLimitPolicies.Donations)]\n    public async Task<IActionResult> Create(Guid campaignId, CreateDonationRequest request, CancellationToken ct)\n    {\n        var result = await sender.Send(new CreateDonationCommand(campaignId, request.Amount), ct);\n        return result.IsSuccess\n            ? CreatedAtAction(nameof(GetById), new { id = result.Value.Id, version = \"1\" }, result.Value)\n            : ProblemFrom(result.Error);\n    }\n\n    [HttpGet(\"donations/mine\")]\n    public async Task<IActionResult> Mine([FromQuery] GetMyDonationsQuery query, CancellationToken ct) =>\n        FromResult(await sender.Send(query, ct));\n\n    [HttpGet(\"donations/{id:guid}\")]\n    public async Task<IActionResult> GetById(Guid id, CancellationToken ct) =>\n        FromResult(await sender.Send(new GetDonationByIdQuery(id), ct));\n}\n\n[ApiController]\n[ApiVersion(\"1.0\")]\n[Route(\"api/v{version:apiVersion}/admin/donations\")]\n[Authorize(Roles = Roles.Admin)]\npublic sealed class AdminDonationsController(ISender sender) : ApiControllerBase\n{\n    [HttpGet]\n    public async Task<IActionResult> List([FromQuery] GetAdminDonationsQuery query, CancellationToken ct) =>\n        FromResult(await sender.Send(query, ct));\n\n    // TEMPORARY (DON-06) — يُحذف في Sprint 5 (PAY-09)\n    [HttpPost(\"{id:guid}/mark-succeeded\")]\n    public async Task<IActionResult> MarkSucceeded(Guid id, CancellationToken ct) =>\n        FromResult(await sender.Send(new MarkDonationSucceededCommand(id), ct));\n}\n\npublic sealed record CreateDonationRequest(decimal Amount);",
+   "filename": "DonationHub.Api/Controllers/DonationsController.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**اختبارات الوحدة — القواعد في الـ Domain:** سهلة جدًا لأن الوقت يُمرَّر كمعامل `DateTime utcNow`:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing FluentAssertions;\n\nnamespace DonationHub.UnitTests.Domain;\n\npublic sealed class DonationTests\n{\n    private static readonly DateTime Now = new(2026, 11, 25, 10, 0, 0, DateTimeKind.Utc);\n\n    private static Campaign NewCampaign(decimal goal = 100m) =>\n        Campaign.Create(\"حملة\", \"Campaign\", \"وصف\", \"Description\", goal, Now.AddDays(5),\n            Guid.NewGuid(), Guid.NewGuid(), Now).Value;\n\n    private static Donation NewDonation(Campaign campaign, decimal amount) =>\n        Donation.Create(campaign, Guid.NewGuid(), amount, 1m, 10_000m, Now);\n\n    [Theory]\n    [InlineData(0.99)]\n    [InlineData(10_000.01)]\n    public void Create_AmountOutsideRange_Throws(double amount)\n    {\n        var act = () => NewDonation(NewCampaign(), (decimal)amount);\n\n        act.Should().Throw<DomainException>().Which.Code.Should().Be(\"Donation.AmountOutOfRange\");\n    }\n\n    [Fact]\n    public void Create_CampaignEnded_Throws()\n    {\n        var campaign = NewCampaign();\n\n        var act = () => Donation.Create(campaign, Guid.NewGuid(), 10m, 1m, 10_000m, Now.AddDays(6));\n\n        act.Should().Throw<DomainException>().Which.Code.Should().Be(\"Campaign.NotActive\");\n    }\n\n    [Fact]\n    public void MarkSucceeded_GoalReached_CompletesCampaign()\n    {\n        var campaign = NewCampaign(goal: 100m);\n        var donation = NewDonation(campaign, 100m);\n\n        donation.MarkSucceeded(campaign, \"DN-2026-000001\", Now);\n\n        donation.Status.Should().Be(DonationStatus.Succeeded);\n        donation.CompletedAt.Should().Be(Now);\n        campaign.RaisedAmount.Should().Be(100m);\n        campaign.Status.Should().Be(CampaignStatus.Completed);\n    }\n\n    [Fact]\n    public void MarkSucceeded_AlreadySucceeded_Throws()\n    {\n        var campaign = NewCampaign();\n        var donation = NewDonation(campaign, 10m);\n        donation.MarkSucceeded(campaign, \"DN-2026-000001\", Now);\n\n        var act = () => donation.MarkSucceeded(campaign, \"DN-2026-000002\", Now);\n\n        act.Should().Throw<DomainException>().Which.Code.Should().Be(\"Donation.InvalidState\");\n    }\n\n    [Fact]\n    public void MarkSucceeded_LatePaymentOnCompletedCampaign_IsAcceptedWithoutStatusChange()\n    {\n        var campaign = NewCampaign(goal: 100m);\n        var first = NewDonation(campaign, 100m);\n        var late = NewDonation(campaign, 50m);          // أُنشئ والحملة ما زالت نشطة\n        first.MarkSucceeded(campaign, \"DN-2026-000001\", Now);\n\n        late.MarkSucceeded(campaign, \"DN-2026-000002\", Now.AddMinutes(5));\n\n        late.Status.Should().Be(DonationStatus.Succeeded);\n        campaign.RaisedAmount.Should().Be(150m);\n        campaign.Status.Should().Be(CampaignStatus.Completed);\n    }\n}",
+   "filename": "tests/DonationHub.UnitTests/Domain/DonationTests.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**اختبارات الـ handlers:** الـ repository مزيَّف بـ Moq، والوقت بـ `FakeTimeProvider` (حزمة `Microsoft.Extensions.TimeProvider.Testing`):"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Caching;\nusing DonationHub.Application.Common.Options;\nusing DonationHub.Application.Features.Donations;\nusing DonationHub.Application.Features.Donations.Common;\nusing DonationHub.Application.Features.Donations.Create;\nusing DonationHub.Application.Features.Donations.GetById;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing FluentAssertions;\nusing Microsoft.Extensions.Logging.Abstractions;\nusing Microsoft.Extensions.Options;\nusing Microsoft.Extensions.Time.Testing;\nusing Moq;\n\nnamespace DonationHub.UnitTests.Donations;\n\npublic sealed class DonationHandlersTests\n{\n    private readonly FakeTimeProvider _clock = new(new DateTimeOffset(2026, 11, 25, 10, 0, 0, TimeSpan.Zero));\n    private readonly Mock<IUnitOfWork> _unitOfWork = new();\n    private readonly Mock<IGenericRepository<Campaign>> _campaigns = new();\n    private readonly Mock<IGenericRepository<Donation>> _donations = new();\n    private readonly Mock<ICurrentUser> _currentUser = new();\n    private readonly Guid _donorId = Guid.NewGuid();\n\n    public DonationHandlersTests()\n    {\n        _unitOfWork.Setup(u => u.Repository<Campaign>()).Returns(_campaigns.Object);\n        _unitOfWork.Setup(u => u.Repository<Donation>()).Returns(_donations.Object);\n        _currentUser.Setup(u => u.UserId).Returns(_donorId);\n    }\n\n    private DateTime Now => _clock.GetUtcNow().UtcDateTime;\n\n    private Campaign GivenCampaign(decimal goal = 1_000m)\n    {\n        var campaign = Campaign.Create(\"حملة\", \"Campaign\", \"وصف\", \"Description\", goal, Now.AddDays(10),\n            Guid.NewGuid(), Guid.NewGuid(), Now).Value;\n        _campaigns.Setup(r => r.GetByIdAsync(campaign.Id, It.IsAny<CancellationToken>())).ReturnsAsync(campaign);\n        return campaign;\n    }\n\n    private CreateDonationCommandHandler CreateHandler() =>\n        new(_unitOfWork.Object, _currentUser.Object, Options.Create(new DonationOptions()), _clock);\n\n    [Fact]\n    public async Task Create_ValidRequest_AddsPendingDonation()\n    {\n        var campaign = GivenCampaign();\n\n        var result = await CreateHandler().Handle(new CreateDonationCommand(campaign.Id, 25m), CancellationToken.None);\n\n        result.IsSuccess.Should().BeTrue();\n        result.Value.Status.Should().Be(DonationStatus.Pending);\n        _donations.Verify(r => r.AddAsync(\n            It.Is<Donation>(d => d.DonorUserId == _donorId && d.Amount == 25m), It.IsAny<CancellationToken>()), Times.Once);\n        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);\n    }\n\n    [Theory]\n    [InlineData(0.5)]\n    [InlineData(10_000.5)]\n    public async Task Create_AmountOutOfRange_Returns422Error(double amount)\n    {\n        var campaign = GivenCampaign();\n\n        var result = await CreateHandler().Handle(new CreateDonationCommand(campaign.Id, (decimal)amount), CancellationToken.None);\n\n        result.Error.Should().Be(DonationErrors.AmountOutOfRange);\n        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);\n    }\n\n    [Fact]\n    public async Task Create_CampaignEnded_ReturnsNotActive()\n    {\n        var campaign = GivenCampaign();\n        _clock.Advance(TimeSpan.FromDays(11));                      // تجاوزنا EndDate\n\n        var result = await CreateHandler().Handle(new CreateDonationCommand(campaign.Id, 25m), CancellationToken.None);\n\n        result.Error.Should().Be(CampaignErrors.NotActive);\n    }\n\n    [Fact]\n    public async Task GetById_DonationOfAnotherUser_ReturnsNotFound()\n    {\n        var campaign = GivenCampaign();\n        var donation = Donation.Create(campaign, Guid.NewGuid(), 25m, 1m, 10_000m, Now);   // متبرع آخر\n        _donations.Setup(r => r.GetByIdAsync(donation.Id, It.IsAny<CancellationToken>())).ReturnsAsync(donation);\n\n        var handler = new GetDonationByIdQueryHandler(_unitOfWork.Object, _currentUser.Object);\n        var result = await handler.Handle(new GetDonationByIdQuery(donation.Id), CancellationToken.None);\n\n        result.Error.Should().Be(DonationErrors.NotFound);         // وليس Forbidden\n    }\n\n    [Fact]\n    public async Task MarkSucceeded_PendingDonation_RunsWholeSuccessFlow()\n    {\n        var campaign = GivenCampaign(goal: 100m);\n        var donation = Donation.Create(campaign, _donorId, 100m, 1m, 10_000m, Now);\n        _donations.Setup(r => r.GetByIdAsync(donation.Id, It.IsAny<CancellationToken>())).ReturnsAsync(donation);\n        var receipts = new Mock<IReceiptNumberGenerator>();\n        receipts.Setup(r => r.NextAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(\"DN-2026-000042\");\n\n        var flow = new DonationSuccessFlow(_unitOfWork.Object, receipts.Object, Mock.Of<ICacheService>(),\n            _clock, NullLogger<DonationSuccessFlow>.Instance);\n        var result = await flow.ExecuteAsync(donation.Id, CancellationToken.None);\n\n        result.IsSuccess.Should().BeTrue();\n        donation.Status.Should().Be(DonationStatus.Succeeded);\n        donation.ReceiptNumber.Should().Be(\"DN-2026-000042\");\n        campaign.RaisedAmount.Should().Be(100m);\n        campaign.Status.Should().Be(CampaignStatus.Completed);\n    }\n}",
+   "filename": "tests/DonationHub.UnitTests/Donations/DonationHandlersTests.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "اختبار «تبرعان متزامنان يُحتسبان كلاهما» لا يُكتب كاختبار وحدة حقيقي لأن التعارض يحدث في قاعدة البيانات. يمكنك اختبار منطق إعادة المحاولة بجعل `SaveChangesAsync` يرمي `DbUpdateConcurrencyException` في أول استدعاء فقط (`SetupSequence`)، والاختبار الحقيقي مكانه Integration tests في Sprint 5."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 3 — PagedList والفلترة والترتيب",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الفكرة:** كل الفلاتر والترتيب و `Skip`/`Take` تُبنى على `IQueryable` فتتحول إلى SQL واحد، ولا يُنفَّذ أي شيء حتى `CountAsync` و `ToListAsync`. إذا ظهر `ToList()` قبل `Skip` فأنت تحمّل الجدول كله إلى الذاكرة — وهذا بند صريح في تعريف الإنجاز."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Application.Common.Paging;\n\npublic static class PagingDefaults\n{\n    public const int DefaultPageSize = 20;\n    public const int MaxPageSize = 50;\n}\n\n// الشكل حسب SRS §6.8: { items, page, pageSize, totalCount, totalPages }\npublic sealed record PagedList<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount)\n{\n    public int TotalPages => TotalCount == 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);\n\n    public static async Task<PagedList<T>> CreateAsync(\n        IQueryable<T> query, int page, int pageSize, CancellationToken ct = default)\n    {\n        page = Math.Max(page, 1);\n        pageSize = Math.Clamp(pageSize, 1, PagingDefaults.MaxPageSize);   // حماية إضافية خلف الـ validator\n\n        var totalCount = await query.CountAsync(ct);                       // SELECT COUNT(*) ...\n        var items = await query\n            .Skip((page - 1) * pageSize)                                   // OFFSET ... ROWS\n            .Take(pageSize)                                                // FETCH NEXT ... ROWS ONLY\n            .ToListAsync(ct);\n\n        return new PagedList<T>(items, page, pageSize, totalCount);\n    }\n}",
+   "filename": "DonationHub.Application/Common/Paging/PagedList.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Common.Paging;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing FluentValidation;\nusing MediatR;\n\nnamespace DonationHub.Application.Features.Campaigns.List;\n\npublic sealed record GetCampaignsQuery : IRequest<Result<PagedList<CampaignSummaryResponse>>>\n{\n    public int Page { get; init; } = 1;\n    public int PageSize { get; init; } = PagingDefaults.DefaultPageSize;\n    public string? Search { get; init; }\n    public Guid? CategoryId { get; init; }\n    public CampaignStatus? Status { get; init; }          // الافتراضي Active (CMP-04)\n    public string? SortBy { get; init; }                  // endDate | raisedAmount | createdAt\n    public string? SortDirection { get; init; }           // asc | desc\n}\n\n// يحل محل GetActiveCampaignsQuery و CampaignSummaryResponse من Sprint 2 (احذفهما): القائمة صارت مقسّمة،\n// و progressPercent/daysLeft في التفاصيل فقط (CMP-05). استجابة عامة ← Title واحد بلغة الطلب (CMP-11)\npublic sealed record CampaignSummaryResponse(\n    Guid Id, string Title, decimal GoalAmount, decimal RaisedAmount,\n    DateTime EndDate, CampaignStatus Status, Guid CategoryId);\n\npublic sealed class GetCampaignsQueryValidator : AbstractValidator<GetCampaignsQuery>\n{\n    private static readonly string[] SortFields = [\"endDate\", \"raisedAmount\", \"createdAt\"];\n\n    public GetCampaignsQueryValidator()\n    {\n        RuleFor(x => x.Page).GreaterThanOrEqualTo(1);\n        RuleFor(x => x.PageSize).InclusiveBetween(1, PagingDefaults.MaxPageSize);\n        RuleFor(x => x.Search).MaximumLength(100);\n        RuleFor(x => x.SortBy)\n            .Must(s => s is null || SortFields.Contains(s, StringComparer.OrdinalIgnoreCase));\n        RuleFor(x => x.SortDirection)\n            .Must(d => d is null || d.Equals(\"asc\", StringComparison.OrdinalIgnoreCase)\n                                 || d.Equals(\"desc\", StringComparison.OrdinalIgnoreCase));\n    }\n}",
+   "filename": "DonationHub.Application/Features/Campaigns/List/GetCampaignsQuery.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Caching;\nusing DonationHub.Application.Common.Localization;\nusing DonationHub.Application.Common.Paging;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing MediatR;\n\nnamespace DonationHub.Application.Features.Campaigns.List;\n\npublic sealed class GetCampaignsQueryHandler(IReadDbContext db, ICacheService cache, TimeProvider clock)\n    : IRequestHandler<GetCampaignsQuery, Result<PagedList<CampaignSummaryResponse>>>\n{\n    public async Task<Result<PagedList<CampaignSummaryResponse>>> Handle(GetCampaignsQuery q, CancellationToken ct)\n    {\n        var lang = CurrentLanguage.Code;\n        var version = await cache.GetCampaignListVersionAsync(ct);\n\n        // اللغة + كل معاملات الاستعلام داخل المفتاح، وإلا يرى المستخدم العربي صفحة إنجليزية مخزّنة\n        var key = CacheKeys.CampaignList(version, lang,\n            $\"page={q.Page}:size={q.PageSize}:cat={q.CategoryId}:status={q.Status ?? CampaignStatus.Active}\" +\n            $\":search={q.Search?.Trim().ToLowerInvariant()}:sort={q.SortBy?.ToLowerInvariant()}:{q.SortDirection?.ToLowerInvariant()}\");\n\n        return await cache.GetOrCreateAsync(key, token => QueryAsync(q, lang == \"ar\", token),\n            CacheProfile.CampaignList, ct);\n    }\n\n    private Task<PagedList<CampaignSummaryResponse>> QueryAsync(GetCampaignsQuery q, bool isArabic, CancellationToken ct)\n    {\n        var status = q.Status ?? CampaignStatus.Active;\n        var query = db.Campaigns.Where(c => c.Status == status);\n\n        if (status == CampaignStatus.Active)                       // «نشطة» = Active ولم ينتهِ تاريخها (كما في Sprint 2)\n        {\n            var now = clock.GetUtcNow().UtcDateTime;\n            query = query.Where(c => c.EndDate > now);\n        }\n\n        if (q.CategoryId is { } categoryId)\n            query = query.Where(c => c.CategoryId == categoryId);\n\n        if (!string.IsNullOrWhiteSpace(q.Search))\n        {\n            var term = q.Search.Trim();\n            query = isArabic                                       // البحث بلغة الطلب الحالية\n                ? query.Where(c => c.TitleAr.Contains(term))\n                : query.Where(c => c.TitleEn.Contains(term));\n        }\n\n        var descending = string.Equals(q.SortDirection, \"desc\", StringComparison.OrdinalIgnoreCase);\n\n        // قائمة بيضاء: كل قيمة مسموحة مربوطة بـ expression معروف — لا أسماء أعمدة من المستخدم\n        var ordered = (q.SortBy?.ToLowerInvariant(), descending) switch\n        {\n            (\"enddate\", false) => query.OrderBy(c => c.EndDate),\n            (\"enddate\", true) => query.OrderByDescending(c => c.EndDate),\n            (\"raisedamount\", false) => query.OrderBy(c => c.RaisedAmount),\n            (\"raisedamount\", true) => query.OrderByDescending(c => c.RaisedAmount),\n            (\"createdat\", false) => query.OrderBy(c => c.CreatedAt),\n            _ => query.OrderByDescending(c => c.CreatedAt)         // الافتراضي: الأحدث أولًا\n        };\n\n        var projected = ordered\n            .ThenBy(c => c.Id)                                     // ترتيب ثابت حتى لا تتكرر عناصر بين الصفحات\n            .Select(c => new CampaignSummaryResponse(\n                c.Id, isArabic ? c.TitleAr : c.TitleEn, c.GoalAmount, c.RaisedAmount,\n                c.EndDate, c.Status, c.CategoryId));\n\n        return PagedList<CampaignSummaryResponse>.CreateAsync(projected, q.Page, q.PageSize, ct);\n    }\n}",
+   "filename": "DonationHub.Application/Features/Campaigns/List/GetCampaignsQueryHandler.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "`ThenBy(c => c.Id)` ليس تجميلًا: لو رتّبت بـ `EndDate` وكان لعشر حملات نفس التاريخ، فإن SQL Server غير ملزم بترتيب ثابت بينها، فقد تظهر حملة في الصفحة 1 والصفحة 2 معًا. و `success-stories` هو نفس الـ handler تقريبًا مع `Status = Completed`."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "قائمة الـ Admin (DON-05) — الفلاتر اختيارية وتُضاف للـ `IQueryable` فقط إذا وصلت. نضيف `Donations` إلى `IReadDbContext`، ونستخدم `join` لأن `Donation` لا يملك navigation property:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Paging;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing MediatR;\n\nnamespace DonationHub.Application.Features.Donations.AdminList;\n\npublic sealed record GetAdminDonationsQuery : IRequest<Result<PagedList<AdminDonationResponse>>>\n{\n    public int Page { get; init; } = 1;\n    public int PageSize { get; init; } = PagingDefaults.DefaultPageSize;\n    public DonationStatus? Status { get; init; }\n    public Guid? CampaignId { get; init; }\n    public Guid? DonorId { get; init; }\n    public DateTime? From { get; init; }\n    public DateTime? To { get; init; }\n}\n\n// endpoint إداري ← العنوان باللغتين\npublic sealed record AdminDonationResponse(\n    Guid Id, Guid CampaignId, string CampaignTitleAr, string CampaignTitleEn, Guid DonorUserId,\n    decimal Amount, DonationStatus Status, DateTime CreatedAt, string? ReceiptNumber);\n\npublic sealed class GetAdminDonationsQueryHandler(IReadDbContext db)\n    : IRequestHandler<GetAdminDonationsQuery, Result<PagedList<AdminDonationResponse>>>\n{\n    public async Task<Result<PagedList<AdminDonationResponse>>> Handle(GetAdminDonationsQuery q, CancellationToken ct)\n    {\n        var donations = db.Donations;\n\n        if (q.Status is { } status) donations = donations.Where(d => d.Status == status);\n        if (q.CampaignId is { } campaignId) donations = donations.Where(d => d.CampaignId == campaignId);\n        if (q.DonorId is { } donorId) donations = donations.Where(d => d.DonorUserId == donorId);\n        if (q.From is { } from) donations = donations.Where(d => d.CreatedAt >= from);\n        if (q.To is { } to) donations = donations.Where(d => d.CreatedAt < to);   // To حصري\n\n        var rows =\n            from d in donations\n            join c in db.CampaignsIncludingDeleted on d.CampaignId equals c.Id   // نُظهر التبرعات حتى لحملة محذوفة\n            orderby d.CreatedAt descending, d.Id\n            select new AdminDonationResponse(d.Id, d.CampaignId, c.TitleAr, c.TitleEn, d.DonorUserId,\n                d.Amount, d.Status, d.CreatedAt, d.ReceiptNumber);\n\n        return await PagedList<AdminDonationResponse>.CreateAsync(rows, q.Page, q.PageSize, ct);\n    }\n}",
+   "filename": "DonationHub.Application/Features/Donations/AdminList/GetAdminDonationsQuery.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "`GetMyDonationsQuery` (DON-03) هو نفس الاستعلام مع شرط ثابت `d.DonorUserId == currentUser.UserId` وعنوان الحملة بلغة الطلب — **ولا يُعمل له كاش** تحت مفتاح مشترك أبدًا. الفهرس `(DonorUserId, CreatedAt)` من Sprint 1 يخدم هذا الاستعلام تمامًا."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 4 — الكاش: من IMemoryCache إلى Redis",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**لماذا تجريد خاص بنا؟** لو استخدمت `IMemoryCache` مباشرة في الـ handlers، فالانتقال إلى Redis يعني تعديل كل handler. بتجريد صغير في Application، الانتقال من الخطوة 1 إلى الخطوة 2 هو **سطر تسجيل واحد** في Infrastructure — وهذا ما يجب أن تستطيع إثباته في المراجعة.\n\n**استراتيجية الإبطال:** `IDistributedCache` لا يدعم «احذف كل المفاتيح التي تبدأ بـ…». لذلك:\n- **تفاصيل الحملة والتصنيفات:** مفاتيح معروفة ← نحذفها مباشرة (لكل لغة).\n- **صفحات القوائم:** عددها غير محدود (كل تركيبة فلاتر)، فنضع في المفتاح **رقم إصدار** (`v{version}`) مخزّنًا في مفتاح مستقل. الإبطال = تغيير رقم الإصدار، فتصبح كل الصفحات القديمة غير مُشار إليها وتنتهي صلاحيتها وحدها."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Application.Common.Caching;\n\npublic enum CacheProfile { Categories, CampaignList, CampaignDetails, Version }\n\npublic interface ICacheService\n{\n    Task<T?> GetAsync<T>(string key, CancellationToken ct = default);\n    Task SetAsync<T>(string key, T value, CacheProfile profile, CancellationToken ct = default);\n    Task RemoveAsync(string key, CancellationToken ct = default);\n}\n\npublic static class CacheKeys\n{\n    public static readonly string[] Languages = [\"en\", \"ar\"];\n    public const string CampaignListVersion = \"campaigns:list:version\";\n\n    public static string CategoriesList(string lang) => $\"categories:list:{lang}\";\n    public static string CampaignDetails(Guid id, string lang) => $\"campaigns:details:{id}:{lang}\";\n    public static string CampaignList(string version, string lang, string queryPart) =>\n        $\"campaigns:list:v{version}:{lang}:{queryPart}\";\n}",
+   "filename": "DonationHub.Application/Common/Caching/ICacheService.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "namespace DonationHub.Application.Common.Caching;\n\npublic static class CacheServiceExtensions\n{\n    // نمط cache-aside: اقرأ من الكاش ← إن لم يوجد اقرأ من DB ← خزّن ← أرجِع\n    public static async Task<T> GetOrCreateAsync<T>(this ICacheService cache, string key,\n        Func<CancellationToken, Task<T>> factory, CacheProfile profile, CancellationToken ct = default)\n    {\n        var cached = await cache.GetAsync<T>(key, ct);\n        if (cached is not null) return cached;\n\n        var value = await factory(ct);\n        if (value is not null)\n            await cache.SetAsync(key, value, profile, ct);\n        return value;\n    }\n\n    public static async Task<string> GetCampaignListVersionAsync(this ICacheService cache, CancellationToken ct = default) =>\n        await cache.GetAsync<string>(CacheKeys.CampaignListVersion, ct) ?? \"0\";\n\n    // تُستدعى عند: إنشاء/تعديل/حذف حملة، تغيّر حالتها (Job الانتهاء في Sprint 4)، ونجاح تبرع\n    public static async Task InvalidateCampaignAsync(this ICacheService cache, Guid campaignId, CancellationToken ct = default)\n    {\n        foreach (var lang in CacheKeys.Languages)\n            await cache.RemoveAsync(CacheKeys.CampaignDetails(campaignId, lang), ct);\n\n        await cache.SetAsync(CacheKeys.CampaignListVersion, Guid.NewGuid().ToString(\"N\"), CacheProfile.Version, ct);\n    }\n\n    // تُستدعى عند إنشاء/تعديل/حذف تصنيف\n    public static async Task InvalidateCategoriesAsync(this ICacheService cache, CancellationToken ct = default)\n    {\n        foreach (var lang in CacheKeys.Languages)\n            await cache.RemoveAsync(CacheKeys.CategoriesList(lang), ct);\n\n        // القوائم قد تُفلتر بالتصنيف ← نبطلها أيضًا\n        await cache.SetAsync(CacheKeys.CampaignListVersion, Guid.NewGuid().ToString(\"N\"), CacheProfile.Version, ct);\n    }\n}",
+   "filename": "DonationHub.Application/Common/Caching/CacheServiceExtensions.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.ComponentModel.DataAnnotations;\nusing DonationHub.Application.Common.Caching;\n\nnamespace DonationHub.Infrastructure.Caching;\n\npublic sealed class CacheOptions\n{\n    public const string SectionName = \"Cache\";\n\n    [Range(1, 1440)] public int CategoriesMinutes { get; init; } = 60;\n    [Range(1, 1440)] public int CampaignListMinutes { get; init; } = 2;\n    [Range(1, 1440)] public int CampaignDetailsSlidingMinutes { get; init; } = 5;\n    [Range(1, 1440)] public int CampaignDetailsAbsoluteMinutes { get; init; } = 30;\n    [Range(1, 10080)] public int VersionKeyMinutes { get; init; } = 1440;\n}\n\ninternal readonly record struct CacheEntrySettings(TimeSpan? Absolute, TimeSpan? Sliding)\n{\n    public static CacheEntrySettings For(CacheProfile profile, CacheOptions o) => profile switch\n    {\n        CacheProfile.Categories => new(TimeSpan.FromMinutes(o.CategoriesMinutes), null),\n        CacheProfile.CampaignList => new(TimeSpan.FromMinutes(o.CampaignListMinutes), null),\n        CacheProfile.CampaignDetails => new(TimeSpan.FromMinutes(o.CampaignDetailsAbsoluteMinutes),\n                                            TimeSpan.FromMinutes(o.CampaignDetailsSlidingMinutes)),\n        CacheProfile.Version => new(TimeSpan.FromMinutes(o.VersionKeyMinutes), null),\n        _ => throw new ArgumentOutOfRangeException(nameof(profile))\n    };\n}",
+   "filename": "DonationHub.Infrastructure/Caching/CacheOptions.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Application.Common.Caching;\nusing Microsoft.Extensions.Caching.Memory;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Infrastructure.Caching;\n\ninternal sealed class MemoryCacheService(IMemoryCache cache, IOptions<CacheOptions> options) : ICacheService\n{\n    public Task<T?> GetAsync<T>(string key, CancellationToken ct = default) =>\n        Task.FromResult(cache.TryGetValue(key, out T? value) ? value : default);\n\n    public Task SetAsync<T>(string key, T value, CacheProfile profile, CancellationToken ct = default)\n    {\n        var settings = CacheEntrySettings.For(profile, options.Value);\n        cache.Set(key, value, new MemoryCacheEntryOptions\n        {\n            AbsoluteExpirationRelativeToNow = settings.Absolute,\n            SlidingExpiration = settings.Sliding\n        });\n        return Task.CompletedTask;\n    }\n\n    public Task RemoveAsync(string key, CancellationToken ct = default)\n    {\n        cache.Remove(key);\n        return Task.CompletedTask;\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Caching/MemoryCacheService.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الخطوة 2 — موزَّع عبر Redis:** نفس الواجهة، لكن القيم تُسلسل إلى JSON لأن Redis يخزّن bytes وليس كائنات .NET:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Text.Json;\nusing DonationHub.Application.Common.Caching;\nusing Microsoft.Extensions.Caching.Distributed;\nusing Microsoft.Extensions.Logging;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Infrastructure.Caching;\n\ninternal sealed class DistributedCacheService(\n    IDistributedCache cache,\n    IOptions<CacheOptions> options,\n    ILogger<DistributedCacheService> logger) : ICacheService\n{\n    private static readonly JsonSerializerOptions Json = JsonSerializerOptions.Web;\n\n    public async Task<T?> GetAsync<T>(string key, CancellationToken ct = default)\n    {\n        try\n        {\n            var bytes = await cache.GetAsync(key, ct);\n            return bytes is null ? default : JsonSerializer.Deserialize<T>(bytes, Json);\n        }\n        catch (Exception ex) when (ex is not OperationCanceledException)\n        {\n            // Redis متوقف ≠ API متوقف: نعتبره cache miss ونقرأ من قاعدة البيانات\n            logger.LogWarning(ex, \"Cache read failed for key {CacheKey}\", key);\n            return default;\n        }\n    }\n\n    public Task SetAsync<T>(string key, T value, CacheProfile profile, CancellationToken ct = default)\n    {\n        var settings = CacheEntrySettings.For(profile, options.Value);\n        return SafeAsync(key, () => cache.SetAsync(key, JsonSerializer.SerializeToUtf8Bytes(value, Json),\n            new DistributedCacheEntryOptions\n            {\n                AbsoluteExpirationRelativeToNow = settings.Absolute,\n                SlidingExpiration = settings.Sliding\n            }, ct));\n    }\n\n    public Task RemoveAsync(string key, CancellationToken ct = default) => SafeAsync(key, () => cache.RemoveAsync(key, ct));\n\n    // الكتابة والحذف كذلك: فشل Redis بعد commit ناجح لا يحوّل الرد إلى 500؛ المفتاح ينتهي بمدته\n    private async Task SafeAsync(string key, Func<Task> action)\n    {\n        try { await action(); }\n        catch (Exception ex) when (ex is not OperationCanceledException)\n        {\n            logger.LogWarning(ex, \"Cache write failed for key {CacheKey}\", key);\n        }\n    }\n}",
+   "filename": "DonationHub.Infrastructure/Caching/DistributedCacheService.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "services.AddOptions<CacheOptions>()\n    .BindConfiguration(CacheOptions.SectionName)\n    .ValidateDataAnnotations()\n    .ValidateOnStart();\n\n// الخطوة 1 (للمقارنة):\n// services.AddMemoryCache();\n// services.AddSingleton<ICacheService, MemoryCacheService>();\n\n// الخطوة 2: نفس الواجهة، تنفيذ مختلف — لا handler تغيّر\nservices.AddStackExchangeRedisCache(options =>\n{\n    options.Configuration = configuration.GetConnectionString(\"Redis\")\n        ?? throw new InvalidOperationException(\"ConnectionStrings:Redis is not configured.\");\n    options.InstanceName = \"donationhub:\";       // بادئة لكل المفاتيح داخل Redis\n});\nservices.AddSingleton<ICacheService, DistributedCacheService>();\n\nservices.AddScoped<IReceiptNumberGenerator, SqlReceiptNumberGenerator>();\n// وفي AddApplicationServices: services.AddScoped<IDonationSuccessFlow, DonationSuccessFlow>();",
+   "filename": "DonationHub.Infrastructure/DependencyInjection.Caching.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "تفاصيل الحملة مع انتهاء منزلق ومطلق. لاحظ أن `progressPercent` و `daysLeft` تُحسب **بعد** القراءة من الكاش لأن `daysLeft` يعتمد على الوقت الحالي:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// GetCampaignByIdQuery(Guid Id): بلا Language — اللغة من CurrentLanguage بدل ContentLanguage (Sprint 2)\npublic async Task<Result<CampaignDetailsResponse>> Handle(GetCampaignByIdQuery query, CancellationToken ct)\n{\n    var lang = CurrentLanguage.Code;\n    var isArabic = lang == \"ar\";\n\n    var snapshot = await cache.GetOrCreateAsync(\n        CacheKeys.CampaignDetails(query.Id, lang),\n        token => db.Campaigns\n            .Where(c => c.Id == query.Id)\n            .Select(c => new CampaignSnapshot(c.Id, isArabic ? c.TitleAr : c.TitleEn,\n                isArabic ? c.DescriptionAr : c.DescriptionEn, c.GoalAmount, c.RaisedAmount,\n                c.EndDate, c.Status, c.CategoryId, c.BannerFileName, c.CreatedAt, c.UpdatedAt, c.RowVersion))\n            .FirstOrDefaultAsync(token),\n        CacheProfile.CampaignDetails, ct);          // null (غير موجودة) لا يُخزَّن\n\n    if (snapshot is null)\n        return CampaignErrors.NotFound;\n\n    var now = clock.GetUtcNow().UtcDateTime;                // CampaignSnapshot = حقول Sprint 2 بلا المشتقة؛ From() جديدة تضيفها\n    return CampaignDetailsResponse.From(snapshot,\n        CampaignCalculations.ProgressPercent(snapshot.RaisedAmount, snapshot.GoalAmount),\n        CampaignCalculations.DaysLeft(snapshot.EndDate, now));\n}",
+   "filename": "DonationHub.Application/Features/Campaigns/GetCampaignById/GetCampaignByIdQueryHandler.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**أخطر خطأ في الكاش:** نسيان اللغة في المفتاح، أو تخزين `GET /donations/mine` تحت مفتاح لا يحتوي معرّف المستخدم. الأول يعرض للعربي بيانات إنجليزية، والثاني **يسرّب تبرعات مستخدم لمستخدم آخر**. أبسط قاعدة: البيانات الخاصة بالمستخدم لا تدخل الكاش في هذا السبرنت."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الإبطال في كل مكان يغيّر البيانات:** `Create/Update/DeleteCampaign` ← `InvalidateCampaignAsync`، و `Create/Update/DeleteCategory` ← `InvalidateCategoriesAsync`، و `DonationSuccessFlow` ← `InvalidateCampaignAsync`. ووثّق ذلك في الـ README:"
+  },
+  {
+   "type": "Code",
+   "language": "markdown",
+   "code": "## Caching (Sprint 3)\n\n| Data | Key | Expiration | Invalidated when |\n|---|---|---|---|\n| Categories list | `categories:list:{lang}` | 60 min absolute | category created / updated / deleted |\n| Campaign list pages + success stories | `campaigns:list:v{version}:{lang}:{query}` | 2 min absolute | `campaigns:list:version` gets a new value |\n| Campaign details | `campaigns:details:{id}:{lang}` | 5 min sliding, 30 min absolute | that campaign changes, or one of its donations succeeds |\n\nStrategy: details keys are removed directly (both languages). List pages cannot be\nenumerated in Redis, so every list key contains a version stamp; changing a campaign,\na category, or a successful donation writes a new version, which makes all old pages\nunreachable (they expire on their own). User-specific data (`/donations/mine`) is never cached.\n\nTry it:\n\n    docker run -d --name redis -p 6379:6379 redis:alpine\n    dotnet user-secrets set \"ConnectionStrings:Redis\" \"localhost:6379\" --project src/DonationHub.Api\n    docker exec -it redis redis-cli KEYS \"donationhub:*\"",
+   "filename": "README.Sprint3.md"
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 5 — التوطين (ar / en)",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**القرار:** نترجم في **ثلاثة أماكن فقط**، وكل منها له آلية واضحة:\n\n1. **رسائل التحقق:** رسائل FluentValidation المدمجة تُترجم تلقائيًّا حسب `CultureInfo.CurrentUICulture` (المكتبة تحتوي ترجمة عربية)، والرسائل المخصّصة عبر `IStringLocalizer<ValidationMessages>`.\n2. **رسائل الأخطاء:** كتالوج الأخطاء يبقى `static` بنص إنجليزي احتياطي، ونترجم عند **حدود الـ API** بالبحث عن `error.Code` في `ErrorMessages.resx`. هكذا لا يحتاج أي handler أن يعرف شيئًا عن اللغة.\n3. **الحقول العامة:** الإسقاط يختار `TitleAr` أو `TitleEn` حسب لغة الطلب."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using Microsoft.AspNetCore.Localization;\n\nnamespace DonationHub.Api.Extensions;\n\npublic static class LocalizationExtensions\n{\n    public static IServiceCollection AddApiLocalization(this IServiceCollection services)\n    {\n        services.AddLocalization();          // بدون ResourcesPath — انظر التحذير أدناه\n\n        services.Configure<RequestLocalizationOptions>(options =>\n        {\n            string[] cultures = [\"en\", \"ar\"];\n            options.SetDefaultCulture(\"en\")                    // الرجوع إلى en\n                .AddSupportedCultures(cultures)\n                .AddSupportedUICultures(cultures);\n            options.ApplyCurrentCultureToResponseHeaders = true;   // يضيف Content-Language للرد\n            // نعتمد على Accept-Language فقط (لا query string ولا cookie في API)\n            options.RequestCultureProviders = [new AcceptLanguageHeaderRequestCultureProvider()];\n        });\n\n        return services;\n    }\n}",
+   "filename": "DonationHub.Api/Extensions/LocalizationExtensions.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Globalization;\n\nnamespace DonationHub.Application.Common.Localization;\n\n// يحل محل ContentLanguage من Sprint 2. UseRequestLocalization يضبط CurrentUICulture لكل طلب، والقيمة تنتقل عبر await تلقائيًّا\npublic static class CurrentLanguage\n{\n    public static string Code =>\n        CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == \"ar\" ? \"ar\" : \"en\";\n\n    public static bool IsArabic => Code == \"ar\";\n}",
+   "filename": "DonationHub.Application/Common/Localization/CurrentLanguage.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "ملفات الموارد في `DonationHub.Application/Resources/` (`ErrorMessages.resx` + `ErrorMessages.ar.resx`، و `ValidationMessages.resx` + `ValidationMessages.ar.resx`)، ومعها كلاسات فارغة (markers) بنفس الأسماء في namespace `DonationHub.Application.Resources`: `public sealed class ErrorMessages { }` و `public sealed class ValidationMessages { }`. المفتاح هو كود الخطأ نفسه:"
+  },
+  {
+   "type": "Code",
+   "language": "xml",
+   "code": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<root>\n  <resheader name=\"resmimetype\"><value>text/microsoft-resx</value></resheader>\n  <resheader name=\"version\"><value>2.0</value></resheader>\n  <resheader name=\"reader\"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>\n  <resheader name=\"writer\"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>\n  <data name=\"Campaign.NotFound\" xml:space=\"preserve\"><value>الحملة غير موجودة.</value></data>\n  <data name=\"Campaign.NotActive\" xml:space=\"preserve\"><value>الحملة لا تستقبل تبرعات حاليًّا.</value></data>\n  <data name=\"Donation.NotFound\" xml:space=\"preserve\"><value>التبرع غير موجود.</value></data>\n  <data name=\"Donation.AmountOutOfRange\" xml:space=\"preserve\"><value>مبلغ التبرع خارج النطاق المسموح.</value></data>\n  <data name=\"Donation.InvalidState\" xml:space=\"preserve\"><value>حالة التبرع لا تسمح بهذه العملية.</value></data>\n  <data name=\"Common.RateLimited\" xml:space=\"preserve\"><value>طلبات كثيرة جدًّا. حاول مرة أخرى لاحقًا.</value></data>\n</root>",
+   "filename": "DonationHub.Application/Resources/ErrorMessages.ar.resx"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**فخ `ResourcesPath`:** إذا كتبت `AddLocalization(o => o.ResourcesPath = \"Resources\")` والـ marker class موجود أصلًا في namespace `DonationHub.Application.Resources`، سيبحث الـ localizer عن `DonationHub.Application.Resources.Resources.ErrorMessages` ولن يجد شيئًا — وستظهر المفاتيح نفسها بدل النصوص **بدون أي خطأ**. القاعدة: إمّا `ResourcesPath` أو marker داخل مجلد Resources، وليس الاثنين."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**تطوير `ApiControllerBase` من Sprint 2 (نفس الملف، لا helper جديد):** تبقى `ProblemFrom(Error)` النقطة الوحيدة التي تحوّل الأخطاء إلى ProblemDetails، ونضيف إليها شيئين: (1) ترجمة الـ `title` بالبحث عن `error.Code` في `ErrorMessages.resx` مع الرجوع إلى النص الإنجليزي من الكتالوج، و(2) الدالتين `FromResult(Result)` ← 204 و `FromResult<T>(Result<T>)` ← 200 حتى تصبح الـ actions سطرًا واحدًا. سلوك Sprint 2 كما هو: `ToStatusCode()` (بما فيه 413)، والحقل `code`، والـ `traceId`، و `errors` لأخطاء التحقق. وعند النجاح بـ 201 نستخدم `CreatedAtAction(...)` و `ProblemFrom` للفشل:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Text.Json;\nusing DonationHub.Application.Resources;\nusing DonationHub.Domain.Common;\nusing Microsoft.AspNetCore.Mvc;\nusing Microsoft.Extensions.Localization;\n\nnamespace DonationHub.Api.Controllers;\n\n// نفس الملف من Sprint 2 — ErrorTypeExtensions.ToStatusCode() فوق الكلاس يبقى كما هو\n[ApiController]\npublic abstract class ApiControllerBase : ControllerBase\n{\n    // جديد في Sprint 3: الـ action يصبح سطرًا واحدًا\n    protected IActionResult FromResult(Result result) =>\n        result.IsSuccess ? NoContent() : ProblemFrom(result.Error);            // 204\n\n    protected IActionResult FromResult<T>(Result<T> result) =>\n        result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);       // 200\n\n    // ما زالت نقطة واحدة تحوّل أي Error إلى RFC 9457 ProblemDetails\n    protected IActionResult ProblemFrom(Error error)\n    {\n        var status = error.Type.ToStatusCode();                                // يشمل 413 لـ PayloadTooLarge\n\n        // جديد في Sprint 3: الكتالوج يبقى إنجليزيًّا، ونترجم عند حدود الـ API بالبحث عن error.Code\n        var localizer = HttpContext.RequestServices.GetRequiredService<IStringLocalizer<ErrorMessages>>();\n        var localized = localizer[error.Code];\n        var title = localized.ResourceNotFound ? error.Message : localized.Value;   // fallback للإنجليزية\n\n        // ProblemDetailsFactory يضيف traceId ويطبّق CustomizeProblemDetails (كما في Sprint 2)\n        var problem = ProblemDetailsFactory.CreateProblemDetails(\n            HttpContext, statusCode: status, title: title, type: $\"https://httpstatuses.io/{status}\");\n\n        problem.Extensions[\"code\"] = error.Code;\n        if (error is ValidationError validation)\n        {\n            problem.Extensions[\"errors\"] = validation.Errors.ToDictionary(\n                e => JsonNamingPolicy.CamelCase.ConvertName(e.Key),   // GoalAmount → goalAmount\n                e => e.Value);\n        }\n\n        return new ObjectResult(problem)\n        {\n            StatusCode = status,\n            ContentTypes = { \"application/problem+json\" }\n        };\n    }\n}",
+   "filename": "DonationHub.Api/Controllers/ApiControllerBase.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "// GetCategoriesQuery من Sprint 2 كما هو؛ الجديد: الكاش، والرد العام بلغة الطلب بدل حقلي Ar/En (CMP-11)\npublic sealed record CategoryResponse(Guid Id, string Name, string? Description);\n\npublic sealed class GetCategoriesQueryHandler(IReadDbContext db, ICacheService cache)\n    : IRequestHandler<GetCategoriesQuery, Result<IReadOnlyList<CategoryResponse>>>\n{\n    public async Task<Result<IReadOnlyList<CategoryResponse>>> Handle(GetCategoriesQuery query, CancellationToken ct)\n    {\n        var lang = CurrentLanguage.Code;\n        var isArabic = lang == \"ar\";\n\n        var items = await cache.GetOrCreateAsync(\n            CacheKeys.CategoriesList(lang),\n            token => db.Categories\n                .OrderBy(c => isArabic ? c.NameAr : c.NameEn)\n                .Select(c => new CategoryResponse(c.Id,\n                    isArabic ? c.NameAr : c.NameEn,\n                    isArabic ? c.DescriptionAr : c.DescriptionEn))\n                .ToListAsync(token),\n            CacheProfile.Categories, ct);\n\n        return Result<IReadOnlyList<CategoryResponse>>.Success(items);   // T واجهة ← Success صراحةً\n    }\n}",
+   "filename": "DonationHub.Application/Features/Categories/GetCategories/GetCategories.cs"
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 6 — إصدارات الـ API وتحديد المعدل",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**الإصدارات:** المهم هنا أن **اسم مجموعة ApiExplorer** (`v1`) يطابق **اسم مستند OpenAPI** (`v1`)، لأن OpenAPI المدمج يضع في كل مستند الـ endpoints التي `GroupName` الخاص بها يساوي اسم المستند:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using Asp.Versioning;\nusing DonationHub.Api.Infrastructure;      // BearerSecuritySchemeTransformer\n\nnamespace DonationHub.Api.Extensions;\n\npublic static class ApiDocuments\n{\n    public static readonly string[] All = [\"v1\"];        // أضف \"v2\" في الـ BONUS\n}\n\npublic static class VersioningExtensions\n{\n    public static IServiceCollection AddApiVersioningWithOpenApi(this IServiceCollection services)\n    {\n        services.AddApiVersioning(options =>\n            {\n                options.DefaultApiVersion = new ApiVersion(1, 0);\n                options.AssumeDefaultVersionWhenUnspecified = true;\n                options.ReportApiVersions = true;                     // ترويسة api-supported-versions\n                options.ApiVersionReader = new UrlSegmentApiVersionReader();\n            })\n            .AddMvc()\n            .AddApiExplorer(options =>\n            {\n                options.GroupNameFormat = \"'v'VVV\";                   // 1.0 ← \"v1\"\n                options.SubstituteApiVersionInUrl = true;             // /api/v{version} ← /api/v1 في المستند\n            });\n\n        foreach (var document in ApiDocuments.All)\n            services.AddOpenApi(document, options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());\n\n        return services;\n    }\n}",
+   "filename": "DonationHub.Api/Extensions/VersioningExtensions.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**رحّل controllers Sprint 1–2** (`Auth` و `AdminStaff` و `Categories` و `Campaigns`) إلى `[ApiVersion(\"1.0\")]` و `api/v{version:apiVersion}/...` بدل `api/v1/...`. **تحقّق:** افتح `/openapi/v1.json` وتأكد أن كل الـ endpoints ظاهرة بمسارات `/api/v1/...`. توقيع `AddDocument` يختلف قليلًا بين إصدارات `Scalar.AspNetCore` — راجع مقال codewithmukesh المرفق."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**تحديد المعدل:** ثلاث نقاط تصميم:\n- **مفتاح التقسيم (partition key):** `global` و `auth` حسب IP؛ و `donations` حسب **المستخدم** (وإلا فإن مستخدمين خلف نفس الـ NAT يستهلكون حصة بعضهم).\n- **الحدود من `RateLimitOptions`** وتُقرأ من `RequestServices` داخل الـ partitioner، فتبقى قابلة للضبط بدون تعديل الكود.\n- **الرفض** يُرجع 429 + `Retry-After` + ProblemDetails بنفس شكل باقي الأخطاء."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.ComponentModel.DataAnnotations;\n\nnamespace DonationHub.Api.Options;\n\npublic sealed class RateLimitOptions\n{\n    public const string SectionName = \"RateLimit\";\n\n    [Range(1, 100_000)] public int GlobalPermitLimit { get; init; } = 100;   // لكل IP\n    [Range(1, 10_000)] public int AuthPermitLimit { get; init; } = 10;       // لكل IP\n    [Range(1, 10_000)] public int DonationsPermitLimit { get; init; } = 20;  // لكل مستخدم\n    [Range(1, 3600)] public int WindowSeconds { get; init; } = 60;\n}",
+   "filename": "DonationHub.Api/Options/RateLimitOptions.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Globalization;\nusing System.Security.Claims;\nusing System.Threading.RateLimiting;\nusing DonationHub.Api.Options;\nusing DonationHub.Application.Resources;\nusing Microsoft.AspNetCore.RateLimiting;\nusing Microsoft.Extensions.Localization;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Api.Extensions;\n\npublic static class RateLimitPolicies\n{\n    public const string Auth = \"auth\";\n    public const string Donations = \"donations\";\n    // \"global\" يُطبَّق كـ GlobalLimiter على كل الطلبات تلقائيًّا\n}\n\npublic static class RateLimitingExtensions\n{\n    public static IServiceCollection AddApiRateLimiting(this IServiceCollection services)\n    {\n        services.AddOptions<RateLimitOptions>()\n            .BindConfiguration(RateLimitOptions.SectionName)\n            .ValidateDataAnnotations()\n            .ValidateOnStart();\n\n        services.AddRateLimiter(options =>\n        {\n            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;\n\n            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(http =>\n                FixedWindow(http, $\"global:{ClientIp(http)}\", o => o.GlobalPermitLimit));\n\n            options.AddPolicy(RateLimitPolicies.Auth, http =>\n                FixedWindow(http, $\"auth:{ClientIp(http)}\", o => o.AuthPermitLimit));\n\n            options.AddPolicy(RateLimitPolicies.Donations, http =>\n            {\n                var user = http.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? ClientIp(http);\n                return FixedWindow(http, $\"donations:{user}\", o => o.DonationsPermitLimit);\n            });\n\n            options.OnRejected = OnRejectedAsync;\n        });\n\n        return services;\n    }\n\n    private static RateLimitPartition<string> FixedWindow(\n        HttpContext http, string partitionKey, Func<RateLimitOptions, int> permitLimit)\n    {\n        var settings = http.RequestServices.GetRequiredService<IOptions<RateLimitOptions>>().Value;\n\n        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions\n        {\n            PermitLimit = permitLimit(settings),\n            Window = TimeSpan.FromSeconds(settings.WindowSeconds),\n            QueueLimit = 0,                     // ارفض فورًا بدل تعليق الطلبات في طابور\n            AutoReplenishment = true\n        });\n    }\n\n    // خلف reverse proxy فعّل UseForwardedHeaders وإلا سيكون IP كل العملاء هو IP الـ proxy\n    private static string ClientIp(HttpContext http) =>\n        http.Connection.RemoteIpAddress?.ToString() ?? \"unknown\";\n\n    private static async ValueTask OnRejectedAsync(OnRejectedContext context, CancellationToken ct)\n    {\n        var http = context.HttpContext;\n\n        var retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var value)\n            ? value\n            : TimeSpan.FromSeconds(60);\n        http.Response.Headers.RetryAfter =\n            ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);\n\n        var localizer = http.RequestServices.GetRequiredService<IStringLocalizer<ErrorMessages>>();\n        var problems = http.RequestServices.GetRequiredService<IProblemDetailsService>();\n\n        await problems.WriteAsync(new ProblemDetailsContext\n        {\n            HttpContext = http,\n            ProblemDetails =\n            {\n                Status = StatusCodes.Status429TooManyRequests,\n                Type = \"https://httpstatuses.io/429\",\n                Title = localizer[\"Common.RateLimited\"],\n                Extensions = { [\"code\"] = \"Common.RateLimited\" }      // traceId يضيفه AddProblemDetails\n            }\n        });\n    }\n}",
+   "filename": "DonationHub.Api/Extensions/RateLimitingExtensions.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**ترتيب الـ middleware مهم:** `UseRateLimiter()` يجب أن يأتي **بعد** `UseAuthentication()` وإلا سيكون `http.User` فارغًا وتتحول سياسة `donations` إلى «لكل IP». و `UseRequestLocalization()` قبله حتى تُترجم رسالة الـ 429. وطبّق السياسات بالـ attributes: `[EnableRateLimiting(RateLimitPolicies.Auth)]` على `register` و `login` و `refresh` في `AuthController`، و `[EnableRateLimiting(RateLimitPolicies.Donations)]` على إنشاء التبرع، و `[DisableRateLimiting]` على الـ webhook في Sprint 5 (يتجاوز الـ global والسياسات المسمّاة معًا)."
+  },
+  {
+   "type": "Heading",
+   "text": "المهمة 7 — CORS",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**لماذا origins صريحة؟** `AllowAnyOrigin()` يعني أن أي موقع على الإنترنت يستطيع استدعاء الـ API من متصفح المستخدم. ومع `AllowCredentials()` يرفض ASP.NET Core هذا الجمع أصلًا لأنه يسمح لأي موقع بإرسال cookies المستخدم. نحن نستخدم Bearer tokens في ترويسة `Authorization`، لذلك **لا نحتاج** `AllowCredentials` إطلاقًا."
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.ComponentModel.DataAnnotations;\n\nnamespace DonationHub.Api.Options;\n\n// تنبيه: يوجد أيضًا Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions — لا تستورد الـ namespace ذاك هنا\npublic sealed class CorsOptions\n{\n    public const string SectionName = \"Cors\";\n\n    [Required, MinLength(1)]\n    public string[] AllowedOrigins { get; init; } = [];\n}\n\npublic static class CorsPolicies\n{\n    public const string Frontend = \"frontend\";\n}",
+   "filename": "DonationHub.Api/Options/CorsOptions.cs"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using DonationHub.Api.Options;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Api.Extensions;\n\npublic static class CorsExtensions\n{\n    public static IServiceCollection AddApiCors(this IServiceCollection services)\n    {\n        services.AddOptions<CorsOptions>()\n            .BindConfiguration(CorsOptions.SectionName)\n            .ValidateDataAnnotations()\n            .Validate(o => o.AllowedOrigins.All(IsValidOrigin),\n                \"Cors:AllowedOrigins must contain absolute http(s) origins without '*' or a trailing slash.\")\n            .ValidateOnStart();\n\n        services.AddCors();\n\n        // نبني السياسة من CorsOptions المُتحقَّق منها عبر DI بدل قراءة IConfiguration يدويًّا\n        services.AddOptions<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions>()\n            .Configure<IOptions<CorsOptions>>((cors, appCors) =>\n                cors.AddPolicy(CorsPolicies.Frontend, policy => policy\n                    .WithOrigins(appCors.Value.AllowedOrigins)\n                    .WithMethods(\"GET\", \"POST\", \"PUT\", \"PATCH\", \"DELETE\")\n                    .WithHeaders(\"Authorization\", \"Content-Type\", \"Accept-Language\", \"Idempotency-Key\")\n                    .WithExposedHeaders(\"Location\", \"Retry-After\", \"Content-Language\")\n                    .SetPreflightMaxAge(TimeSpan.FromMinutes(10))));\n                    // لا AllowAnyOrigin، ولا AllowCredentials (نستخدم Bearer وليس cookies)\n\n        return services;\n    }\n\n    private static bool IsValidOrigin(string origin) =>\n        Uri.TryCreate(origin, UriKind.Absolute, out var uri)\n        && uri.Scheme is \"http\" or \"https\"\n        && !origin.EndsWith('/');\n}",
+   "filename": "DonationHub.Api/Extensions/CorsExtensions.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Tip",
+   "markdown": "`Access-Control-Expose-Headers` ضروري لـ `Location` و `Retry-After`: بدونه لا يستطيع JavaScript في المتصفح قراءة هذه الترويسات حتى لو كانت موجودة في الرد. وانتبه: origin بشرطة مائلة في النهاية (`http://localhost:5173/`) لن يطابق أبدًا — لهذا نتحقق منه عند بدء التشغيل."
+  },
+  {
+   "type": "Code",
+   "language": "json",
+   "code": "{\n  \"ConnectionStrings\": {\n    \"Default\": \"\"\n  },\n  \"Cache\": {\n    \"CategoriesMinutes\": 60,\n    \"CampaignListMinutes\": 2,\n    \"CampaignDetailsSlidingMinutes\": 5,\n    \"CampaignDetailsAbsoluteMinutes\": 30\n  },\n  \"RateLimit\": {\n    \"GlobalPermitLimit\": 100,\n    \"AuthPermitLimit\": 10,\n    \"DonationsPermitLimit\": 20,\n    \"WindowSeconds\": 60\n  },\n  \"Cors\": {\n    \"AllowedOrigins\": [ \"http://localhost:5173\", \"http://localhost:4200\" ]\n  }\n}",
+   "filename": "appsettings.json"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "using System.Text.Json.Serialization;\nusing DonationHub.Api.Extensions;\nusing DonationHub.Api.Infrastructure;\nusing DonationHub.Api.Options;\nusing DonationHub.Application;\nusing DonationHub.Infrastructure;\nusing DonationHub.Infrastructure.Persistence;\nusing Scalar.AspNetCore;\n\nvar builder = WebApplication.CreateBuilder(args);\n\nbuilder.Services\n    .AddApplicationServices()\n    .AddInfrastructureServices(builder.Configuration);\n\nbuilder.Services.AddControllers()\n    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));\nbuilder.Services.AddProblemDetails(/* CustomizeProblemDetails (traceId + code افتراضي) كما في Sprint 2 */);\nbuilder.Services.AddExceptionHandler<GlobalExceptionHandler>();     // من Sprint 2\n\nbuilder.Services\n    .AddApiVersioningWithOpenApi()\n    .AddApiLocalization()\n    .AddApiAuthorization()\n    .AddApiRateLimiting()\n    .AddApiCors();\n\nvar app = builder.Build();\n\napp.UseExceptionHandler();\napp.UseStatusCodePages();             // كما في Sprint 2: 401/403/404 بلا جسم ← ProblemDetails\napp.UseRequestLocalization();          // أولًا: كل ما بعده يكتب رسائل بلغة الطلب\n\nif (app.Environment.IsDevelopment())\n{\n    app.MapOpenApi();\n    app.MapScalarApiReference(options =>\n    {\n        foreach (var document in ApiDocuments.All)\n            options.AddDocument(document, $\"DonationHub API {document}\");\n    });\n}\n\napp.UseCors(CorsPolicies.Frontend);    // قبل المصادقة حتى تمر طلبات الـ preflight\napp.UseAuthentication();\napp.UseRateLimiter();                  // بعد المصادقة: سياسة donations تحتاج userId\napp.UseAuthorization();\napp.MapControllers();\n\nawait DbSeeder.SeedAsync(app.Services, app.Environment.IsDevelopment());\n\napp.Run();",
+   "filename": "DonationHub.Api/Program.cs"
+  },
+  {
+   "type": "Divider"
+  },
+  {
+   "type": "Heading",
+   "text": "أخطاء شائعة تخسّر نقاطًا",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "إرجاع **403** عند طلب حملة مدير آخر أو تبرع مستخدم آخر بدل **404** — يكشف وجود المورد.",
+    "فحص الملكية في الـ Controller فقط (أو في الـ handler فقط) بدل الطبقتين معًا (الدفاع في العمق).",
+    "قبول `createdByUserId` أو `donorUserId` من جسم الطلب بدل أخذه من التوكن عبر `ICurrentUser`.",
+    "تعديل `RaisedAmount` بـ `campaign.RaisedAmount += amount` من خارج الكيان، أو حفظ التبرع والحملة في `SaveChanges` منفصلين بدون transaction.",
+    "عدم معالجة `DbUpdateConcurrencyException` — فيضيع أحد التبرعين المتزامنين أو يحصل المستخدم على 500.",
+    "توليد `ReceiptNumber` بـ `MAX(...) + 1` أو بعدّاد في الذاكرة — يتكرر تحت التزامن أو بعد إعادة التشغيل.",
+    "رفض الدفعة المتأخرة على حملة منتهية بدل قبولها وتسجيل warning (المتبرع خُصم منه بالفعل).",
+    "`ToList()` قبل `Skip/Take`، أو `CountAsync` بعد `Skip` فيُرجع عدد الصفحة بدل العدد الكلي.",
+    "ترتيب ديناميكي باسم عمود من المستخدم مباشرة (Reflection أو SQL نصّي) بدل قائمة بيضاء.",
+    "مفتاح كاش بدون اللغة أو بدون كل معاملات الاستعلام، أو كاش لـ `/donations/mine` تحت مفتاح مشترك.",
+    "نسيان إبطال الكاش بعد نجاح تبرع، فيبقى المبلغ المجموع القديم ظاهرًا في القائمة والتفاصيل.",
+    "نصوص عربية ثابتة داخل الـ handlers بدل ملفات `.resx`، أو ترجمة البيانات المخزّنة آليًّا.",
+    "`UseRateLimiter()` قبل `UseAuthentication()` فتصبح سياسة `donations` لكل IP وليس لكل مستخدم.",
+    "429 بدون ترويسة `Retry-After` أو بجسم نصّي بدل ProblemDetails بـ `code: Common.RateLimited`.",
+    "`AllowAnyOrigin()` في CORS، أو origins مكتوبة في الكود بدل `CorsOptions`.",
+    "connection string الخاص بـ Redis أو SQL Server مكتوب في `appsettings.json` ومرفوع إلى Git."
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "أسئلة استعد لها في المراجعة",
+   "level": 2
+  },
+  {
+   "type": "Checklist",
+   "items": [
+    "كيف جعلت `RaisedAmount` آمنًا تحت التزامن؟ لماذا اخترت `RowVersion` + إعادة المحاولة بدل `ExecuteUpdateAsync` (أو العكس)؟ ماذا يحدث في المحاولة الثالثة الفاشلة؟",
+    "لماذا يكفي `SaveChangesAsync` واحد ليكون transaction؟ متى تحتاج `BeginTransactionAsync` صريحة، ولماذا مع Execution Strategy؟",
+    "كيف تضمن تفرّد `ReceiptNumber` تحت تدفقات نجاح متزامنة؟ وهل الفجوات في التسلسل مشكلة؟",
+    "لماذا 404 وليس 403 لمورد شخص آخر؟ وما الفرق بين 401 و 403 و 404 في مشروعك؟",
+    "لماذا لا يكفي `[Authorize(Roles = \"CampaignManager\")]` لحماية `PUT /campaigns/{id}`؟",
+    "لماذا يجب إضافة اللغة إلى مفتاح الكاش؟ اشرح استراتيجية الإبطال لصفحات القوائم مع `IDistributedCache`.",
+    "ماذا يحدث للـ API لو توقفت حاوية Redis؟ وماذا يحدث مع كاش الذاكرة لو شغّلت نسختين من الـ API؟",
+    "لماذا نترجم رسائل الأخطاء عند حدود الـ API وليس داخل الـ handlers؟",
+    "لماذا سياسة `donations` مقسّمة حسب المستخدم بينما `auth` حسب IP؟",
+    "لماذا CORS ليس حماية للخادم؟ ولماذا لا نحتاج `AllowCredentials` مع Bearer tokens؟"
+   ]
+  },
+  {
+   "type": "Heading",
+   "text": "تلميحات للمهام الإضافية",
+   "level": 2
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**DON-11 (تبرع مجهول):** أضف `bool IsAnonymous` إلى `Donation.Create` وإلى الطلب. الإخفاء يحدث في **الإسقاط العام** فقط (`DonorName = d.IsAnonymous ? null : u.FullName`) — الـ Admin والمالك يريان كل شيء."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**DON-12 (آخر المتبرعين):** `GET /campaigns/{id}/recent-donors` يقرأ التبرعات `Succeeded` فقط، مرتبة بـ `CompletedAt` تنازليًّا، مع `Take(10)`. يمكن عمل كاش له لأنه عام (المفتاح يتضمن الحملة)، وأبطله داخل `InvalidateCampaignAsync`."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**CMP-12 (Cancelled):** أضف القيمة إلى `CampaignStatus` واجعل `IsFinal` يشملها، ودالة `Cancel(DateTime utcNow)` تُستدعى بعد `CanManageAsync`. قرّر ماذا يحدث للتبرعات `Pending` — ووثّق القرار."
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**CMP-13 (Specification):** غلّف الفلاتر في كلاس واحد قابل للاختبار بدل سلسلة `if` داخل الـ handler:"
+  },
+  {
+   "type": "Code",
+   "language": "csharp",
+   "code": "public sealed class CampaignListSpecification(GetCampaignsQuery q, bool isArabic)\n{\n    public IQueryable<Campaign> Apply(IQueryable<Campaign> query)\n    {\n        query = query.Where(c => c.Status == (q.Status ?? CampaignStatus.Active));\n        if (q.CategoryId is { } categoryId) query = query.Where(c => c.CategoryId == categoryId);\n        if (!string.IsNullOrWhiteSpace(q.Search))\n            query = isArabic ? query.Where(c => c.TitleAr.Contains(q.Search)) : query.Where(c => c.TitleEn.Contains(q.Search));\n        return query;\n    }\n}",
+   "filename": "DonationHub.Application/Features/Campaigns/List/CampaignListSpecification.cs"
+  },
+  {
+   "type": "Paragraph",
+   "markdown": "**API v2 لـ endpoint واحد:** أضف `\"v2\"` إلى `ApiDocuments.All`، وأنشئ controller منفصلًا بـ `[ApiVersion(\"2.0\")]` على نفس المسار. سيظهر مستند `/openapi/v2.json` تلقائيًّا لأن `GroupNameFormat` يولّد `v2`. مثال جيد: v2 من `GET /campaigns` يُرجع `progressPercent` داخل كل عنصر — تغيير في شكل الاستجابة لا يكسر عملاء v1."
+  },
+  {
+   "type": "Callout",
+   "variant": "Success",
+   "markdown": "لو حلّك يحقق نفس **المبادئ** — ملكية تُفحص في طبقتين مع 404، تدفق نجاح في transaction واحدة آمن تحت التزامن، رقم إيصال فريد من قاعدة البيانات، تقسيم على صفحات داخل SQL، كاش بمفاتيح تراعي اللغة مع إبطال موثّق، توطين عبر `.resx`، وسياسات rate limiting و CORS من الإعدادات — فهو حل صحيح حتى لو اختلفت الأسماء والتفاصيل."
+  }
+ ]
+}

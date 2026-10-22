@@ -1,0 +1,59 @@
+{
+ "criteria": [
+  {
+   "title": "التفويض على مستوى المورد والملكية (CMP-07)",
+   "description": "يوجد CampaignOwnershipRequirement : IAuthorizationRequirement وCampaignOwnershipHandler : AuthorizationHandler<CampaignOwnershipRequirement, Campaign> مسجّلان، ويُستدعيان عبر IAuthorizationService.AuthorizeAsync بعد تحميل الحملة. CampaignManager ينشئ الحملات (POST /campaigns) ويعدّل ويحذف حملاته فقط (PUT وDELETE /campaigns/{id})، والـ Admin يدير كل الحملات. تعديل أو حذف حملة مدير آخر يُرجع 404 Campaign.NotFound وليس 403. الطلب بدون توكن إلى endpoint محمي يُرجع 401. الملكية تُفحص في طبقتين (سياسة/دور في الـ API ثم فحص الملكية داخل الـ handler — SRS §6.3)، والمالك يُؤخذ من التوكن وليس من جسم الطلب. GET /campaigns/mine يُرجع حملات المدير نفسه بكل حالاتها، مقسّمة على صفحات، وبالحقول باللغتين.",
+   "maxPoints": 11
+  },
+  {
+   "title": "وحدة التبرعات: الإنشاء والقوائم والـ stub (DON-01 إلى DON-06)",
+   "description": "POST /campaigns/{campaignId}/donations بجسم { \"amount\": 25.00 } متاح لـ Donor وCampaign Manager وAdmin، وينشئ تبرعًا بحالة Pending ويُرجع 201 Created مع ترويسة Location. حملة غير Active أو انتهى EndDate تُرجع 409 Campaign.NotActive، والمبلغ خارج حدود DonationOptions (الافتراضي 1.00 إلى 10,000.00) يُرجع 422 Donation.AmountOutOfRange. GET /donations/mine يُرجع تبرعات المستخدم الحالي فقط (المبلغ، التاريخ، الحالة، عنوان الحملة) مقسّمة على صفحات. GET /donations/{id} للمالك أو الـ Admin، وتبرع مستخدم آخر يُرجع 404 Donation.NotFound. GET /admin/donations للـ Admin فقط مع الفلاتر status وcampaignId وdonorId وfrom وto. POST /admin/donations/{id}/mark-succeeded للـ Admin فقط، وتبرع ليس Pending يُرجع 409 Donation.InvalidState، والـ endpoint معلَّم بوضوح كمؤقت يُحذف في Sprint 5.",
+   "maxPoints": 11
+  },
+  {
+   "title": "تدفق النجاح الذرّي والتزامن ورقم الإيصال (DON-07، DON-08)",
+   "description": "تحويل التبرع إلى Succeeded يجري في transaction واحدة (SaveChangesAsync واحد عبر الـ UoW أو BeginTransactionAsync صريحة): الحالة Succeeded، وCompletedAt من TimeProvider، وReceiptNumber، وإضافة المبلغ إلى RaisedAmount، وتحويل الحملة إلى Completed عند RaisedAmount >= GoalAmount، ثم commit. القواعد داخل الكيانات وليست تعديلًا مباشرًا لـ RaisedAmount من الخارج. نجاح تبرعين متزامنين يُحتسب كلاهما: RowVersion مع إعادة المحاولة عند DbUpdateConcurrencyException، أو ExecuteUpdateAsync ذرّي. ReceiptNumber بالصيغة DN-{year}-{6 digits} (مثل DN-2026-000042) وفريد تحت التزامن (Database Sequence أو Unique Index مع إعادة المحاولة — SRS §9.4)، وليس MAX + 1 ولا عدّادًا في الذاكرة. الدفع المتأخر على حملة منتهية أو مكتملة يُقبل ويُسجَّل Succeeded مع warning عبر ILogger.",
+   "maxPoints": 12
+  },
+  {
+   "title": "التقسيم على صفحات والفلترة والترتيب (CMP-08)",
+   "description": "PagedList<T> عام يُرجع الشكل { items, page, pageSize, totalCount, totalPages } (SRS §6.8)، بحجم صفحة افتراضي 20 وأقصى 50. التقسيم يتم في قاعدة البيانات بـ Skip وTake على IQueryable قبل التنفيذ، ولا تُحمَّل جداول كاملة إلى الذاكرة (لا ToList قبل Skip، وtotalCount هو العدد الكلي). مطبّق على GET /campaigns وGET /campaigns/success-stories وGET /campaigns/mine وGET /donations/mine وGET /admin/donations. قائمة الحملات العامة تبحث في TitleAr أو TitleEn حسب لغة الطلب، وتفلتر بـ categoryId وstatus، وترتّب بقائمة بيضاء فقط (endDate وraisedAmount وcreatedAt، تصاعديًّا أو تنازليًّا) دون بناء أسماء أعمدة من مدخلات المستخدم.",
+   "maxPoints": 7
+  },
+  {
+   "title": "الكاش: الذاكرة ثم Redis مع الإبطال (CMP-09)",
+   "description": "تجريد كاش خاص في Application بنمط cache-aside، طُبّق أولًا بـ IMemoryCache ثم بـ IDistributedCache عبر AddStackExchangeRedisCache، ومدد الصلاحية من CacheOptions (مسجّل مع ValidateOnStart). حاوية Redis (redis:alpine أو valkey/valkey:alpine) تعمل ويتصل بها التطبيق دون استثناءات وقت التشغيل. مخزّن في الكاش: قائمة التصنيفات، وصفحات قائمة الحملات العامة وقصص النجاح، وتفاصيل الحملة GET /campaigns/{id} بانتهاء sliding وabsolute. المفاتيح تتضمن اللغة وكل معاملات الاستعلام. الإبطال يحدث فورًا عند إنشاء أو تعديل أو حذف أو تغيّر حالة حملة، وعند تغيّر تصنيف، وعند نجاح تبرع. GET /donations/mine وأي بيانات خاصة بمستخدم لا تُخزَّن تحت مفتاح مشترك.",
+   "maxPoints": 9
+  },
+  {
+   "title": "التوطين ثنائي اللغة (ar / en، CMP-11)",
+   "description": "التوطين مضبوط بـ IStringLocalizer وملفات .resx، والثقافات المدعومة en (الافتراضية) وar تُحدَّد من ترويسة Accept-Language مع الرجوع إلى en. Accept-Language: ar يُخرج رسائل التحقق ورسائل كتالوج الأخطاء (Message لكل Error داخل ProblemDetails) والحقول العامة (Title وName وDescription) بالعربية، وAccept-Language: en أو بدون ترويسة يُخرجها بالإنجليزية. endpoints الـ Admin والمدير تُرجع اللغتين معًا. لا نصوص ثابتة داخل الـ handlers، والبيانات المخزّنة تبقى في أعمدة Ar/En دون ترجمة آلية.",
+   "maxPoints": 7
+  },
+  {
+   "title": "إصدارات الـ API وتحديد معدل الطلبات",
+   "description": "الإصدارات عبر مقطع الرابط /api/v1/... باستخدام Asp.Versioning.Mvc، وScalar يعرض مستند OpenAPI واحدًا لكل إصدار. الـ Rate Limiter المدمج مضبوط بسياسات مسمّاة حدودها من RateLimitOptions (مسجّل مع ValidateOnStart): global لكل الـ endpoints حسب IP (افتراضي 100 طلب/دقيقة)، وauth على login وregister وrefresh (10 طلبات/دقيقة لكل IP)، وdonations على إنشاء التبرع (20 طلبًا/دقيقة لكل مستخدم). تجاوز الحد يُرجع 429 Too Many Requests مع ترويسة Retry-After وجسم ProblemDetails بـ code: Common.RateLimited. ترتيب الـ middleware صحيح (UseRateLimiter بعد UseAuthentication حتى يتوفر معرّف المستخدم).",
+   "maxPoints": 7
+  },
+  {
+   "title": "سياسة CORS والإعدادات وحماية الأسرار",
+   "description": "سياسة CORS مسمّاة واحدة في Program.cs، والـ origins من CorsOptions (مُتحقَّق منها عند بدء التشغيل)، مع طرق HTTP وترويسات صريحة. لا يوجد AllowAnyOrigin مع AllowCredentials، ولا origins مكتوبة في الكود. لا أسرار في المستودع أو تاريخ Git: connection strings الخاصة بـ SQL Server وRedis والمفاتيح في user-secrets أو متغيّرات البيئة، وappsettings.json يحتوي placeholders فقط.",
+   "maxPoints": 5
+  },
+  {
+   "title": "اختبارات الوحدة للتبرعات",
+   "description": "اختبارات وحدة جديدة تغطي قواعد التبرع: نطاق المبلغ، والحملة يجب أن تكون نشطة، والحالات النهائية لا تتغيّر (Donation.InvalidState)، واكتمال الحملة عند بلوغ الهدف. واختبارات للـ handlers: إنشاء التبرع، وجلب التبرع الخاص مع 404 لتبرع مستخدم آخر، وmark-succeeded (الحالة وReceiptNumber وRaisedAmount). الـ repository والـ TimeProvider مزيّفان (Moq [4.18.4] وFakeTimeProvider)، والإصدارات المثبّتة محترمة (FluentAssertions [7.0.0] وMediatR [12.5.0]). كل الاختبارات تنجح بـ dotnet test.",
+   "maxPoints": 6
+  },
+  {
+   "title": "الـ README والتسليم",
+   "description": "الـ README محدَّث لهذا السبرنت: ما أُضيف، وكيف تجرّبه (مثل تشغيل Redis بـ Docker، وضبط الأسرار عبر user-secrets، وتجربة Accept-Language والـ 429)، والقرارات التصميمية (مثل طريقة جعل RaisedAmount آمنًا تحت التزامن)، ويحتوي قسمًا صريحًا لاستراتيجية إبطال الكاش (المفاتيح، المدد، ومتى يُبطل كل منها). الـ tag باسم sprint-3 موجود ويشير إلى آخر commit، وأي تصحيح يكون على tag باسم sprint-3-fix دون تحريك الأصلي.",
+   "maxPoints": 5
+  },
+  {
+   "title": "شرح القرارات والمقايضات",
+   "description": "قدرة الطالب في المراجعة على شرح سبب قراراته وبدائلها والمقايضات (trade-offs)، مثل: كيف جعلت RaisedAmount آمنًا تحت التزامن ولماذا RowVersion مع إعادة المحاولة بدل ExecuteUpdateAsync (أو العكس)، ومتى يكفي SaveChangesAsync واحد ومتى تحتاج transaction صريحة، وكيف تضمن تفرّد ReceiptNumber، ولماذا 404 وليس 403 لمورد شخص آخر، ولماذا لا يكفي فحص الدور لحماية PUT /campaigns/{id}، ولماذا تدخل اللغة في مفتاح الكاش وكيف تُبطل صفحات القوائم مع IDistributedCache، ولماذا سياسة donations لكل مستخدم بينما auth لكل IP، ولماذا CORS ليس حماية للخادم. تُقيَّم الإجابة بمدى الفهم وليس بالحفظ.",
+   "maxPoints": 20
+  }
+ ]
+}

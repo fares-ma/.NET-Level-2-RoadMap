@@ -157,7 +157,7 @@ Implement the jobs according to SRS §5.8 and the success flow in SRS §5.5:
   `BackgroundJob.Enqueue<IDonationNotificationService>(s => s.SendReceiptAsync(donationId));`
   The job fetches the donation, generates the PDF receipt (FIL-06), and emails it to the donor (NTF-02).
 - **JOB-02 (Fire-and-forget) — Send goal-reached email:** if the campaign just became `Completed`, enqueue an email to the campaign creator (NTF-03).
-- **JOB-03 (Delayed) — Fail stale pending donation (DON-09):** when a donation is created (`POST /campaigns/{campaignId}/donations`), schedule `BackgroundJob.Schedule(...)` to run after `DonationOptions.PendingTimeout` (default **30 minutes**). If the donation is still `Pending`, it becomes `Failed`; otherwise the job does nothing.
+- **JOB-03 (Delayed) — Fail stale pending donation (DON-09):** when a donation is created (`POST /campaigns/{campaignId}/donations`), schedule `BackgroundJob.Schedule(...)` to run after `DonationOptions.PendingTimeoutMinutes` (default **30 minutes**). If the donation is still `Pending`, it becomes `Failed`; otherwise the job does nothing.
 - **JOB-04 (Recurring, hourly):** Register a **Recurring Job** running every hour (`Cron.Hourly()` / `0 * * * *`) that marks all `Active` campaigns past their `EndDate` as `Expired`.
 - **Idempotency:** Jobs must be idempotent — running a job twice must not send two emails or change state twice (e.g., check a `ReceiptSentAt` / `GoalEmailSentAt` marker or the current status before acting).
 - **Hangfire Best Practice:** Pass only entity IDs (`Guid`/`int`) as job arguments, never full entities or `DbContext` instances.

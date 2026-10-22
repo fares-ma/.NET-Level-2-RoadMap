@@ -1,0 +1,49 @@
+{
+ "criteria": [
+  {
+   "title": "جلسة Stripe Checkout ومحاولات الدفع",
+   "description": "المتطلبات PAY-01 إلى PAY-03 تعمل: POST /donations/{id}/checkout لمالك التبرع فقط ولتبرع حالته Pending، وينشئ Checkout Session بوضع payment ويُرجع رابط checkout صالحًا. الجلسة تحمل client_reference_id = donation.Id وmetadata فيها donationId وcampaignId، وبندًا واحدًا باسم الحملة ومبلغه بالوحدات الصغرى (long، مثل 25.00 ← 2500) محسوبًا على الخادم من donation.Amount وليس من مدخلات العميل، والعملة وروابط النجاح والإلغاء من StripeOptions. كل جلسة تُخزَّن كـ PaymentAttempt بحالة Created وبالحقول المطلوبة، ويمكن بدء محاولة جديدة لتبرع Pending، وتبرع غير Pending يُرجع 409 Donation.InvalidState. GET /donations/{id}/payment-status يُرجع حالة التبرع وآخر محاولة للمالك والـ Admin، وتبرع مستخدم آخر يُرجع 404. كود Stripe.net معزول في Infrastructure خلف تجريد في Application، والـ Controller رفيع.",
+   "maxPoints": 13
+  },
+  {
+   "title": "إعدادات Stripe ووضع الاختبار وحماية الأسرار",
+   "description": "المتطلب PAY-10: الكلاس StripeOptions (المفتاح السري، سر الـ webhook، العملة، روابط النجاح والإلغاء) مسجّل بـ BindConfiguration وValidateDataAnnotations وValidateOnStart، والتطبيق يتوقف عند الإقلاع إذا نقص إعداد. تُستخدم مفاتيح test mode فقط (sk_test_). المفتاح السري وسر الـ webhook (whsec_) يأتيان من dotnet user-secrets أو متغيرات البيئة، وappsettings*.json يحتوي placeholders فقط. لا يوجد أي مفتاح Stripe أو سر webhook في المستودع أو في تاريخ Git، ولا تُسجَّل الأسرار في الـ logs.",
+   "maxPoints": 6
+  },
+  {
+   "title": "الـ Webhook والتحقق التشفيري من التوقيع",
+   "description": "المتطلب PAY-04: يوجد POST /api/v1/payments/webhook مجهول الهوية ([AllowAnonymous]) ومستثنى من الـ rate limiting (SRS §6.4). الـ endpoint يقرأ جسم الطلب الخام (بدون [FromBody] أو إعادة تسلسل JSON) والـ header Stripe-Signature، ويتحقق بـ EventUtility.ConstructEvent وسر الـ webhook من الإعدادات. الطلب غير الموقَّع أو المعدَّل أو الموقَّع بسر خاطئ يُرجع 400 بـ ProblemDetails ورمز Payment.InvalidSignature قبل أي تعديل في قاعدة البيانات.",
+   "maxPoints": 11
+  },
+  {
+   "title": "معالجة أحداث الدفع ومسار النجاح",
+   "description": "المتطلبات PAY-05 وPAY-07 وPAY-08: الحدث checkout.session.completed يُكمل التبرع عبر مسار النجاح في SRS §5.5 داخل معاملة واحدة (التبرع Succeeded مع CompletedAt وReceiptNumber بصيغة DN-{year}-{6 digits}، والمحاولة Succeeded، وإضافة المبلغ إلى RaisedAmount، والحملة Completed عند بلوغ الهدف)، والدفعة المتأخرة لحملة منتهية أو مكتملة تُقبل مع log تحذيري. checkout.session.expired يجعل المحاولة Expired، وpayment_intent.payment_failed يجعلها Failed مع FailureCode ويجعل التبرع Failed عند عدم وجود محاولة أخرى مفتوحة. الجلسات غير المعروفة والأحداث غير المعالَجة تُسجَّل ويُرد عليها 200. المبلغ بالوحدات الصغرى والعملة يُقارنان بالتبرع، وعدم التطابق يُسجَّل كـ error ولا يُكمل التبرع. التبرع يصبح Succeeded عبر الـ webhook فقط وليس عبر رابط النجاح. لا يوجد توليد PDF أو إرسال بريد داخل طلب الـ webhook؛ الـ jobs تُضاف إلى Hangfire بعد الـ commit فقط.",
+   "maxPoints": 13
+  },
+  {
+   "title": "إزالة تكرار أحداث الـ Webhook",
+   "description": "المتطلب PAY-06: كل حدث معالَج يُخزَّن في ProcessedStripeEvent (EventId مفتاح أساسي، Type، ProcessedAt) في نفس المعاملة (نفس SaveChanges) مع تغييرات الحدث. إرسال نفس الـ payload مرتين يُرجع 200 في المرتين ولا يزيد RaisedAmount مرة ثانية ولا يُنشئ إيصالًا ثانيًا. والمفتاح الأساسي على EventId يمنع الاحتساب المزدوج حتى لو وصل نفس الحدث في طلبين متزامنين.",
+   "maxPoints": 7
+  },
+  {
+   "title": "Idempotency لطلبات الـ API",
+   "description": "المتطلب DON-10 وSRS §6.5: POST /campaigns/{campaignId}/donations وPOST /donations/{id}/checkout يشترطان الـ header Idempotency-Key، والمفتاح المفقود يُرجع 400. كل مفتاح يُخزَّن في IdempotencyRecord (Key، UserId، RequestHash، ResponseStatusCode، ResponseBody، CreatedAt، ExpiresAt). نفس المفتاح ونفس المستخدم ونفس الـ body يُرجع الاستجابة المخزَّنة (نفس الحالة ونفس الـ body) دون إنشاء تبرع أو جلسة جديدة، ونفس المفتاح مع body مختلف يُرجع 422 Idempotency.KeyReusedWithDifferentRequest. المفاتيح تنتهي بعد 24 ساعة. طلبان متزامنان بنفس المفتاح لا يُنشئان تبرعين (مثلًا فهرس فريد على Key + UserId والسجل يُدخل قبل تنفيذ الإجراء). الأخطاء ProblemDetails تحتوي code وtraceId.",
+   "maxPoints": 11
+  },
+  {
+   "title": "اختبارات التكامل",
+   "description": "يوجد مشروع DonationHub.Api.IntegrationTests يستخدم WebApplicationFactory<Program> ضد قاعدة اختبار SQL Server حقيقية (Docker Compose أو LocalDB، وTestcontainers إضافي)، ولا يستخدم EF Core InMemory. الاختبارات لا تستدعي Stripe الحقيقي ولا SMTP الحقيقي: الـ payloads تُبنى محليًا وتُوقَّع بسر webhook تجريبي، ومرسل البريد مستبدل بنسخة مزيفة. السيناريوهات الستة في SRS §6.13 مغطاة: التسجيل والدخول، وإنشاء حملة وتبرع، ونجاح الـ webhook (التبرع Succeeded وRaisedAmount محدَّث)، والحدث المكرر (احتساب مرة واحدة و200)، والتوقيع غير الصالح (400 ولا تغيير)، وإعادة مفتاح Idempotency (نفس الاستجابة ولا تبرع ثانٍ). الأمر dotnet test ينجح دون خطوات يدوية عدا تشغيل SQL Server.",
+   "maxPoints": 13
+  },
+  {
+   "title": "الـ README والتسليم وحذف الـ stub",
+   "description": "الـ endpoint المؤقت POST /admin/donations/{id}/mark-succeeded (DON-06) والـ handler الخاص به محذوفان (PAY-09) ولا يظهر له أثر في الكود. الـ README محدَّث لهذا السبرنت ويحتوي قسم How to test Stripe locally يشرح stripe login وstripe listen --forward-to وتخزين whsec_ بـ user-secrets وأوامر stripe trigger الثلاثة (checkout.session.completed وcheckout.session.expired وpayment_intent.payment_failed) وتجربة الدفع ببطاقة الاختبار. الـ tag باسم sprint-5 موجود ويشير إلى آخر commit، وأي تصحيح يكون على tag باسم sprint-5-fix دون تحريك الأصلي.",
+   "maxPoints": 6
+  },
+  {
+   "title": "شرح القرارات والمقايضات",
+   "description": "قدرة الطالب في المراجعة على شرح سبب قراراته والمقايضات (trade-offs) بينها وبين بدائلها، مثل: لماذا الـ webhook هو مصدر الحقيقة الوحيد وليس رابط النجاح، وما الذي يحميه توقيع HMAC والـ timestamp، ولماذا يجب قراءة الجسم الخام، ولماذا يُحفظ ProcessedStripeEvent في نفس المعاملة وماذا يحدث لو وصل نفس الحدث مرتين في نفس اللحظة، وكيف يمنع الفهرس الفريد تبرعين بنفس Idempotency-Key، ولماذا 422 لإعادة المفتاح مع body مختلف، ولماذا يُرد بـ 200 عند عدم تطابق المبلغ، ولماذا تُقبل الدفعة المتأخرة، ولماذا تُضاف الـ jobs بعد الـ commit، ولماذا اختبارات التكامل على SQL Server حقيقي وليس InMemory. تُقيَّم الإجابة بمدى الفهم وليس بالحفظ.",
+   "maxPoints": 20
+  }
+ ]
+}

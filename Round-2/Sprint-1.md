@@ -212,7 +212,7 @@ Configure database persistence in `DonationHub.Infrastructure`:
 Create strongly-typed option classes with Data Annotations and register with `.ValidateOnStart()`:
 - `JwtOptions` (SecretKey, Issuer, Audience, ExpiryMinutes, RefreshTokenExpiryDays)
 - `SeedAdminOptions` (Email, Password, FullName)
-- `DonationOptions` (MinAmount = 1.00, MaxAmount = 10,000.00, pending TimeoutMinutes = 30, DefaultCurrency = `USD`)
+- `DonationOptions` (MinAmount = 1.00, MaxAmount = 10,000.00, PendingTimeoutMinutes = 30, DefaultCurrency = `USD`)
 - Ensure the application **fails fast** on startup if any required configuration is missing or invalid.
 - **Secrets never go in `appsettings*.json`:** the JWT signing key, the seed Admin password and the connection string password come from `dotnet user-secrets` (development) or environment variables. `appsettings.json` contains placeholders only.
 - Read settings only through option classes (`IOptions<T>`), never with `IConfiguration["..."]` inside services.
@@ -378,6 +378,8 @@ Create an initial `README.md` in the project root documenting:
 | Automated | 40 | Build succeeds, `dotnet test` passes, tag `sprint-1` exists, CORE endpoints respond as specified (mentor smoke check) |
 | Checklist | 40 | The Definition of Done items above (structure, rules, security, README) |
 | Explanation | 20 | One question on a design decision, or a review of the decisions written in your README |
+
+> **Note on `dotnet test`:** unit tests are BONUS in Sprint 1. If your solution has no test project yet, "`dotnet test` passes" means the solution builds and the command finishes without failures. If you added tests (BONUS), they must all pass.
 
 Bonus items are extra credit on top of the 100 points (capped by the mentors) and count only when all CORE items pass.
 

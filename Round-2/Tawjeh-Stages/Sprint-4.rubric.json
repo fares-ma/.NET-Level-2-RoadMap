@@ -1,0 +1,54 @@
+{
+ "criteria": [
+  {
+   "title": "بنية Hangfire التحتية وحماية اللوحة وإعادة المحاولة",
+   "description": "Hangfire مضبوط بالحزم المجانية فقط (Hangfire.Core وHangfire.AspNetCore وHangfire.SqlServer) مع تخزين دائم UseSqlServerStorage على SQL Server، وAddHangfireServer مسجّل في Program.cs. JOB-05: لوحة /hangfire لا يمكن فتحها بدون تسجيل دخول (طلب مجهول يُرجع 401)، ومحمية بـ basic authentication ببيانات من HangfireDashboardOptions مُتحقَّق منها بـ ValidateOnStart وقيمها من user-secrets أو متغيرات البيئة (أو سياسة تشترط دور Admin)، وليس بالفلتر الافتراضي LocalRequestsOnly. NTF-04: كل job يُعاد تلقائيًا 3 مرات على الأقل (AutomaticRetry بـ Attempts = 3 أو فلتر عام)، وكل محاولة فاشلة تُسجَّل بمستوى Error (يمكن التحقق بجعل job يرمي استثناءً ومراقبة اللوحة والـ logs).",
+   "maxPoints": 11
+  },
+  {
+   "title": "خدمة البريد عبر MailKit وMailpit",
+   "description": "NTF-01: الواجهة IEmailService معرّفة في DonationHub.Application ومطبّقة في DonationHub.Infrastructure باستخدام MailKit وMimeKit، وإعدادات SMTP من EmailOptions (Host وPort وSenderEmail وSenderName)، وبيانات الدخول من user-secrets أو متغيرات البيئة فقط. NTF-06: في Development يذهب البريد إلى Mailpit على localhost:1025 ولا يُرسل أي بريد حقيقي. NTF-02 وNTF-03: بريد الإيصال يصل للمتبرع مع ملف PDF مرفق، وبريد الوصول للهدف يصل لمنشئ الحملة، وكلاهما يظهر في لوحة Mailpit على http://localhost:8025. NTF-05: النص بلغة PreferredLanguage للمستلم (ar أو en)، والرسالة العربية بـ <html dir=\"rtl\" lang=\"ar\"> وتظهر من اليمين لليسار. استثناءات SMTP لا تُبتلع حتى يعيد Hangfire المحاولة.",
+   "maxPoints": 9
+  },
+  {
+   "title": "إيصال PDF عبر QuestPDF وتحميله المحمي",
+   "description": "QuestPDF مضبوط بـ QuestPDF.Settings.License = LicenseType.Community في Program.cs. FIL-06: الإيصال يُولَّد داخل Hangfire job وليس داخل الطلب، بلغة المتبرع، ويحتوي رقم الإيصال بصيغة DN-{year}-{6-digit sequence} وتاريخ المعاملة وعنوان الحملة بلغة المتبرع والتصنيف واسم المتبرع والمبلغ المنسّق مع العملة وترويسة وتذييل توثيق المنظمة، والنص العربي يظهر بخط صحيح واتجاه من اليمين لليسار. الملف يُخزَّن عبر IFileStorage خارج أي مجلد عام. FIL-07: GET /donations/{id}/receipt يُرجع ملفًا بنوع application/pdf لصاحب التبرع أو الـ Admin فقط، وتبرع مستخدم آخر يُرجع 404، والطلب بدون توكن يُرجع 401.",
+   "maxPoints": 10
+  },
+  {
+   "title": "رفع صورة الحملة بأمان والتحقق بالـ Magic Bytes",
+   "description": "FIL-01: POST /campaigns/{id}/banner يقبل IFormFile بصيغة multipart/form-data للـ Admin أو Campaign Manager صاحب الحملة فقط (غير المالك يحصل على 404)، والأنواع المسموحة JPG وPNG وWEBP بحد أقصى 2 MB قابل للتعديل من FileStorageOptions. FIL-02: النوع يُحدَّد بفحص أول البايتات الخام (FF D8 FF وPNG وRIFF....WEBP) وليس بالامتداد أو ContentType؛ ملف .exe بعد إعادة تسميته إلى .jpg يُرفض بـ File.InvalidType (400)، والملف الأكبر من الحد يُرجع File.TooLarge (413) بصيغة ProblemDetails. FIL-03: التخزين عبر IFileStorage (واجهة في Application وتطبيق على القرص في Infrastructure) باسم Guid عشوائي وليس اسم ملف المستخدم. FIL-04: استبدال الصورة يحذف الملف القديم، وDELETE /campaigns/{id}/banner يعمل بنفس الصلاحيات، والحذف الناعم للحملة يُبقي الملف. FIL-05: استجابة الحملة تحتوي bannerUrl يفتح الصورة للعامة.",
+   "maxPoints": 12
+  },
+  {
+   "title": "الـ Jobs: الإضافة بعد الـ commit والجدولة",
+   "description": "الـ jobs تُضاف فقط بعد نجاح commit لـ transaction مسار النجاح (DON-07) وأبدًا داخلها أو قبلها، والـ stub POST /admin/donations/{id}/mark-succeeded يشغّل نفس المسار. JOB-01 (Fire-and-forget) يولّد الإيصال ويرسله للمتبرع، وJOB-02 يُضاف فقط إذا أصبحت الحملة Completed للتو. JOB-03 (DON-09): عند POST /campaigns/{campaignId}/donations يُجدوَل job مؤجَّل بعد DonationOptions.PendingTimeout (30 دقيقة افتراضيًا) يُفشل التبرع إن كان ما زال Pending ولا يفعل شيئًا غير ذلك. JOB-04: recurring job كل ساعة (Cron.Hourly أو 0 * * * *) يحوّل الحملات Active التي تجاوزت EndDate إلى Expired. وسائط الـ jobs معرّفات فقط (Guid) وليست كيانات أو DbContext. لا يوجد أي بريد أو PDF داخل طلب HTTP، واستجابة التبرع سريعة (أقل من 100ms تقريبًا) لأن العمل الثقيل في الطابور.",
+   "maxPoints": 11
+  },
+  {
+   "title": "Idempotency الـ jobs",
+   "description": "تشغيل نفس الـ job مرتين يرسل بريدًا واحدًا بالضبط ويغيّر الحالة مرة واحدة: قبل التنفيذ يفحص كل job علامة محفوظة في قاعدة البيانات أو الحالة الحالية، مثلًا: job الإيصال يفحص ReceiptSentAt ولا يولّد PDF جديدًا عند إعادة المحاولة، وjob الوصول للهدف يفحص GoalEmailSentAt، وjob التبرع المعلّق يفحص أن التبرع ما زال Pending، وjob إنهاء الحملات لا يجد شيئًا في التشغيل الثاني. يمكن التحقق بإعادة تشغيل job ناجح من لوحة Hangfire ومراقبة Mailpit.",
+   "maxPoints": 7
+  },
+  {
+   "title": "التسجيل المنظّم باستخدام Serilog",
+   "description": "Serilog (Serilog.AspNetCore) يستبدل الـ logger الافتراضي، بوجهتين أساسيتين: Console وملف دوّار يوميًا (مثل logs/donationhub-.log). UseSerilogRequestLogging مفعّل ويلتقط status code ومدة الطلب. كل سطر log مُثرى بـ traceId ومعرّف المستخدم عند تسجيل الدخول (يظهران في الـ Console والملف). الرسائل بقوالب منظّمة مثل \"Donation {DonationId} succeeded\" وليس بدمج النصوص، والمستويات صحيحة: Information لأحداث العمل، وWarning للحالات الشاذة مثل الدفعة المتأخرة، وError للفشل بما فيه محاولات الـ jobs. تنفيذ الـ background jobs يظهر في الـ logs. لا تُسجَّل أسرار (كلمات مرور، JWT أو refresh tokens، بيانات SMTP، بيانات بطاقات).",
+   "maxPoints": 8
+  },
+  {
+   "title": "الاختبارات وحماية الأسرار",
+   "description": "Unit tests تغطي السلوك الجديد وتنجح بـ dotnet test: التحقق من توقيع الملف (بما فيه رفض ملف exe بامتداد jpg)، ومنطق job التبرع المعلّق (Pending يصبح Failed، وغير ذلك لا يتغيّر)، وidempotency الـ jobs. الأوقات عبر TimeProvider وليس DateTime.UtcNow داخل الـ handlers والـ jobs. بيانات SMTP وبيانات HangfireDashboardOptions غير موجودة في appsettings*.json ولا في تاريخ Git، وتُقرأ من user-secrets أو متغيرات البيئة.",
+   "maxPoints": 7
+  },
+  {
+   "title": "الـ README والتسليم",
+   "description": "الـ README محدَّث للسبرنت: ما أُضيف، وكيف تجرّبه (مثلًا: تشغيل Mailpit وضبط الأسرار، ثم تبرع وmark-succeeded وفحص Mailpit ولوحة /hangfire ورفع صورة مزوّرة)، والقرارات (مثل الإضافة بعد الـ commit وطريقة تحقيق الـ idempotency). الـ tag باسم sprint-4 موجود ويشير إلى آخر commit، وأي تصحيح يكون على tag باسم sprint-4-fix دون تحريك الأصلي.",
+   "maxPoints": 5
+  },
+  {
+   "title": "شرح القرارات والمقايضات",
+   "description": "قدرة الطالب في المراجعة على شرح قراراته وبدائلها والمقايضات (trade-offs)، مثل: ماذا يحدث لو شُغّل job الإيصال مرتين، أو فشل SMTP بعد توليد الـ PDF؟ لماذا يُضاف الـ job بعد الـ commit وليس قبله، وما الذي قد يضيع وكيف يحلّه نمط Outbox؟ لماذا نمرّر Guid فقط للـ job؟ لماذا لا يكفي فحص الامتداد أو ContentType؟ ماذا يحدث لو وصل mark-succeeded أثناء تنفيذ JOB-03؟ لماذا basic auth للوحة Hangfire ولماذا لا يعمل JWT من المتصفح؟ الفرق بين Fire-and-forget وDelayed وRecurring، والفرق بين القالب المنظّم ودمج النصوص في Serilog. تُقيَّم الإجابة بمدى الفهم وليس بالحفظ.",
+   "maxPoints": 20
+  }
+ ]
+}

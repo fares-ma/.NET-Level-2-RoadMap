@@ -317,7 +317,7 @@ Base path: `/api/v1`. Roles in the "Access" column: **A** Anonymous, **D** Donor
 | DON-01 | CORE | A logged-in user creates a donation for an active campaign with an amount (`POST /campaigns/{campaignId}/donations`). The donation starts as `Pending`. |
 | DON-02 | CORE | Reject a donation if the campaign is not active, its end date passed, or the amount is outside the allowed range (invariants 3 and 4). |
 | DON-03 | CORE | A donor lists their own donations (paged) with amount, date, status and campaign title. |
-| DON-04 | CORE | A donor gets one of their own donations by id. Accessing someone else's donation returns 404 (do not reveal it exists). |
+| DON-04 | CORE | The owner of a donation (or an Admin) gets it by id. Accessing someone else's donation returns 404 (do not reveal it exists). |
 | DON-05 | CORE | Admin lists all donations with filters: status, campaign, donor, date range. Paged. |
 | DON-06 | CORE | **Temporary stub (Sprints 3 and 4):** `POST /admin/donations/{id}/mark-succeeded` simulates a successful payment so you can test the full flow without Stripe. **It must be removed in Sprint 5.** |
 | DON-07 | CORE | Marking a donation succeeded runs the success flow described in 5.5 (raise amount, complete campaign if goal reached) inside **one database transaction**. |
@@ -449,7 +449,7 @@ Jobs must be **idempotent**: running a job twice must not send two emails or cha
 - Expected failures (not found, validation, business-rule violations, conflicts) are returned as a `Result` with an `Error` (`Code`, `Message`, `Type`). Do not throw exceptions for them.
 - Unexpected failures are caught by one global handler (`IExceptionHandler`) that logs the exception and returns a generic 500 without leaking details.
 - All errors are returned as **ProblemDetails** (RFC 9457) with extra fields `code`, `traceId` and, for validation, `errors` (field to messages).
-- Error `Type` maps to HTTP: Validation 400, Unauthorized 401, Forbidden 403, NotFound 404, Conflict 409, UnprocessableEntity 422, TooManyRequests 429, Failure 500.
+- Error `Type` maps to HTTP: Validation 400, Unauthorized 401, Forbidden 403, NotFound 404, Conflict 409, PayloadTooLarge 413 (used by `File.TooLarge`), UnprocessableEntity 422, TooManyRequests 429, Failure 500.
 
 Minimum error code catalogue:
 | Code | HTTP |

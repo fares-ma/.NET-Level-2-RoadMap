@@ -1,0 +1,49 @@
+{
+ "criteria": [
+  {
+   "title": "لوحة التحليلات وتجميعات EF Core",
+   "description": "المتطلبات RPT-01 إلى RPT-03 تعمل للـ Admin فقط (غير الـ Admin يحصل على 403، وبدون توكن 401): GET /admin/dashboard/summary يُرجع إجمالي المبالغ من التبرعات Succeeded فقط (Sum)، وعددها (Count)، وعدد المتبرعين المميَّزين، وعدد الحملات حسب الحالة Active وCompleted وExpired. GET /admin/dashboard/top-campaigns?count=5 يرتّب حسب RaisedAmount تنازليًا مع Take. GET /admin/dashboard/donations-over-time?from=&to= يُرجع مجاميع يومية ضمن النطاق. كل استعلامات التقارير AsNoTracking وتعمل projection مباشرة إلى DTOs عبر Select، ويُستخدم AsSplitQuery حيث توجد مجموعات مضمومة. الـ SQL المولَّد (في الـ log أو ToQueryString) يحتوي SUM وCOUNT وGROUP BY فعلًا، ولا يوجد ToListAsync أو AsEnumerable قبل التجميع (لا تقييم في جهة العميل).",
+   "maxPoints": 13
+  },
+  {
+   "title": "كاش اللوحة ومطابقة الأرقام لقاعدة البيانات",
+   "description": "RPT-04: استجابات اللوحة مخزّنة في Redis عبر IDistributedCache بنمط cache-aside، بمفاتيح تتضمن المعاملات (count وfrom وto)، ومدة الانتهاء الافتراضية 5 دقائق قابلة للضبط عبر Options class مسجّلة مع ValidateOnStart. استعلام SQL مكتوب يدويًا موجود في الـ README، وعند تشغيله تطابق نتائجه أرقام الـ endpoints (بعد انتهاء الكاش أو إبطاله). استراتيجية الإبطال وحدّ التأخير مذكوران في الـ README.",
+   "maxPoints": 6
+  },
+  {
+   "title": "إدارة المستخدمين والموظفين وقواعدها",
+   "description": "ADM-01: GET /admin/users يدعم ترقيم الصفحات بالشكل الموحّد (items وpage وpageSize وtotalCount وtotalPages) والتصفية بالدور والبحث بالاسم أو البريد. ADM-02: PATCH /admin/users/{id}/status يفعّل ويعطّل، والمستخدم المعطَّل لا يستطيع تسجيل الدخول (403 Auth.AccountDeactivated) ولا تجديد الرموز. ADM-03: GET /admin/staff وPUT /admin/staff/{id} وDELETE /admin/staff/{id} تعمل للـ Admin فقط على حسابات Admin وCampaignManager، والحذف تعطيل وليس حذفًا فعليًا. الـ Admin لا يستطيع تعطيل نفسه، وآخر Admin نشط لا يمكن تعطيله أو حذفه. الإخفاقات تُرجَع كـ Result بأكواد من الكتالوج وتتحوّل إلى ProblemDetails (لا استثناءات لقواعد العمل). توجد unit tests تغطي: منع التعطيل الذاتي، وحماية آخر Admin نشط، ومنع المستخدم المعطَّل من تسجيل الدخول، وكلها تنجح في dotnet test.",
+   "maxPoints": 13
+  },
+  {
+   "title": "Dockerfile متعدد المراحل",
+   "description": "يوجد Dockerfile في جذر المستودع بمرحلتين: مرحلة build على mcr.microsoft.com/dotnet/sdk:10.0 تنسخ ملفات المشاريع أولًا ثم dotnet restore ثم الكود ثم dotnet publish -c Release -o /app/publish، ومرحلة runtime على mcr.microsoft.com/dotnet/aspnet:10.0 تنسخ الملفات المنشورة فقط. الصورة تكشف المنفذ 8080 وتعمل بمستخدم غير root (مثل USER $APP_UID؛ docker run --entrypoint whoami لا يُرجع root). يوجد .dockerignore يستثني bin/ وobj/ و.git/ ونتائج الاختبارات المحلية. docker build ينجح دون أخطاء.",
+   "maxPoints": 8
+  },
+  {
+   "title": "Docker Compose والأسرار والتشغيل من نسخة نظيفة",
+   "description": "docker-compose.yml يحتوي الخدمات الأربع: api (يُبنى من الـ Dockerfile المحلي، وكل إعداداته من متغيرات البيئة، وdepends_on مع condition: service_healthy لـ sqlserver وredis)، وsqlserver (mcr.microsoft.com/mssql/server مع health check وnamed volume للبيانات)، وredis (redis:alpine مع health check)، وmailpit (axllent/mailpit على المنفذين 8025 و1025). يوجد named volume ثانٍ للملفات المرفوعة. الاتصال داخل الشبكة بأسماء الخدمات وليس localhost. docker compose up --build يرفع الخدمات الأربع دون أخطاء، ومن نسخة نظيفة (بعد cp .env.example .env) يعطي API يعمل مع تطبيق الـ migrations وبذر الـ Admin من SeedAdminOptions. لا أسرار في المستودع أو تاريخه: .env في .gitignore، و.env.example مرفوع بقيم وهمية فقط، ولا أسرار في appsettings*.json أو docker-compose.yml.",
+   "maxPoints": 14
+  },
+  {
+   "title": "فحوص الصحة Health Checks",
+   "description": "الحزمتان AspNetCore.HealthChecks.SqlServer وAspNetCore.HealthChecks.Redis مثبّتتان. /health/live يُرجع 200 دون فحص أي اعتمادية. /health/ready يفحص SQL Server وRedis وصلاحية الكتابة في مجلد تخزين الملفات عبر IHealthCheck مخصّص، ويُرجع 503 عند فشل أحدها. الاستجابتان بصيغة JSON وتتضمنان اسم كل فحص وحالته. /health/ready مستخدم كـ healthcheck لخدمة api في docker-compose.yml، والـ endpoints غير محجوبة بالمصادقة أو الـ rate limiting.",
+   "maxPoints": 8
+  },
+  {
+   "title": "خط CI على GitHub Actions",
+   "description": "يوجد .github/workflows/ci.yml يعمل عند كل push وpull_request على كل الفروع، وخطواته: actions/checkout، وactions/setup-dotnet بإصدار 10.0.x، وdotnet restore، وdotnet build --no-restore -c Release، وdotnet test --no-build -c Release يشغّل الـ unit tests واختبارات التكامل من Sprint 5 (مثلًا مقابل SQL Server service container). الخط يفشل إذا فشل البناء أو أي اختبار (لا continue-on-error). الاختبارات لا تستدعي Stripe أو SMTP حقيقيًا، وكلمات المرور تأتي من Repository Secrets لا من ملف الـ workflow. شارة حالة الـ CI أعلى الـ README، والخط ناجح (أخضر) على الـ commit الموسوم بـ sprint-6.",
+   "maxPoints": 10
+  },
+  {
+   "title": "الـ README النهائي وتوثيق المعمارية والتسليم",
+   "description": "الـ README يحتوي: شارة CI في الأعلى، وشرح المعمارية بمخطط ومسؤوليات الطبقات الأربع والـ vertical slices وفصل القراءة عن الكتابة، وحزمة التقنيات والأنماط، والتشغيل محليًا (user-secrets وmigrations وحاويتا Redis وMailpit)، والتشغيل بـ Docker (cp .env.example .env ثم docker compose up)، وجدول متغيرات البيئة والـ Options، واختبار Stripe محليًا (stripe listen --forward-to وسرّ الـ webhook وstripe trigger)، وقائمة قرارات التصميم ومقايضاتها (RaisedAmount المخزّن، Result مقابل الاستثناءات، الـ idempotency، إبطال الكاش، الحذف الناعم)، وملخّص الـ endpoints ودليل المصادقة، واستعلام SQL للتحقق من اللوحة. الـ tag باسم sprint-6 موجود ويشير إلى آخر commit ولم يُحرَّك، وتصحيحات الدفاع النهائي على tag باسم final.",
+   "maxPoints": 8
+  },
+  {
+   "title": "شرح القرارات والمقايضات",
+   "description": "قدرة الطالب في المراجعة والاستعداد للدفاع النهائي على شرح المعمارية وأنماط التصميم وتبرير المقايضات (trade-offs) في قراراته المكتوبة في الـ README، مثل: لماذا لا تمر استعلامات التقارير عبر الـ Repository، والفرق بين AsNoTracking وAsSplitQuery، وكيف تتأكد أن GroupBy تُرجم إلى SQL، ولماذا يُخزَّن RaisedAmount وكيف تثبت صحته، وكيف يتوافق كاش 5 دقائق مع مطابقة الأرقام، ولماذا نحمي آخر Admin نشط رغم منع التعطيل الذاتي، وفائدة الـ Dockerfile متعدد المراحل والمستخدم غير root، والفرق بين service_started وservice_healthy، والفرق بين liveness وreadiness، وأين تعيش الأسرار محليًا وفي Docker وفي CI، ومخاطر تطبيق الـ migrations عند الإقلاع في الإنتاج. تُقيَّم الإجابة بمدى الفهم وليس بالحفظ.",
+   "maxPoints": 20
+  }
+ ]
+}

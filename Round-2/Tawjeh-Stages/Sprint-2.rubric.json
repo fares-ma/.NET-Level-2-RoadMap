@@ -1,0 +1,54 @@
+{
+ "criteria": [
+  {
+   "title": "الترحيل إلى CQRS مع MediatR والـ Controllers الرفيعة",
+   "description": "MediatR مثبّت على [12.5.0] بالأقواس في الـ csproj (لا v13 ولا v14). كل use cases الـ Sprint 1 (IDN-01 إلى IDN-12 وCAT-01 إلى CAT-04) ومعها endpoints الحملات مكتوبة كـ Command أو Query من نوع IRequest<Result<T>>، لكلٍّ منها IRequestHandler مستقل في شريحة خاصة تحت Application/Features/<Feature>/<UseCase>/ (الطلب والـ Handler والـ Validator والـ DTOs). الـ Controllers ترسل عبر ISender/IMediator فقط، ولا تحتوي أي منطق عمل أو كود تحقق، وتحوّل Result إلى Ok أو Created مع ترويسة Location أو NoContent أو ProblemDetails. الـ Commands تكتب عبر Generic Repository وUnit of Work، والـ Queries تقرأ من الـ DbContext بـ AsNoTracking مع projection بـ Select إلى DTOs. لا يُعاد أي كيان مجال من الـ API. كل متطلبات CORE تعمل من Scalar أو Postman.",
+   "maxPoints": 13
+  },
+  {
+   "title": "Result Pattern وكتالوج الأخطاء",
+   "description": "يوجد Error بالحقول Code وMessage وType حيث Type من enum اسمه ErrorType، ويوجد Result وResult<T> بدوال Success وFailure. الأكواد العشرون في كتالوج SRS §6.1 معرّفة كلها كأخطاء ثابتة (من Validation.Failed وAuth.* وCategory.* وCampaign.* حتى Donation.* وCommon.RateLimited وFile.* وPayment.InvalidSignature وIdempotency.KeyReusedWithDifferentRequest) بأكواد HTTP الصحيحة. ربط ErrorType بالـ HTTP مطبّق: Validation 400، Unauthorized 401، Forbidden 403، NotFound 404، Conflict 409، PayloadTooLarge 413، UnprocessableEntity 422، TooManyRequests 429، Failure 500. لا يُرمى أي استثناء لفشل متوقع (لا AppException ولا DomainException في التدفق العادي)، والأخطاء تُرجع كقيم من الـ Domain والـ Handlers.",
+   "maxPoints": 9
+  },
+  {
+   "title": "التحقق التلقائي عبر ValidationBehavior",
+   "description": "ValidationBehavior<TRequest, TResponse> يطبّق IPipelineBehavior ومسجّل في MediatR (مثل AddOpenBehavior)، ويشغّل كل IValidator<TRequest> المسجّلة قبل الـ Handler. عند الفشل يوقف التنفيذ فورًا ويُرجع Result.Failure بالكود Validation.Failed مع قاموس أخطاء على مستوى الحقول، ولا يُستدعى الـ Handler. يوجد Validator لكل Command وQuery له مدخلات (SRS §6.2)، منها سياسة كلمة المرور في التسجيل (8+ أحرف، حرف كبير، حرف صغير، رقم) وCreateCampaignCommandValidator. الـ Handlers لا تكرّر التحقق الأساسي، وقواعد العمل تبقى في الـ Domain. فشل التحقق يُرجع HTTP 400 مع code: Validation.Failed والحقل errors.",
+   "maxPoints": 8
+  },
+  {
+   "title": "معالجة الأخطاء الموحّدة: IExceptionHandler وRFC 9457 ProblemDetails",
+   "description": "AddProblemDetails مفعّل، وIExceptionHandler يلتقط الاستثناءات غير المتوقعة ويسجّلها كاملة في الـ log، ويُرجع 500 بـ ProblemDetails عام بدون exception.Message أو stack trace أو أي تفاصيل داخلية. كل استجابات الخطأ (فشل Result المتوقع والاستثناءات وأخطاء الإطار مثل 401 و403) بصيغة application/problem+json وتحتوي code وtraceId، والحقل errors لأخطاء التحقق فقط. كود HTTP يأتي من ربط ErrorType. يُتحقق بطلب ببيانات غير صالحة (400)، ومعرّف غير موجود (404 Campaign.NotFound)، وخرق قاعدة (422 Campaign.GoalBelowRaised).",
+   "maxPoints": 8
+  },
+  {
+   "title": "تمرير CancellationToken وتجريد الوقت بـ TimeProvider",
+   "description": "كل action في الـ Controllers يستقبل CancellationToken ويمرّره إلى Send ثم الـ Handlers والـ Repositories ودوال EF Core غير المتزامنة (ToListAsync وFirstOrDefaultAsync وSaveChangesAsync) دون CancellationToken.None في المنتصف. TimeProvider مسجّل في الـ DI ومحقون في الـ Handlers، ولا يوجد DateTime.UtcNow أو DateTime.Now في الـ Domain أو الـ Handlers؛ الوقت يُقرأ بـ GetUtcNow ويُمرَّر للكيانات كمعامل. حسابات التاريخ (daysLeft وانتهاء الحملة) تعتمد على TimeProvider.",
+   "maxPoints": 6
+  },
+  {
+   "title": "التحكم المتفائل في التزامن (CMP-10)",
+   "description": "Campaign يحتوي byte[] RowVersion مضبوطًا بـ IsRowVersion() عبر Fluent API. استجابة الحملة تُرجع RowVersion، والعميل يرسله في PUT /campaigns/{id}، والـ Handler يضعه كقيمة أصلية (OriginalValue) للمقارنة. DbUpdateConcurrencyException يُلتقط ويتحوّل إلى Campaign.ConcurrencyConflict. يُتحقق بإرسال طلبي PUT بنفس الـ rowVersion: الأول ينجح والثاني يُرجع HTTP 409 بـ ProblemDetails فيه code: Campaign.ConcurrencyConflict.",
+   "maxPoints": 7
+  },
+  {
+   "title": "وحدة الحملات (CMP-01 إلى CMP-06 وCMP-11)",
+   "description": "POST /campaigns (Admin فقط) ينشئ حملة ثنائية اللغة بحالة Active وRaisedAmount = 0 ويُرجع 201 مع Location؛ تصنيف غير موجود 404 Category.NotFound، وGoalAmount <= 0 يُرجع 400 Validation.Failed، وتاريخ ماضٍ 422 Campaign.EndDateInPast. PUT /campaigns/{id} (Admin فقط) يفرض القواعد 2 و7 و8 (Campaign.EndDateInPast وCampaign.GoalBelowRaised 422 وCampaign.NotActive 409). DELETE /campaigns/{id} (Admin فقط) حذف ناعم يُرجع 204 والحملة المحذوفة لا تظهر في أي استعلام. GET /campaigns يعرض الحملات النشطة وGET /campaigns/success-stories يعرض المكتملة، وكلاهما بدون تسجيل دخول. GET /campaigns/{id} يُرجع كل الحقول مع progressPercent المسقوف عند 100 وdaysLeft غير السالب، و404 Campaign.NotFound لمعرّف مجهول. الـ endpoints العامة تُرجع العنوان والوصف حسب Accept-Language (ar يُرجع العربية، وأي قيمة أخرى أو غيابها يُرجع الإنجليزية)، وendpoints الـ Admin تُرجع اللغتين. القواعد داخل دوال الكيان (Campaign.Create وCampaign.Update) وليس في الـ Handlers، والـ Enums تُرجع كنصوص في JSON.",
+   "maxPoints": 13
+  },
+  {
+   "title": "اختبارات الوحدة",
+   "description": "مشروع اختبارات (DonationHub.UnitTests أو مشروعان منفصلان) فيه 15 اختبارًا ناجحًا على الأقل بنمط Arrange-Act-Assert، و dotnet test ينجح والحل يُبنى بدون أخطاء. Moq مثبّت على [4.18.4] وFluentAssertions على [7.0.0] (أو البديلان NSubstitute وShouldly). الاختبارات تغطي قواعد المجال (الهدف > 0، التاريخ الماضي بـ TimeProvider مزيّف، GoalBelowRaised، الحالة النهائية، التحوّل إلى Completed)، والحسابات (progressPercent وdaysLeft)، والـ Validators، والـ Handlers بمستودعات مزيّفة (Category.NotFound بدون استدعاء SaveChangesAsync، والحفظ مرة واحدة عند النجاح، وCampaign.NotFound، وتحويل DbUpdateConcurrencyException إلى Campaign.ConcurrencyConflict)، وقصر الـ pipeline في ValidationBehavior، وتوحيد خطأ Auth.InvalidCredentials. السلوك الجديد مغطّى، ولا اختبارات للـ getters أو لـ EF Core نفسه، ولا اعتماد على الساعة الحقيقية.",
+   "maxPoints": 11
+  },
+  {
+   "title": "الـ README والتسليم",
+   "description": "الـ README محدَّث: ما أُضيف في Sprint 2، وكيفية التجربة (ومنها Accept-Language وتجربة تعارض التزامن)، والقرارات وأهمها فصل القراءة عن الكتابة (Repository/UoW للكتابة، وDbContext مع AsNoTracking للقراءة). الـ tag باسم sprint-2 موجود ويشير إلى آخر commit، وأي تصحيح على tag باسم sprint-2-fix دون تحريك الأصلي. لا توجد أسرار في المستودع أو في تاريخ Git (المفاتيح وكلمات المرور في user-secrets أو متغيرات البيئة فقط).",
+   "maxPoints": 5
+  },
+  {
+   "title": "شرح القرارات والمقايضات",
+   "description": "قدرة الطالب في المراجعة على شرح سبب قراراته وبدائلها ومقايضاتها، مثل: لماذا تتجاوز القراءة الـ Repository بينما تمر الكتابة عبره، والفرق بين Command وQuery، ولماذا Result بدل الاستثناءات ومتى يبقى الاستثناء مناسبًا، وكيف تعمل MediatR Pipeline Behaviors وترتيب تنفيذها وكيف يوقف ValidationBehavior التنفيذ، وكيف يعمل التزامن المتفائل بـ RowVersion ومتى يُفضَّل القفل المتشائم، ولماذا ثُبّت MediatR على 12.5.0 وFluentAssertions على 7.0.0، وماذا يحدث لاستعلام جارٍ عند إلغاء الطلب مع تمرير CancellationToken وبدونه، ولماذا TimeProvider يجعل الاختبارات حتمية. تُقيَّم الإجابة بمدى الفهم وليس بالحفظ.",
+   "maxPoints": 20
+  }
+ ]
+}

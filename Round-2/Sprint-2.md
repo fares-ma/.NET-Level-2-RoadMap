@@ -133,6 +133,7 @@ Eliminate exception throwing for expected business and validation failures:
 | `Forbidden` | 403 Forbidden |
 | `NotFound` | 404 Not Found |
 | `Conflict` | 409 Conflict |
+| `PayloadTooLarge` | 413 Payload Too Large (used by `File.TooLarge` from Sprint 4) |
 | `UnprocessableEntity` | 422 Unprocessable Entity |
 | `TooManyRequests` | 429 Too Many Requests |
 | `Failure` | 500 Internal Server Error |
