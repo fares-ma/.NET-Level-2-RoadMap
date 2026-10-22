@@ -14,7 +14,7 @@
 
 ## 🎯 Sprint Goal
 
-Advance DonationHub beyond basic CRUD by implementing the **Donations Core** module backed by atomic **EF Core Database Transactions** to protect financial consistency. Enforce fine-grained **Resource-Based Authorization** (ownership rules), and equip the platform with production-grade API features: distributed caching with **Redis** via Docker, bilingual **Localization** (ar-EG / en-US), **API Versioning**, **Rate Limiting** to prevent abuse, and strict **CORS** policies.
+Advance DonationHub beyond basic CRUD by implementing the **Donations Core** module backed by atomic **EF Core Database Transactions** to protect financial consistency. Enforce fine-grained **Resource-Based Authorization** (ownership rules), and equip the platform with production-grade API features: caching (in-memory first, then distributed **Redis** via Docker), bilingual **Localization** (`ar` / `en`), **API Versioning**, **Rate Limiting** to prevent abuse, and strict **CORS** policies.
 
 ---
 
@@ -38,6 +38,10 @@ Advance DonationHub beyond basic CRUD by implementing the **Donations Core** mod
 
 ## 🛠️ Sprint Tasks
 
+All tasks below are **CORE** unless marked BONUS.
+
+> 📘 **Written references:** Links marked 📘 point to the free [.NET Web API Zero to Hero](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) course (.NET 10 articles + source code). Its samples use **PostgreSQL** and **Minimal APIs** — apply the ideas to our **SQL Server** + **thin Controllers** setup.
+
 ### Task 1 — Resource-Based Authorization & Ownership Policies
 
 Implement ownership rules and access boundaries according to SRS requirement **CMP-07**:
@@ -45,14 +49,16 @@ Implement ownership rules and access boundaries according to SRS requirement **C
 - `Admin` has unrestricted access to manage all campaigns across the system.
 - Implement `CampaignOwnershipRequirement : IAuthorizationRequirement`.
 - Implement `CampaignOwnershipHandler : AuthorizationHandler<CampaignOwnershipRequirement, Campaign>` utilizing `IAuthorizationService`.
-- **Security Rule:** When an authenticated user attempts to fetch or modify a private resource owned by another user, return **404 Not Found** (not 403 Forbidden) to avoid revealing the existence of the resource ID to unauthorized parties.
+- **Security Rule:** When an authenticated user attempts to fetch or modify a private resource owned by another user, return **404 Not Found** (`Campaign.NotFound` / `Donation.NotFound`, not 403 Forbidden) to avoid revealing the existence of the resource ID to unauthorized parties. Unauthenticated requests to protected endpoints return **401**.
+- **Defense in depth (SRS §6.3):** Enforce authorization in the API (policies/roles) **and** check ownership again inside the handler for owned resources (campaigns and donations).
+- `GET /campaigns/mine` returns the manager's own campaigns in **all statuses** (paged), with both-language fields.
 
 | Endpoint | Campaign Manager | Admin |
 |---|---|---|
 | `POST /campaigns` | ✅ Creates owned campaign | ✅ Creates campaigns |
 | `PUT /campaigns/{id}` | ✅ Own campaigns only | ✅ All campaigns |
 | `DELETE /campaigns/{id}` | ✅ Own campaigns only | ✅ All campaigns |
-| `GET /campaigns/mine` | ✅ Fetches own campaigns | — |
+| `GET /campaigns/mine` | ✅ Fetches own campaigns (all statuses) | — |
 
 **Resources:**
 - **⭐ Required Primary:**
@@ -62,21 +68,36 @@ Implement ownership rules and access boundaries according to SRS requirement **C
   - [ASP.NET Web API 8 Identity — Fullstack Dev (Resource authorization timestamp at 02:19:44)](https://youtu.be/tXUtSGvHMeg)
   - [14- Create Policy Part 1 — Mahmoud Hamza [Arabic]](https://youtu.be/tdMrNKPO39U)
   - [Custom Authorization Handler — Milan Jovanović](https://youtu.be/SZtZuvcMBA0)
+  - 📘 [Policy-Based Authorization in ASP.NET Core — codewithmukesh](https://codewithmukesh.com/blog/policy-based-authorization-in-aspnet-core/)
+  - 📘 [Claims-Based Authorization in ASP.NET Core — codewithmukesh](https://codewithmukesh.com/blog/claims-based-authorization-in-aspnet-core/)
 
 ---
 
 ### Task 2 — Donations Core & Atomic Database Transactions
 
-Implement donation flow requirements from SRS §3.4:
-- **DON-01:** Submit donation `POST /campaigns/{id}/donations` with amount, donor display name, optional message, and anonymous flag (`IsAnonymous`). Initial status is `Pending`.
-- **DON-02:** Enforce amount boundaries configured in `DonationOptions` (e.g., Min $5, Max $50,000).
-- **DON-03:** Reject donations targeting non-active campaigns (`Completed` or `Expired`).
-- **DON-04:** Provide a temporary payment stub endpoint `POST /donations/{id}/pay-stub` to simulate successful completion prior to real Stripe integration in Sprint 5.
-- **DON-05 & DON-06 (ACID Consistency):** Upon payment success:
-  1. Update donation status to `Succeeded` and record payment timestamp.
-  2. Increment campaign raised amount: `RaisedAmount += donation.Amount`.
-  3. If `RaisedAmount >= GoalAmount`, update campaign status to `Completed`.
-  4. Wrap these updates inside an atomic **EF Core Database Transaction** via `await dbContext.Database.BeginTransactionAsync()` to prevent partial writes during runtime failures.
+Implement donation flow requirements from SRS §5.4:
+- **DON-01:** A logged-in user (Donor, Campaign Manager or Admin) creates a donation for an active campaign via `POST /campaigns/{campaignId}/donations` with body `{ "amount": 25.00 }`. The donation starts as `Pending`. Return **201 Created** with a `Location` header.
+- **DON-02:** Reject the donation when the campaign is not `Active` or its `EndDate` has passed (`Campaign.NotActive`, 409), or when the amount is outside the range configured in `DonationOptions` (defaults: min **1.00**, max **10,000.00**) (`Donation.AmountOutOfRange`, 422). These are domain invariants 3 and 4.
+- **DON-03:** `GET /donations/mine` — the current user lists **their own** donations (paged) with amount, date, status and campaign title.
+- **DON-04:** `GET /donations/{id}` — the owner (or an Admin) gets one donation by id. Accessing someone else's donation returns **404** `Donation.NotFound` (do not reveal that it exists).
+- **DON-05:** `GET /admin/donations` (Admin only) — list all donations, paged, with filters: `status`, `campaignId`, `donorId`, and date range (`from`, `to`).
+- **DON-06 (Temporary stub, Sprints 3–4):** `POST /admin/donations/{id}/mark-succeeded` (**Admin only**) simulates a successful payment so the full flow can be tested before Stripe. A donation that is not `Pending` returns `Donation.InvalidState` (409). **This endpoint is removed in Sprint 5.**
+- **DON-07 (Success flow in one transaction — SRS §5.5):** Marking a donation succeeded runs, inside **one database transaction** (e.g. `await dbContext.Database.BeginTransactionAsync()` or a single `SaveChangesAsync` through the Unit of Work):
+  1. Set donation status to `Succeeded`, set `CompletedAt` (from `TimeProvider`), and generate `ReceiptNumber` in the format `DN-{year}-{6-digit sequence}` (e.g. `DN-2026-000042`). The sequence must be **unique under concurrent success flows** (database sequence, or a unique index with retry — SRS §9.4).
+  2. Add the amount to the campaign's `RaisedAmount`.
+  3. If `RaisedAmount >= GoalAmount`, set the campaign status to `Completed`.
+  4. Commit. (From Sprint 4, background jobs are enqueued only **after** the commit, never inside the transaction.)
+  - **Late-payment edge case:** If a payment succeeds after the campaign already expired or completed, **accept the money and record the donation as `Succeeded`** (the donor was already charged) and log a warning with `ILogger`. Refunds are BONUS.
+- **DON-08 (Concurrency-safe `RaisedAmount`):** Two donations succeeding at the same time must **both** be counted. Use the campaign `RowVersion` with a retry on `DbUpdateConcurrencyException`, or an atomic database update (`ExecuteUpdateAsync(... RaisedAmount + amount ...)`). Be ready to explain your choice.
+- **Unit tests (SRS §6.13):** Add unit tests for the new donation invariants (amount range, campaign must be active, final states cannot change, campaign completes when goal is reached) and for the donation handlers (create, get own / 404 for others, mark-succeeded), with the repository and `TimeProvider` faked.
+
+| Method | Path | Access |
+|---|---|---|
+| `POST` | `/campaigns/{campaignId}/donations` | Donor, Campaign Manager, Admin |
+| `GET` | `/donations/mine` | Any authenticated user |
+| `GET` | `/donations/{id}` | Owner, Admin |
+| `GET` | `/admin/donations` | Admin |
+| `POST` | `/admin/donations/{id}/mark-succeeded` | Admin (temporary, removed in Sprint 5) |
 
 **Resources:**
 - **⭐ Required Primary:** [#020 DB Transaction EF Core — Essam Abdelnabi [Arabic] (32:57)](https://youtu.be/m2RDSxGPuhs) (BeginTransaction at 19:15, Rollback at 24:40, Savepoints at 28:50).
@@ -88,11 +109,14 @@ Implement donation flow requirements from SRS §3.4:
 
 ### Task 3 — Pagination, Filtering & Sorting
 
-Implement scalable querying across public campaign and donation endpoints:
-- Create a reusable `PagedList<T>` model: `Items`, `PageNumber`, `PageSize`, `TotalCount`, `TotalPages`, `HasPreviousPage`, `HasNextPage`.
+Implement scalable querying across public and admin list endpoints (`GET /campaigns`, `GET /campaigns/success-stories`, `GET /campaigns/mine`, `GET /donations/mine`, `GET /admin/donations`):
+- Create a reusable `PagedList<T>` returned with the SRS §6.8 shape: `{ "items": [], "page": 1, "pageSize": 20, "totalCount": 0, "totalPages": 0 }`. Default page size **20**, maximum **50**.
 - Perform pagination at the database level via `Skip()` and `Take()` on `IQueryable` before executing the query.
-- Support dynamic filtering: category (`categoryId`), status (`status`), and date/amount ranges.
-- Support safe dynamic sorting by created date, goal amount, or raised amount.
+- **CMP-08 (public campaign list):**
+  - Search in the campaign title in the **current request language** (`search` → `TitleAr` or `TitleEn`).
+  - Filter by category (`categoryId`) and status (`status`).
+  - Safe dynamic sorting (whitelist only) by **end date**, **raised amount**, or **creation date**, ascending or descending.
+- Admin donation filters (DON-05): `status`, `campaignId`, `donorId`, `from`, `to`.
 
 **Resources:**
 - **⭐ Required Primary:**
@@ -101,29 +125,37 @@ Implement scalable querying across public campaign and donation endpoints:
 - **🔄 Alternative / Deep Dive:**
   - [16. Pagination Part 2 — Coding-Future](https://youtu.be/8vum4WH8PVs)
   - [Paging Math and Implementation — Essam Abdelnabi (Timestamp 56:35)](https://youtu.be/fb8j6CjyWWw)
+  - 📘 [Pagination, Sorting & Searching in ASP.NET Core Web API — codewithmukesh](https://codewithmukesh.com/blog/pagination-sorting-searching-aspnet-core-webapi/)
 
 ---
 
-### Task 4 — Distributed Caching with Redis & IDistributedCache
+### Task 4 — Caching: In-Memory First, Then Redis & IDistributedCache (CMP-09)
 
-- Run a local **Redis** container in Docker and configure `AddStackExchangeRedisCache`.
-- Inject `IDistributedCache` to cache high-frequency read queries:
-  - Cache active campaign list and success stories.
-  - Cache campaign details `GET /campaigns/{id}` with sliding and absolute expiration.
-- **Cache Invalidation:** Evict or refresh cache entries immediately when a campaign is updated or a donation succeeds to guarantee immediate financial accuracy.
+- **Step 1 — In-memory:** Implement the cache-aside pattern with `IMemoryCache` behind your own caching abstraction in Application.
+- **Step 2 — Distributed:** Switch the implementation to `IDistributedCache` backed by a local **Redis** container (`AddStackExchangeRedisCache`), with durations from `CacheOptions`.
+- Cache high-frequency public reads (SRS §6.6):
+  - Categories list.
+  - Public campaign list pages and success stories.
+  - Campaign details `GET /campaigns/{id}` with sliding and absolute expiration.
+- **Key naming:** Keys must include the **language** and the **query parameters** (e.g. `campaigns:list:en:page=1:size=20:cat=…:status=…:search=…:sort=…`), otherwise Arabic users receive English data.
+- **Cache Invalidation (CMP-09):** Evict related keys immediately when a **campaign** changes (create, update, delete, status change), when a **category** changes, and when a donation succeeds (raised amount changed). Document your invalidation strategy in the README.
+- **Never** cache user-specific data (e.g. `GET /donations/mine`) under a shared key.
 
 **Resources:**
 - **⭐ Required Primary:** [Caching Explained: In-Memory vs Redis — Amr Mohamed [Arabic] (21:11)](https://youtu.be/AIBOcH_dAX8).
-- **🔄 Alternative / Deep Dive:** [Distributed Caching With Redis in ASP.NET Core — Milan Jovanović](https://youtu.be/Tt5zIKVMMbs)
+- **🔄 Alternative / Deep Dive:**
+  - [Distributed Caching With Redis in ASP.NET Core — Milan Jovanović](https://youtu.be/Tt5zIKVMMbs)
+  - 📘 [In-Memory Caching in ASP.NET Core — codewithmukesh](https://codewithmukesh.com/blog/in-memory-caching-in-aspnet-core/) (Step 1)
+  - 📘 [Distributed Caching in ASP.NET Core with Redis — codewithmukesh](https://codewithmukesh.com/blog/distributed-caching-in-aspnet-core-with-redis/) (Step 2)
 
 ---
 
-### Task 5 — Localization Support (ar-EG / en-US)
+### Task 5 — Localization Support (ar / en)
 
-- Configure ASP.NET Core localization using `IStringLocalizer` and `.resx` resource files.
-- Automatically resolve client language via `Accept-Language: ar-EG` or `en-US` request header.
-- Localize validation and domain error catalogue messages.
-- Return appropriate localized fields (`Name`, `Description`) in public DTOs based on the requested culture.
+- Configure ASP.NET Core localization using `IStringLocalizer` and `.resx` resource files. Texts live in resource files, not hard-coded strings in handlers.
+- Supported cultures: `en` (**default**) and `ar`, resolved from the `Accept-Language: ar` or `Accept-Language: en` request header, with fallback to `en`.
+- Localize validation messages and error catalogue messages (the `Message` of each `Error`).
+- **CMP-11:** Public campaign and category responses return the localized fields (`Title`, `Name`, `Description`) for the requested culture. Admin and manager endpoints return both languages. Stored data stays bilingual (Ar/En columns) and is never auto-translated.
 
 **Resources:**
 - **⭐ Required Primary:**
@@ -135,51 +167,105 @@ Implement scalable querying across public campaign and donation endpoints:
 
 ### Task 6 — API Versioning & Rate Limiting
 
-- **API Versioning:** Implement URI-based versioning (e.g., `/api/v1/...`) using `Asp.Versioning.Mvc`.
-- **Rate Limiting:** Protect sensitive endpoints (donations, authentication) from brute force and denial of service using built-in ASP.NET Core Rate Limiting (e.g., sliding window of 5 requests/minute per client IP).
-- Return standard **429 Too Many Requests** when the threshold is exceeded.
+- **API Versioning:** Implement URL-segment versioning (`/api/v1/...`) using `Asp.Versioning.Mvc`. The OpenAPI documentation (Scalar) shows **one document per API version**.
+- **Rate Limiting (SRS §6.4):** Use the built-in ASP.NET Core rate limiter with **named policies** whose limits come from `RateLimitOptions`:
+
+| Policy | Applies to | Default |
+|---|---|---|
+| `global` | All endpoints, partitioned per client IP | 100 requests / minute |
+| `auth` | `login`, `register`, `refresh` | 10 requests / minute per IP |
+| `donations` | Donation creation (and checkout from Sprint 5) | 20 requests / minute per user |
+
+- The Stripe webhook endpoint (Sprint 5) is **excluded** from rate limiting.
+- Rejected requests return **429 Too Many Requests** with a `Retry-After` header and a ProblemDetails body (`code: Common.RateLimited`).
 
 **Resources:**
 - **⭐ Required Primary:**
   - ⭐1 [.NET 9: ASP.NET Core Web API Versioning — Mohamad Lawand (12:55)](https://youtu.be/DkZd-5z0CeI).
   - ⭐2 [How To Implement Rate Limiting In .NET — Milan Jovanović (09:42)](https://youtu.be/1tPVVDEDGtE).
-- **🔄 Alternative / Deep Dive:** [Rate Limiting Algorithms — Mohamad Lawand](https://youtu.be/bOfOo3Zsfx0)
+- **🔄 Alternative / Deep Dive:**
+  - [Rate Limiting Algorithms — Mohamad Lawand](https://youtu.be/bOfOo3Zsfx0)
+  - 📘 [API Versioning in ASP.NET Core (.NET 10, Asp.Versioning + Scalar) — codewithmukesh](https://codewithmukesh.com/blog/api-versioning-in-aspnet-core/)
+  - 📘 [Rate Limiting in ASP.NET Core — codewithmukesh](https://codewithmukesh.com/blog/rate-limiting-aspnet-core/)
 
 ---
 
 ### Task 7 — CORS Policy Configuration
 
-- Configure Cross-Origin Resource Sharing (CORS) in `Program.cs`.
-- Define explicit allowed origins, HTTP methods, and headers for prospective frontend applications, avoiding wildcard `AllowAnyOrigin()` in non-development profiles.
+- Configure Cross-Origin Resource Sharing (CORS) in `Program.cs` with **one named policy**.
+- Allowed origins come from `CorsOptions` (validated on startup), together with explicit HTTP methods and headers for prospective frontend applications.
+- **Never** combine `AllowAnyOrigin()` with `AllowCredentials()`.
 
 **Resources:**
 - **⭐ Required Primary:** [6. Enable CORS (Updated) — Mohamed El-Helaly [Arabic] (05:39)](https://youtu.be/_YXcxm-O06I).
-- **🔄 Alternative / Deep Dive:** [Microsoft Learn — Enable CORS](https://learn.microsoft.com/en-us/aspnet/core/security/cors)
+- **🔄 Alternative / Deep Dive:**
+  - [Microsoft Learn — Enable CORS](https://learn.microsoft.com/en-us/aspnet/core/security/cors)
+  - 📘 [CORS in ASP.NET Core (.NET 10) — Cross-Origin Done Right — codewithmukesh](https://codewithmukesh.com/blog/cors-in-aspnet-core/) (preflight, config-driven origins, and the `AllowAnyOrigin` + `AllowCredentials` trap)
 
 ---
 
 ## 📦 Sprint Deliverables
 
-- [ ] Resource-Based Authorization protecting private campaign manager resources (404 on unowned).
-- [ ] Donations module implemented with boundary validation and stub payment processing.
-- [ ] Database transaction wrapping donation settlement and campaign raised amount updates.
-- [ ] Generic `PagedList<T>` with database-level pagination, sorting, and filtering.
-- [ ] Redis container integrated with `IDistributedCache` and proactive cache invalidation.
-- [ ] Bilingual localization (ar-EG / en-US) for error messages and public responses.
-- [ ] API Versioning configured via URL path.
-- [ ] Rate limiting active on sensitive endpoints returning HTTP 429 upon violation.
-- [ ] Secure CORS policy configured.
+- [ ] Resource-Based Authorization protecting private campaign manager resources (CMP-07, 404 on unowned) and `GET /campaigns/mine`.
+- [ ] Donations module DON-01 to DON-08 with boundary validation, own/admin lists, and the Admin-only `mark-succeeded` stub.
+- [ ] Database transaction wrapping the success flow (status, `ReceiptNumber`, raised amount, campaign completion), safe under concurrency.
+- [ ] Generic `PagedList<T>` with database-level pagination, search, sorting, and filtering (CMP-08) on public and admin lists.
+- [ ] In-memory cache first, then Redis via `IDistributedCache`, with language-aware keys and invalidation on campaign/category changes (CMP-09).
+- [ ] Bilingual localization (`ar` / `en`) for validation messages, error messages and public responses.
+- [ ] API Versioning configured via URL path, with one OpenAPI document per version.
+- [ ] Named rate limiting policies (`global`, `auth`, `donations`) from `RateLimitOptions`, returning HTTP 429 with `Retry-After`.
+- [ ] Named CORS policy with origins from `CorsOptions`.
+- [ ] Unit tests for the new donation invariants and handlers.
 
 ---
 
 ## ✅ Definition of Done
 
 - [ ] Redis container runs and connects seamlessly with no runtime exceptions.
-- [ ] Successful donation increments campaign funds inside an atomic transaction.
-- [ ] Unauthenticated requests or unauthorized access to other users' campaigns return 404.
-- [ ] Queries do not load entire tables into memory; pagination uses `Skip` and `Take`.
-- [ ] Header `Accept-Language: ar-EG` outputs Arabic messages, and `en-US` outputs English.
-- [ ] Exceeding request rate triggers HTTP 429 Too Many Requests.
+- [ ] Successful donation increments campaign funds inside an atomic transaction, and two concurrent successes are both counted.
+- [ ] Each succeeded donation has a unique `ReceiptNumber` in the format `DN-{year}-{6 digits}`.
+- [ ] Unauthenticated requests to protected endpoints return **401**; requesting another user's resource (a donation, or another manager's campaign) returns **404**.
+- [ ] Queries do not load entire tables into memory; pagination uses `Skip` and `Take` and returns the `{ items, page, pageSize, totalCount, totalPages }` shape.
+- [ ] Header `Accept-Language: ar` outputs Arabic messages and fields, `Accept-Language: en` (or no header) outputs English.
+- [ ] Exceeding a request rate triggers HTTP 429 Too Many Requests with a `Retry-After` header.
+- [ ] Unit tests for the new donation invariants and handlers pass with `dotnet test`.
+- [ ] The checkpoint tag `sprint-3` exists and points to the final commit.
+- [ ] The README is updated for the sprint (what was added, how to try it, decisions), including the **cache invalidation strategy**.
+- [ ] No secrets in the repository history (connection strings and keys live in user-secrets or environment variables, not `appsettings`).
+
+---
+
+## ⭐ BONUS (optional — counts only after all CORE items pass)
+
+- **DON-11:** Anonymous donation flag (`IsAnonymous`) — the donor's name is hidden from public displays.
+- **DON-12:** Public list of recent donors of a campaign (respecting the anonymous flag).
+- **CMP-12:** Campaign `Cancelled` status set by Admin or the owner.
+- **CMP-13:** Specification pattern for the campaign list filters.
+- **API v2 of one endpoint** (SRS §6.8), shown as a separate OpenAPI document.
+
+---
+
+## 📤 Submission
+
+- Submit your repository URL on **tawjeh.net** before **23:59 on Day 15 (06/12/2026)**.
+- Tag the final commit and push the tag:
+  ```bash
+  git tag sprint-3
+  git push origin sprint-3
+  ```
+- Fixes are allowed during the **Code Review & Corrections window (07/12/2026 to 09/12/2026)**. Do not move or force-push `sprint-3`; tag the fixed commit `sprint-3-fix` and push it (`git tag sprint-3-fix && git push origin sprint-3-fix`).
+
+---
+
+## 🧮 Grading (100 Points)
+
+| Part | Points | How |
+|---|---|---|
+| Automated | 40 | Build succeeds, `dotnet test` passes, the `sprint-3` tag exists, CORE endpoints respond as specified (smoke check by the mentor) |
+| Checklist | 40 | The Definition of Done above (structure, rules, security, README) |
+| Explanation | 20 | A short question on one of your design decisions (e.g. how you made `RaisedAmount` concurrency-safe), or a code review of the decisions written in your README |
+
+BONUS items add capped extra credit on top of the 100 points, only when all CORE items pass.
 
 ---
 
@@ -190,3 +276,6 @@ Implement scalable querying across public campaign and donation endpoints:
 - [Minimal APIs vs Controllers in ASP.NET Core — Milan Jovanović](https://youtu.be/gsAuFIhXz3g)
 - [Minimal API Versioning in ASP.NET Core](https://youtu.be/F9j3X6KuIpw)
 - [Building High-Performance APIs with FastEndpoints — Nick Chapsas](https://youtu.be/oqNu0xavAyc)
+- 📘 [HybridCache in ASP.NET Core — codewithmukesh](https://codewithmukesh.com/blog/hybridcache-in-aspnet-core/)
+- 📘 [Permission-Based Authorization in ASP.NET Core — codewithmukesh](https://codewithmukesh.com/blog/permission-based-authorization-in-aspnet-core/)
+- 📘 [Filtering by a Large List — Contains and the 2,100 Parameter Wall — codewithmukesh](https://codewithmukesh.com/blog/ef-core-contains-large-list/)

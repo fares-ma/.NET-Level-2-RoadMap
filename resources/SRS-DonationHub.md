@@ -3,8 +3,9 @@
 | | |
 |---|---|
 | **Program** | .NET Level 2, Round 2 (tawjeh.net) |
-| **Duration** | 23/10/2026 to 20/01/2027 |
-| **Document version** | 0.9 (draft for team review) |
+| **Duration** | 23/10/2026 to 20/01/2027 (6 sprints × 15 days) + final defense 21/01 to 23/01/2027 |
+| **Document version** | 1.0 |
+| **Target framework** | .NET 10 (`net10.0`, `.slnx` solution) |
 | **Audience** | Students (this file). Mentors also have an internal notes file. |
 | **System type** | REST API only (no front end) |
 
@@ -12,6 +13,16 @@
 > **[CORE]** means mandatory: you must deliver it to pass the sprint.
 > **[BONUS]** means optional: it earns extra credit only after all CORE items of the sprint are done and working.
 > Never start a BONUS item while a CORE item is missing.
+>
+> This SRS is the source of truth for **requirements** (IDs, rules, endpoints, error codes). The sprint files in `Round-2/` are the source of truth for **schedule, tasks and learning resources**. If they disagree on a requirement, this file wins.
+
+### Changelog
+| Version | Date | Changes |
+|---|---|---|
+| 1.0 | 10/2026 | Sprint dates aligned with the official calendar (15-day sprints from 23/10/2026, deadline on Day 15, review on Days 16–18, final defense 21–23/01/2027). Target framework fixed to .NET 10 with `.slnx`; API documentation via built-in OpenAPI + Scalar. Donation creation moved to `POST /campaigns/{campaignId}/donations` (DON-01, DON-10, 6.5, 9.2). Grading split defined (section 8). |
+| 0.9 | 10/2026 | Draft for team review. |
+
+Rule: the SRS is frozen per sprint. Changes are announced here and apply from the next sprint, never the current one.
 
 ---
 
@@ -59,7 +70,7 @@ Out of scope: any web or mobile front end, an external authentication server (no
 
 ### 2.2 System context
 ```
-Client (Swagger / Postman)
+Client (Scalar / Postman)
         |
    DonationHub API  ---- SQL Server   (data + Hangfire storage)
         |        \----- Redis         (distributed cache)
@@ -75,6 +86,7 @@ Client (Swagger / Postman)
 - All entity ids are `Guid`.
 - Arabic and English are the two supported languages. The default is English.
 - The database is SQL Server, accessed with EF Core code-first migrations.
+- The target framework is .NET 10 (`net10.0`) with a `.slnx` solution file. All Microsoft.* and EF Core packages use the same major version.
 
 ---
 
@@ -98,7 +110,7 @@ Client (Swagger / Postman)
 | 13 | Pagination, filtering, sorting, searching | Public and admin lists | 3 |
 | 14 | Caching (memory, then Redis) | Public reads and dashboard | 3 |
 | 15 | Localization (ar / en) | Responses, validation and error messages, emails | 3 |
-| 16 | API versioning | `/api/v1/...` with Swagger per version | 3 |
+| 16 | API versioning | `/api/v1/...` with one OpenAPI document per version | 3 |
 | 17 | CORS | Named policy from options | 3 |
 | 18 | Rate limiting | Built-in middleware with named policies | 3 |
 | 19 | Hangfire | Fire-and-forget, delayed and recurring jobs | 4 |
@@ -126,7 +138,7 @@ Specification pattern for query reuse, Domain Events (in-process notifications i
 
 ### 3.4 Suggested solution layout
 ```
-DonationHub.sln
+DonationHub.slnx
 src/
   DonationHub.Domain/
     Common/               (Entity, AuditableEntity, Error, Result)
@@ -302,7 +314,7 @@ Base path: `/api/v1`. Roles in the "Access" column: **A** Anonymous, **D** Donor
 
 | ID | Pri | Requirement |
 |---|---|---|
-| DON-01 | CORE | A logged-in user creates a donation for an active campaign with an amount. The donation starts as `Pending`. |
+| DON-01 | CORE | A logged-in user creates a donation for an active campaign with an amount (`POST /campaigns/{campaignId}/donations`). The donation starts as `Pending`. |
 | DON-02 | CORE | Reject a donation if the campaign is not active, its end date passed, or the amount is outside the allowed range (invariants 3 and 4). |
 | DON-03 | CORE | A donor lists their own donations (paged) with amount, date, status and campaign title. |
 | DON-04 | CORE | A donor gets one of their own donations by id. Accessing someone else's donation returns 404 (do not reveal it exists). |
@@ -311,14 +323,14 @@ Base path: `/api/v1`. Roles in the "Access" column: **A** Anonymous, **D** Donor
 | DON-07 | CORE | Marking a donation succeeded runs the success flow described in 5.5 (raise amount, complete campaign if goal reached) inside **one database transaction**. |
 | DON-08 | CORE | Raised amount updates are safe under concurrency: two donations succeeding at the same time must both be counted (use `RowVersion` with retry, or an atomic update). |
 | DON-09 | CORE | A `Pending` donation that is not paid within the configured timeout (default 30 minutes) becomes `Failed`. (Implemented with Hangfire in Sprint 4.) |
-| DON-10 | CORE | From Sprint 5: `POST /donations` and `POST /donations/{id}/checkout` accept an `Idempotency-Key` header (see 6.5). |
+| DON-10 | CORE | From Sprint 5: `POST /campaigns/{campaignId}/donations` and `POST /donations/{id}/checkout` accept an `Idempotency-Key` header (see 6.5). |
 | DON-11 | BONUS | Anonymous donation flag: the donor's name is hidden from public displays. |
 | DON-12 | BONUS | Public list of recent donors of a campaign (respecting the anonymous flag). |
 | DON-13 | BONUS | Refund of a succeeded donation (Admin), with amount subtracted from the raised amount. |
 
 | Method | Path | Access |
 |---|---|---|
-| POST | `/donations` | D, M, Adm |
+| POST | `/campaigns/{campaignId}/donations` | D, M, Adm |
 | GET | `/donations/mine` | Any auth |
 | GET | `/donations/{id}` | Owner, Adm |
 | GET | `/admin/donations` | Adm |
@@ -485,7 +497,7 @@ Use the built-in ASP.NET Core rate limiter with named policies configured throug
 The webhook endpoint is **excluded** from rate limiting. Rejected requests return 429 with a `Retry-After` header and a ProblemDetails body.
 
 ### 6.5 Idempotency key [CORE, Sprint 5]
-- Applies to `POST /donations` and `POST /donations/{id}/checkout`.
+- Applies to `POST /campaigns/{campaignId}/donations` and `POST /donations/{id}/checkout`.
 - The client sends `Idempotency-Key: <unique string>`. The key is required on these endpoints (400 if missing).
 - First request: process and store the key, user id, a hash of the request body and the response.
 - Same key, same user, same body: return the stored response without repeating the action.
@@ -507,7 +519,7 @@ The webhook endpoint is **excluded** from rate limiting. Rejected requests retur
 - Data fields stay bilingual (Ar and En columns). Do not translate stored data automatically.
 
 ### 6.8 API conventions [CORE]
-- **Versioning:** URL segment (`/api/v1`). Swagger shows one document per version. (Bonus: v2 of one endpoint.)
+- **Versioning:** URL segment (`/api/v1`). The OpenAPI documentation (Scalar) shows one document per version. (Bonus: v2 of one endpoint.)
 - **Paged response shape:** `{ "items": [], "page": 1, "pageSize": 20, "totalCount": 0, "totalPages": 0 }`. Default page size 20, maximum 50.
 - **Status codes:** 200 read, 201 create (with `Location`), 204 no content, 400/401/403/404/409/422/429 as in 6.1.
 - **Naming:** plural nouns, kebab-case paths, camelCase JSON. Enums are returned as strings.
@@ -551,23 +563,25 @@ Each sprint ends with a checkpoint tag. The new modules are what you build; the 
 
 | Sprint | Dates | New modules | Topics | Improvements to earlier work |
 |---|---|---|---|---|
-| **1** | 20/10 to 2/11 | Identity, Categories | Clean Architecture + Vertical Slice, EF Core, Generic Repo + UoW, Options, Identity + JWT + Refresh | Categories protected by the Admin role |
-| **2** | 3/11 to 16/11 | Campaigns | CQRS with MediatR, FluentValidation, Result, exception handling, unit testing | Identity and Categories move to CQRS with validation and Result |
-| **3** | 17/11 to 30/11 | Donations (with the temporary stub) | Caching, authorization policies, pagination and filters, localization, API versioning, rate limiting, CORS | Campaign Manager ownership, cached and localized public reads |
-| **4** | 1/12 to 14/12 | Notifications, Files and Receipts | Hangfire, MailKit, file handling, Serilog | Receipt flow and background jobs on Donations, Serilog everywhere |
-| **5** | 15/12 to 28/12 | Payments | Stripe, webhooks, idempotency, integration testing | Stub removed, donations completed by webhook, idempotency on donations |
-| **6** | 29/12 to 11/1 | Reports and Admin | Health checks, Docker, GitHub Actions | Dashboard caching, full containerization, CI |
-| **Final** | 12/1 to 20/1 | none | none | Fixes, documentation, discussion |
+| **1** | 23/10 to 06/11 | Identity, Categories | Clean Architecture + Vertical Slice, EF Core, Generic Repo + UoW, Options, Identity + JWT + Refresh | Categories protected by the Admin role |
+| **2** | 07/11 to 21/11 | Campaigns | CQRS with MediatR, FluentValidation, Result, exception handling, unit testing | Identity and Categories move to CQRS with validation and Result |
+| **3** | 22/11 to 06/12 | Donations (with the temporary stub) | Caching, authorization policies, pagination and filters, localization, API versioning, rate limiting, CORS | Campaign Manager ownership, cached and localized public reads |
+| **4** | 07/12 to 21/12 | Notifications, Files and Receipts | Hangfire, MailKit, file handling, Serilog | Receipt flow and background jobs on Donations, Serilog everywhere |
+| **5** | 22/12 to 05/01 | Payments | Stripe, webhooks, idempotency, integration testing | Stub removed, donations completed by webhook, idempotency on donations |
+| **6** | 06/01 to 20/01 | Reports and Admin | Health checks, Docker, GitHub Actions | Dashboard caching, full containerization, CI |
+| **Final** | 21/01 to 23/01 | none | none | Final defense: discussion of design decisions on the `final` tag |
+
+Each sprint lasts 15 days. Day 15 is the deadline; Days 16–18 are the review and corrections window (they overlap the first days of the next sprint). The exact dates and live sessions are in `Round-2/General RoadMap/Round2 Timeline.md`.
 
 Note: from Sprint 1 to Sprint 3, use the built-in `ILogger`. Serilog arrives in Sprint 4.
 
 ### 7.1 Deliverables per sprint (CORE)
 
-**Sprint 1.** Working solution with the four-layer structure. Identity (IDN-01 to IDN-12) and Categories (CAT-01 to CAT-04). Migrations committed. Options classes validated at startup. Swagger with a Bearer authorization button. README with run steps.
+**Sprint 1.** Working solution with the four-layer structure. Identity (IDN-01 to IDN-12) and Categories (CAT-01 to CAT-04). Migrations committed. Options classes validated at startup. OpenAPI documentation (Scalar) with Bearer token support. README with run steps.
 
 **Sprint 2.** Campaigns (CMP-01 to CMP-06, CMP-10, CMP-11 for the basic list). All Sprint 1 use cases rewritten as commands and queries. Validators and the pipeline behavior. Result pattern and global exception handler with the error catalogue. At least 15 unit tests including the campaign invariants.
 
-**Sprint 3.** Donations (DON-01 to DON-08). CMP-07 to CMP-09. Policies and resource ownership. Pagination, filtering, search and sorting on public and admin lists. Memory then Redis caching with invalidation. Localization for validation, errors and public responses. Versioned routes and Swagger per version. CORS and rate limiting policies.
+**Sprint 3.** Donations (DON-01 to DON-08). CMP-07 to CMP-09. Policies and resource ownership. Pagination, filtering, search and sorting on public and admin lists. Memory then Redis caching with invalidation. Localization for validation, errors and public responses. Versioned routes and one OpenAPI document per version. CORS and rate limiting policies.
 
 **Sprint 4.** Notifications (NTF-01 to NTF-06), Files (FIL-01 to FIL-07), Jobs (JOB-01 to JOB-05), DON-09. Serilog configured. Mailpit used for development.
 
@@ -575,11 +589,11 @@ Note: from Sprint 1 to Sprint 3, use the built-in `ILogger`. Serilog arrives in 
 
 **Sprint 6.** Reports and Admin (RPT-01 to RPT-04, ADM-01 to ADM-03). Health checks. Dockerfile and Compose. CI workflow. Final README: architecture explanation, how to run (local and Docker), how to test Stripe locally, list of design decisions.
 
-**Final.** Fix defects found in review. Bonus items. Prepare to explain your design decisions.
+**Final.** Fixes from the Sprint 6 review are tagged `final`. Prepare to explain your design decisions.
 
 ### 7.2 Definition of Done for every sprint
 1. The solution builds with no warnings treated as errors, and runs with the README steps.
-2. Every CORE requirement of the sprint works through Swagger.
+2. Every CORE requirement of the sprint works through the API documentation (Scalar) or Postman.
 3. Validation and error responses follow section 6.1 and 6.2 (from Sprint 2).
 4. New behavior is covered by tests (from Sprint 2).
 5. The checkpoint tag exists and points to the final commit.
@@ -590,10 +604,18 @@ Note: from Sprint 1 to Sprint 3, use the built-in `ILogger`. Serilog arrives in 
 
 ## 8. Submission and Evaluation
 
-- **Submit:** the repository URL on tawjeh.net before the sprint deadline (Monday 23:59). Tag the commit `sprint-N`.
+- **Submit:** the repository URL on tawjeh.net before 23:59 on Day 15 of the sprint (see the sprint file for the date). Tag the commit `sprint-N` and push the tag (`git tag sprint-N && git push origin sprint-N`).
 - **Reviewed against:** the sprint checklist published with the tasks. It checks the requirements above, code structure, tests, and your README.
-- **Bonus** items count only when all CORE items of that sprint pass.
-- **Late work and fixes:** you can fix and resubmit within the review window announced on the platform. Work after the deadline is not counted unless the sprint rules say so.
+- **Grading (100 points per sprint, 600 total):**
+
+| Part | Points | How |
+|---|---|---|
+| Automated | 40 | Build succeeds, `dotnet test` passes, the tag exists, CORE endpoints respond as specified (smoke check by the mentor) |
+| Checklist | 40 | The sprint's CORE checklist (structure, rules, security, README) |
+| Explanation | 20 | A short question on one of your design decisions, or a code review of the decisions written in your README |
+
+- **Bonus** items count only when all CORE items of that sprint pass. They add extra credit (capped by the mentors) on top of the 100 points.
+- **Late work and fixes:** you can fix and resubmit within the review window (Days 16–18). Never move or force-push the `sprint-N` tag; tag the fixed commit `sprint-N-fix` (Sprint 6 fixes use the `final` tag). Work after the deadline is not counted unless the sprint rules say so.
 - **Discussion:** mentors may ask you to explain parts of your code. Be ready to explain why, not only what.
 
 ---
@@ -610,12 +632,12 @@ Note: from Sprint 1 to Sprint 3, use the built-in `ILogger`. Serilog arrives in 
 
 Create a donation:
 ```http
-POST /api/v1/donations
+POST /api/v1/campaigns/{campaignId}/donations
 Authorization: Bearer <access-token>
 Idempotency-Key: 6f1b0c1e-8a53-4c3a-9a9c-0d6f9d0c2f11
 Content-Type: application/json
 
-{ "campaignId": "…", "amount": 25.00 }
+{ "amount": 25.00 }
 ```
 ```http
 201 Created
