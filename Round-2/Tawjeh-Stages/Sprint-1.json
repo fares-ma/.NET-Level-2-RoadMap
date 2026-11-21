@@ -1,6 +1,6 @@
 {
- "title": "Sprint 1 — المعمارية النظيفة، نمذجة المجال، الهوية والتصنيفات",
- "summary": "أسّس DonationHub: معمارية نظيفة، نموذج مجال غني، هوية JWT، ووحدة التصنيفات.",
+ "title": "Sprint 1 — Clean Architecture, Domain Modeling, Identity & Categories",
+ "summary": "Establish DonationHub: Clean Architecture, Rich Domain Model, JWT Identity, and the Categories module.",
  "isGraded": true,
  "basePoints": 100,
  "lateMultiplier": 0.4,
@@ -11,30 +11,30 @@
  "briefBlocks": [
   {
    "type": "Heading",
-   "text": "Sprint 1 — المعمارية النظيفة، نمذجة المجال، الهوية والتصنيفات",
+   "text": "Sprint 1 — Clean Architecture, Domain Modeling, Identity & Categories",
    "level": 1
   },
   {
    "type": "Paragraph",
-   "markdown": "في هذا السبرنت تضع **الأساس المعماري** لمشروع **DonationHub** — منصّة لإدارة التبرعات والحملات الخيرية. كل ما ستبنيه في السبرنتات القادمة (CQRS، التبرعات، Stripe، Hangfire، Docker) سيقوم على ما تؤسّسه الآن، لذلك الجودة هنا أهم من السرعة."
+   "markdown": "In this sprint, you lay the **architectural foundation** for **DonationHub** — a donation and charity campaign management platform. Everything you build in upcoming sprints (CQRS, Donations, Stripe, Hangfire, Docker) rests on what you establish now, so quality here matters more than speed."
   },
   {
    "type": "Paragraph",
-   "markdown": "- **المدة:** 15 يومًا (من 23/10/2026 إلى 06/11/2026)\n- **Stand-up 1 (اليوم 5):** 27/10/2026 — يقودها **Mohamed Atef**\n- **Stand-up 2 (اليوم 10):** 01/11/2026 — تقودها **Asma ELhadidy**\n- **الختام وآخر موعد للتسليم (اليوم 15):** 06/11/2026 — يقودها **Kareem Zein**\n- **المراجعة والتصحيح (الأيام 16–18):** من 07/11/2026 إلى 09/11/2026\n- **التقييم:** 100 نقطة"
+   "markdown": "- **Duration:** 15 Days (23/10/2026 to 06/11/2026)\n- **Stand-up 1 (Day 5):** 27/10/2026 — Session Leader: **Mohamed Atef**\n- **Stand-up 2 (Day 10):** 01/11/2026 — Session Leader: **Asma ELhadidy**\n- **Closing & Deadline (Day 15):** 06/11/2026 — Session Leader: **Kareem Zein**\n- **Code Review & Corrections (Days 16–18):** 07/11/2026 to 09/11/2026\n- **Evaluation:** 100 Points"
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "**الإطار المستهدف:** .NET 10 (`net10.0`) بصيغة الحل `.slnx` وكل الإعدادات في `Program.cs`. المشروع متوافق أيضًا مع .NET 8 و .NET 9."
+   "markdown": "**Target Framework:** .NET 10 (`net10.0`) with the `.slnx` solution format and all configuration in `Program.cs`. The project is also compatible with .NET 8 and .NET 9."
   },
   {
    "type": "Heading",
-   "text": "🎯 هدف السبرنت",
+   "text": "🎯 Sprint Goal",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "بناء معمارية نظيفة (Clean Architecture) من أربع طبقات، منظّمة داخليًا بأسلوب **Vertical Slices**، مع طبقة بيانات EF Core (Fluent API + Migrations + Interceptors)، وتسليم وحدتين تعملان بالكامل:\n\n1. **الهوية (Identity):** تسجيل، دخول، JWT، وتدوير Refresh Token.\n2. **التصنيفات (Categories):** إدارة تصنيفات ثنائية اللغة مع قواعد المجال."
+   "markdown": "Build a four-layer Clean Architecture solution, organized internally using **Vertical Slices**, with an EF Core persistence layer (Fluent API + Migrations + Interceptors), and deliver two fully working modules:\n\n1. **Identity:** Registration, login, JWT, and Refresh Token rotation.\n2. **Categories:** Bilingual category management with domain rules."
   },
   {
    "type": "Code",
@@ -44,21 +44,21 @@
   },
   {
    "type": "Heading",
-   "text": "📌 المتطلبات المسبقة",
+   "text": "📌 Sprint Prerequisites",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "قبل كتابة أي كود، تأكّد أنك تفهم المفاهيم التالية جيدًا. ⭐ تعني مصدرًا **أساسيًّا مطلوبًا**، و🔄 تعني مصدرًا **بديلًا أو للتعمّق**."
+   "markdown": "Before writing any code, make sure you thoroughly understand the following concepts. ⭐ denotes a **Required Primary** resource, and 🔄 denotes an **Alternative / Deep Dive** resource."
   },
   {
    "type": "Heading",
-   "text": "1. Git و GitHub وطريقة الـ Pull Request",
+   "text": "1. Git & GitHub Pull Request Workflow (PR Flow)",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "لازم تعرف تعمل fork وclone، وتدير الـ branches، وتقدّم Pull Request نظيفًا لمراجعة المنتور."
+   "markdown": "You must know how to fork and clone, manage branches, and submit a clean Pull Request for mentor review."
   },
   {
    "type": "Video",
@@ -71,23 +71,23 @@
    "title": "🔄 Git and GitHub — Ahmed Sami [Arabic]",
    "url": "https://youtu.be/Q6G-J54vgKc",
    "kind": "video",
-   "description": "شرح الـ PR يبدأ من 05:56:20"
+   "description": "PR walkthrough starts at 05:56:20"
   },
   {
    "type": "Heading",
-   "text": "2. آلية Async/Await و الـ ThreadPool",
+   "text": "2. Async/Await Mechanics & The ThreadPool",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "افهم الـ I/O Completion Ports (IOCP)، ولماذا يُعدّ تغليف استعلامات EF Core داخل `Task.Run` نمطًا خاطئًا وخطيرًا في ASP.NET Core."
+   "markdown": "Understand I/O Completion Ports (IOCP) and why wrapping EF Core queries inside `Task.Run` is a dangerous anti-pattern in ASP.NET Core."
   },
   {
    "type": "Resource",
-   "title": "⭐ Async/Await, I/O Completion Ports & ThreadPool — Arabic PDF (11 صفحة)",
+   "title": "⭐ Async/Await, I/O Completion Ports & ThreadPool — Arabic PDF (11 pages)",
    "url": "https://drive.google.com/file/d/1omf6AeRSblrCyqs4ZPv09MQdVxI_JJM2/view?usp=sharing",
    "kind": "doc",
-   "description": "يشرح IOCP ولماذا يُمنع استخدام Task.Run حول استعلامات EF Core"
+   "description": "Explains IOCP and why wrapping EF Core queries in Task.Run is prohibited"
   },
   {
    "type": "Resource",
@@ -112,12 +112,12 @@
   },
   {
    "type": "Heading",
-   "text": "3. مبادئ SOLID وأعمار الخدمات في DI",
+   "text": "3. SOLID Principles & DI Service Lifetimes",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "أتقِن مبدأ عكس الاعتمادية (DIP)، واختر عمر الخدمة الصحيح: `Transient` أو `Scoped` أو `Singleton`."
+   "markdown": "Master the Dependency Inversion Principle (DIP), and choose the right service lifetime: `Transient`, `Scoped`, or `Singleton`."
   },
   {
    "type": "Video",
@@ -129,7 +129,7 @@
    "type": "Video",
    "provider": "youtube",
    "url": "https://youtu.be/KAHxOLmvGZo",
-   "title": "⭐2 Dependency Injection C# Tutorial — Julio Casal (مقارنة الأعمار عند 05:35)"
+   "title": "⭐2 Dependency Injection C# Tutorial — Julio Casal (Service lifetimes compared at 05:35)"
   },
   {
    "type": "Resource",
@@ -140,12 +140,12 @@
   },
   {
    "type": "Heading",
-   "text": "4. Extension Methods و LINQ: الفرق بين IEnumerable و IQueryable",
+   "text": "4. Extension Methods & LINQ: IEnumerable vs. IQueryable",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "افهم الـ Expression Trees والتنفيذ المؤجَّل (Deferred Execution)، ولماذا الفلترة في الذاكرة (`IEnumerable`) بدل قاعدة البيانات (`IQueryable`) تدمّر أداء الـ Backend."
+   "markdown": "Understand Expression Trees and Deferred Execution, and why filtering in memory (`IEnumerable`) instead of in the database (`IQueryable`) destroys backend performance."
   },
   {
    "type": "Video",
@@ -165,53 +165,53 @@
    "title": "🔄 Advanced C# LINQ Tutorial — Gavin Lon",
    "url": "https://youtu.be/5l2qA3Pc83M",
    "kind": "video",
-   "description": "IEnumerable vs IQueryable عند 03:02:35"
+   "description": "IEnumerable vs IQueryable at 03:02:35"
   },
   {
    "type": "Heading",
-   "text": "📋 القرارات الهندسية والأعراف",
+   "text": "📋 Engineering Decisions & Conventions",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "| المجال | القرار | التفاصيل |\n|---|---|---|\n| **إصدار .NET** | .NET 10 (`net10.0`) | كل الإعدادات في `Program.cs`. على .NET 9/10 نستخدم OpenAPI المدمج + `Scalar.AspNetCore` بدل Swashbuckle (`builder.Services.AddOpenApi();` و `app.MapOpenApi();`). |\n| **صيغة الحل** | `.slnx` | `dotnet new sln --format slnx` (أو `.sln` على الإصدارات الأقدم). |\n| **نمذجة المجال** | Rich Domain Model | النماذج الفقيرة (Anemic) ممنوعة. الـ setters خاصة (`private set`). القواعد داخل الكيانات، و Value Objects لمنع Primitive Obsession. |\n| **الحذف الناعم** | عبر Interceptor | الكيان يطبّق `ISoftDeletable`، و `SoftDeleteInterceptor` يحوّل `EntityState.Deleted` إلى `IsDeleted = true`، مع فلتر عام `HasQueryFilter(e => !e.IsDeleted)`. |\n| **الإعدادات** | Options Pattern | كلاسات إعدادات قوية النوع، تُتحقَّق بـ Data Annotations عند بدء التشغيل عبر `.ValidateOnStart()`. |"
+   "markdown": "| Area | Decision | Details |\n|---|---|---|\n| **Target .NET Version** | .NET 10 (`net10.0`) | All configuration is in `Program.cs`. On .NET 9/10, use built-in OpenAPI + `Scalar.AspNetCore` instead of Swashbuckle (`builder.Services.AddOpenApi();` and `app.MapOpenApi();`). |\n| **Solution Format** | `.slnx` | `dotnet new sln --format slnx` (or `.sln` on older versions). |\n| **Domain Modeling** | Rich Domain Model | Anemic models are prohibited. Setters are private (`private set`). Business rules live inside entities, with Value Objects to prevent Primitive Obsession. |\n| **Soft Delete** | Interceptor-Driven | Entities implement `ISoftDeletable`, and `SoftDeleteInterceptor` converts `EntityState.Deleted` to `IsDeleted = true`, with a global query filter `HasQueryFilter(e => !e.IsDeleted)`. |\n| **Configuration** | Options Pattern | Strongly-typed option classes, validated with Data Annotations at startup via `.ValidateOnStart()`. |"
   },
   {
    "type": "Heading",
-   "text": "🛠️ مهام السبرنت",
+   "text": "🛠️ Sprint Tasks",
    "level": 2
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "كل المهام التالية **أساسية (CORE)** ما لم يُذكر أنها BONUS."
+   "markdown": "All tasks below are **CORE** unless marked BONUS."
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "الروابط المعلَّمة بـ 📘 من كورس [.NET Web API Zero to Hero](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) المجاني (مقالات .NET 10 مع كود كامل على [GitHub](https://github.com/codewithmukesh/dotnet-webapi-zero-to-hero-course)). أمثلته تستخدم **PostgreSQL** و **Minimal APIs** — طبّق نفس الأفكار على **SQL Server** و **Controllers رفيعة** كما في مشروعنا."
+   "markdown": "Links marked 📘 are from the free [.NET Web API Zero to Hero](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) course (.NET 10 articles with full source code on [GitHub](https://github.com/codewithmukesh/dotnet-webapi-zero-to-hero-course)). Its samples use **PostgreSQL** and **Minimal APIs** — apply the same ideas to **SQL Server** and **thin Controllers** as in our project."
   },
   {
    "type": "Heading",
-   "text": "المهمة 1 — إعداد حل Clean Architecture",
+   "text": "Task 1 — Clean Architecture Solution Setup",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "أنشئ المشاريع الأربعة واضبط اتجاه الاعتماد ليكون **في اتجاه واحد فقط**:"
+   "markdown": "Create the four projects and configure the dependency direction to be **strictly unidirectional**:"
   },
   {
    "type": "Code",
    "language": "text",
-   "code": "DonationHub.Domain         (بدون أي اعتماد خارجي)\n        ↑\nDonationHub.Application    (يعتمد على Domain فقط)\n        ↑\nDonationHub.Infrastructure (يعتمد على Application و Domain لتطبيق الواجهات)\n        ↑\nDonationHub.Api            (طبقة العرض و Composition Root — يعتمد على Application و Infrastructure)",
+   "code": "DonationHub.Domain         (Zero external dependencies)\n        ↑\nDonationHub.Application    (References Domain only)\n        ↑\nDonationHub.Infrastructure (References Application & Domain to implement abstractions)\n        ↑\nDonationHub.Api            (Presentation layer & Composition Root — references Application & Infrastructure)",
    "filename": "snippet-2.txt"
   },
   {
    "type": "Checklist",
    "items": [
-    "إنشاء حل `.slnx` يحتوي المشاريع الأربعة مع المراجع الصحيحة بينها.",
-    "تنظيم `DonationHub.Application` في **مجلدات حسب الميزة (Vertical Slices)** مثل `Features/Auth` و `Features/Categories`، وليس مجلدات تقنية مسطّحة.",
-    "إنشاء دوال تسجيل DI لكل طبقة (`AddApplicationServices` و `AddInfrastructureServices`) واستدعاؤها من `Program.cs`."
+    "Create an `.slnx` solution containing the four projects with the proper project references between them.",
+    "Organize `DonationHub.Application` into **feature folders (Vertical Slices)** such as `Features/Auth` and `Features/Categories`, rather than flat technical folders.",
+    "Create DI registration methods for each layer (`AddApplicationServices` and `AddInfrastructureServices`) and call them from `Program.cs`."
    ]
   },
   {
@@ -222,7 +222,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "الطبقات وقاعدة الاعتماد عند 09:18، ورحلة الطلب عند 14:30."
+   "markdown": "Layers & dependency rule at 09:18, and request journey at 14:30."
   },
   {
    "type": "Resource",
@@ -236,7 +236,7 @@
    "title": "🔄 Clean Architecture & CQRS in Action (.NET 10) — Essam Abdelnabi",
    "url": "https://youtu.be/v9fRFyg414k",
    "kind": "video",
-   "description": "من 09:18 إلى 20:25: إنشاء المشاريع بالـ CLI و .slnx"
+   "description": "09:18 to 20:25: CLI project creation and .slnx"
   },
   {
    "type": "Resource",
@@ -261,32 +261,32 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 2 — نمذجة المجال والقواعد الثابتة (Domain Layer)",
+   "text": "Task 2 — Domain Modeling & Invariants (Domain Layer)",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "انمذج كيانات المجال حسب SRS §4.1 (كل المعرّفات `Guid` وكل الأوقات UTC):"
+   "markdown": "Model the domain entities per SRS §4.1 (all IDs are `Guid` and all timestamps are UTC):"
   },
   {
    "type": "Paragraph",
-   "markdown": "- `ApplicationUser` (مستخدم Identity): `Id`, `Email`, `UserName`, `FullName`, `PreferredLanguage` (`en` | `ar`، الافتراضي `en`)، `IsActive`, `CreatedAt`. الأدوار: `Admin`, `CampaignManager`, `Donor`.\n- `RefreshToken`: `Id`, `UserId`, `TokenHash`, `CreatedAt`, `ExpiresAt`, `RevokedAt?`, `ReplacedByTokenId?`.\n- `Category`: `Id`, `NameAr`, `NameEn`, `DescriptionAr`, `DescriptionEn`, `CreatedAt`, `UpdatedAt`.\n- `Campaign`: `Id`, `TitleAr`, `TitleEn`, `DescriptionAr`, `DescriptionEn`, `GoalAmount`, `RaisedAmount`, `EndDate`, `CategoryId`, `BannerFileName?`, `Status`, `CreatedByUserId`, `CreatedAt`, `UpdatedAt`, `IsDeleted`, `RowVersion`.\n- `Donation`: `Id`, `CampaignId`, `DonorUserId`, `Amount`, `Status`, `CreatedAt`, `CompletedAt?`, `FailureReason?`, `ReceiptNumber?`, `ReceiptFileName?`.\n- `PaymentAttempt`: `Id`, `DonationId`, `StripeCheckoutSessionId`, `StripePaymentIntentId?`, `Amount`, `Status`, `CreatedAt`, `UpdatedAt`, `FailureCode?`.\n- `ProcessedStripeEvent`: `EventId` (المفتاح)، `Type`, `ProcessedAt`.\n- `IdempotencyRecord`: `Key`, `UserId`, `RequestHash`, `ResponseStatusCode`, `ResponseBody`, `CreatedAt`, `ExpiresAt`."
+   "markdown": "- `ApplicationUser` (Identity user): `Id`, `Email`, `UserName`, `FullName`, `PreferredLanguage` (`en` | `ar`, default `en`), `IsActive`, `CreatedAt`. Roles: `Admin`, `CampaignManager`, `Donor`.\n- `RefreshToken`: `Id`, `UserId`, `TokenHash`, `CreatedAt`, `ExpiresAt`, `RevokedAt?`, `ReplacedByTokenId?`.\n- `Category`: `Id`, `NameAr`, `NameEn`, `DescriptionAr`, `DescriptionEn`, `CreatedAt`, `UpdatedAt`.\n- `Campaign`: `Id`, `TitleAr`, `TitleEn`, `DescriptionAr`, `DescriptionEn`, `GoalAmount`, `RaisedAmount`, `EndDate`, `CategoryId`, `BannerFileName?`, `Status`, `CreatedByUserId`, `CreatedAt`, `UpdatedAt`, `IsDeleted`, `RowVersion`.\n- `Donation`: `Id`, `CampaignId`, `DonorUserId`, `Amount`, `Status`, `CreatedAt`, `CompletedAt?`, `FailureReason?`, `ReceiptNumber?`, `ReceiptFileName?`.\n- `PaymentAttempt`: `Id`, `DonationId`, `StripeCheckoutSessionId`, `StripePaymentIntentId?`, `Amount`, `Status`, `CreatedAt`, `UpdatedAt`, `FailureCode?`.\n- `ProcessedStripeEvent`: `EventId` (key), `Type`, `ProcessedAt`.\n- `IdempotencyRecord`: `Key`, `UserId`, `RequestHash`, `ResponseStatusCode`, `ResponseBody`, `CreatedAt`, `ExpiresAt`."
   },
   {
    "type": "Paragraph",
-   "markdown": "**الـ Enums:** `CampaignStatus` (Active, Completed, Expired) — `DonationStatus` (Pending, Succeeded, Failed) — `PaymentAttemptStatus` (Created, Succeeded, Failed, Expired).\n\n**Value Objects:** أنشئ كلاس أساسي `ValueObject` يقارن بالقيمة، وطبّق Value Objects حيث يناسب (مثل `Money` يجمع المبلغ والعملة)."
+   "markdown": "**Enums:** `CampaignStatus` (Active, Completed, Expired) — `DonationStatus` (Pending, Succeeded, Failed) — `PaymentAttemptStatus` (Created, Succeeded, Failed, Expired).\n\n**Value Objects:** Create a `ValueObject` base class with value-based equality comparison, and implement Value Objects where appropriate (such as `Money` encapsulating amount and currency)."
   },
   {
    "type": "Paragraph",
-   "markdown": "**القواعد الثابتة للمجال (SRS §4.5)** — انمذجها **كلها الآن** حتى لو بعضها لن يُستخدم من الـ endpoints إلا لاحقًا:\n\n1. `GoalAmount > 0`.\n2. `EndDate` يجب أن يكون في المستقبل عند إنشاء الحملة أو تغيير تاريخ انتهائها.\n3. الحملة تقبل تبرعًا جديدًا فقط إذا كانت `Status == Active` و `EndDate` في المستقبل. *(يُستخدم في Sprint 3)*\n4. مبلغ التبرع بين الحد الأدنى والأقصى من `DonationOptions` (الافتراضي 1.00 و 10,000.00). *(Sprint 3)*\n5. `RaisedAmount` يتغيّر فقط عندما يصبح التبرع `Succeeded`. *(Sprint 3)*\n6. إذا أصبح `RaisedAmount >= GoalAmount` بعد نجاح تبرع، تصبح الحملة `Completed`. *(Sprint 3)*\n7. لا يمكن خفض `GoalAmount` إلى أقل من `RaisedAmount` الحالي. *(Sprint 2)*\n8. الحالة النهائية (Succeeded, Failed, Completed, Expired) لا تتغيّر.\n9. الحملة التي لها تبرعات لا تُحذف حذفًا نهائيًا؛ استخدم الحذف الناعم. *(Sprint 2)*\n10. التصنيف الذي ما زالت له حملات لا يُحذف. *(يُطبَّق في هذا السبرنت عبر CAT-04)*"
+   "markdown": "**Domain Invariants (SRS §4.5)** — Model **all of them now** even if some are only exercised by endpoints later:\n\n1. `GoalAmount > 0`.\n2. `EndDate` must be in the future when a campaign is created or its end date is changed.\n3. A campaign accepts a new donation only when `Status == Active` and `EndDate` is in the future. *(exercised in Sprint 3)*\n4. Donation amount is within the minimum and maximum from `DonationOptions` (defaults: 1.00 and 10,000.00). *(Sprint 3)*\n5. `RaisedAmount` changes only when a donation becomes `Succeeded`. *(Sprint 3)*\n6. When `RaisedAmount >= GoalAmount` after a donation succeeds, the campaign becomes `Completed`. *(Sprint 3)*\n7. `GoalAmount` cannot be lowered below the current `RaisedAmount`. *(Sprint 2)*\n8. A final state (Succeeded, Failed, Completed, Expired) cannot change.\n9. A campaign that has donations cannot be hard-deleted; use soft delete. *(Sprint 2)*\n10. A category that still has campaigns cannot be deleted. *(enforced in this sprint via CAT-04)*"
   },
   {
    "type": "Checklist",
    "items": [
-    "كل الـ setters خاصة (`private set`)، والسلوك يُعرض عبر دوال الكيان و Factory Methods مثل `Campaign.Create(...)`.",
-    "إنشاء الـ Enums الثلاثة والكلاس الأساسي `ValueObject` و `Money`.",
-    "تمثيل القواعد العشر داخل طبقة Domain.",
-    "عدم استدعاء `DateTime.UtcNow` داخل الـ Domain؛ مرّر الوقت الحالي كمعامل (سيُحقن `TimeProvider` في الـ handlers من Sprint 2)."
+    "All setters are private (`private set`), and behavior is exposed via entity methods and factory methods such as `Campaign.Create(...)`.",
+    "Create the three enums, the `ValueObject` base class, and `Money`.",
+    "Model all ten invariants inside the Domain layer.",
+    "Do not call `DateTime.UtcNow` inside the Domain; pass the current time as a parameter (`TimeProvider` will be injected into handlers starting in Sprint 2)."
    ]
   },
   {
@@ -297,14 +297,14 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "Entity عند 09:00، و ValueObject عند 19:10، و Aggregate Root عند 24:55."
+   "markdown": "Entity at 09:00, ValueObject at 19:10, and Aggregate Root at 24:55."
   },
   {
    "type": "Resource",
    "title": "🔄 Value Objects in C# — Milan Jovanović (13:54)",
    "url": "https://youtu.be/P5CRea21R2E",
    "kind": "video",
-   "description": "الكلاس الأساسي عند 02:40 والـ factory methods عند 08:35"
+   "description": "Base class at 02:40 and factory methods at 08:35"
   },
   {
    "type": "Resource",
@@ -322,22 +322,22 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 3 — EF Core و Fluent API و Migrations",
+   "text": "Task 3 — EF Core, Fluent API & Migrations",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "اضبط طبقة البيانات داخل `DonationHub.Infrastructure`:"
+   "markdown": "Configure database persistence inside `DonationHub.Infrastructure`:"
   },
   {
    "type": "Checklist",
    "items": [
-    "إنشاء `AppDbContext`.",
-    "ضبط الكيانات **بالـ Fluent API فقط** عبر كلاسات منفصلة تطبّق `IEntityTypeConfiguration<T>`.",
-    "تسجيل الإعدادات تلقائيًا عبر `ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly)`.",
-    "العلاقات: `Category` → `Campaigns` (واحد لمتعدد مع `DeleteBehavior.Restrict`)، و `Campaign` → `Donations`، و `User` → `Donations` و `User` → `Campaigns`، مع الفهارس المناسبة.",
-    "ضبط `RowVersion` (`byte[]`) كـ concurrency token على `Campaign`.",
-    "إنشاء الـ Migration الأولى، وقراءة connection string الخاص بـ SQL Server من الإعدادات."
+    "Implement `AppDbContext`.",
+    "Configure entities **using Fluent API only** via separate classes implementing `IEntityTypeConfiguration<T>`.",
+    "Register configurations automatically via `ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly)`.",
+    "Relationships: `Category` → `Campaigns` (one-to-many with `DeleteBehavior.Restrict`), `Campaign` → `Donations`, and `User` → `Donations` and `User` → `Campaigns`, with appropriate indexes.",
+    "Configure `RowVersion` (`byte[]`) as a concurrency token on `Campaign`.",
+    "Generate the initial migration, and read the SQL Server connection string from configuration."
    ]
   },
   {
@@ -348,7 +348,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "إعداد AppDbContext عند 11:45، و IEntityTypeConfiguration عند 20:10، و ApplyConfigurations عند 30:55، و Migrations عند 34:45."
+   "markdown": "AppDbContext setup at 11:45, IEntityTypeConfiguration at 20:10, ApplyConfigurations at 30:55, and Migrations at 34:45."
   },
   {
    "type": "Resource",
@@ -380,16 +380,16 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 4 — Generic Repository و Unit of Work",
+   "text": "Task 4 — Generic Repository & Unit of Work",
    "level": 3
   },
   {
    "type": "Checklist",
    "items": [
-    "تعريف الواجهتين `IGenericRepository<T>` و `IUnitOfWork` في `DonationHub.Application`.",
-    "تطبيقهما في `DonationHub.Infrastructure` بالاعتماد على `AppDbContext`.",
-    "الـ Repository مسؤول عن تغييرات حالة المجال وعمليات الكتابة.",
-    "استعلامات القراءة المباشرة يمكنها عمل projection مباشرة إلى DTOs مع `AsNoTracking` للأداء العالي."
+    "Define the `IGenericRepository<T>` and `IUnitOfWork` interfaces in `DonationHub.Application`.",
+    "Implement them in `DonationHub.Infrastructure` backed by `AppDbContext`.",
+    "The Repository handles domain state changes and write operations.",
+    "Direct read queries can project directly to DTOs with `AsNoTracking` for high performance."
    ]
   },
   {
@@ -413,15 +413,15 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 5 — Soft Delete Interceptor و Global Query Filters",
+   "text": "Task 5 — Soft Delete Interceptor & Global Query Filters",
    "level": 3
   },
   {
    "type": "Checklist",
    "items": [
-    "تعريف الواجهة `ISoftDeletable` (`bool IsDeleted { get; set; }` و `DateTime? DeletedAtUtc { get; set; }`).",
-    "تطبيق `SoftDeleteInterceptor : SaveChangesInterceptor` ليحوّل عمليات الحذف إلى حذف ناعم تلقائيًا.",
-    "تطبيق `HasQueryFilter(e => !e.IsDeleted)` لاستبعاد السجلات المحذوفة من الاستعلامات العادية، مع إمكانية `IgnoreQueryFilters()` عند الحاجة."
+    "Define the `ISoftDeletable` interface (`bool IsDeleted { get; set; }` and `DateTime? DeletedAtUtc { get; set; }`).",
+    "Implement `SoftDeleteInterceptor : SaveChangesInterceptor` to convert deletions into soft deletes automatically.",
+    "Apply `HasQueryFilter(e => !e.IsDeleted)` to exclude deleted records from normal queries, supporting `IgnoreQueryFilters()` when needed."
    ]
   },
   {
@@ -432,7 +432,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "ISoftDeletable عند 05:05، و Interceptor عند 10:40، و HasQueryFilter عند 20:10."
+   "markdown": "ISoftDeletable at 05:05, Interceptor at 10:40, and HasQueryFilter at 20:10."
   },
   {
    "type": "Resource",
@@ -471,25 +471,25 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 6 — Options Pattern والتحقق عند بدء التشغيل",
+   "text": "Task 6 — Options Pattern & Startup Validation",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "أنشئ كلاسات إعدادات قوية النوع مع Data Annotations وسجّلها مع `.ValidateOnStart()`:\n\n- `JwtOptions` (SecretKey, Issuer, Audience, ExpiryMinutes, RefreshTokenExpiryDays)\n- `SeedAdminOptions` (Email, Password, FullName)\n- `DonationOptions` (MinAmount = 1.00, MaxAmount = 10,000.00, PendingTimeoutMinutes = 30 (مهلة التبرع المعلّق), DefaultCurrency = `USD`)"
+   "markdown": "Create strongly-typed option classes with Data Annotations and register them with `.ValidateOnStart()`:\n\n- `JwtOptions` (SecretKey, Issuer, Audience, ExpiryMinutes, RefreshTokenExpiryDays)\n- `SeedAdminOptions` (Email, Password, FullName)\n- `DonationOptions` (MinAmount = 1.00, MaxAmount = 10,000.00, PendingTimeoutMinutes = 30 (pending donation timeout), DefaultCurrency = `USD`)"
   },
   {
    "type": "Checklist",
    "items": [
-    "التطبيق **يفشل فورًا (Fail Fast)** عند بدء التشغيل إذا كان أي إعداد مطلوب ناقصًا أو غير صالح.",
-    "قراءة الإعدادات فقط عبر كلاسات الـ Options (`IOptions<T>`)، وليس عبر `IConfiguration[\"...\"]` داخل الخدمات.",
-    "`appsettings.json` يحتوي قيمًا مؤقتة (placeholders) فقط."
+    "The application **fails fast** on startup if any required setting is missing or invalid.",
+    "Read settings only through Option classes (`IOptions<T>`), never via `IConfiguration[\"...\"]` inside services.",
+    "`appsettings.json` contains placeholders only."
    ]
   },
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "**الأسرار لا توضع أبدًا في `appsettings*.json`:** مفتاح توقيع JWT، وكلمة مرور الـ Admin، وكلمة مرور قاعدة البيانات تأتي من `dotnet user-secrets` (في التطوير) أو من متغيرات البيئة."
+   "markdown": "**Secrets never go in `appsettings*.json`:** the JWT signing key, the Admin password, and the database password come from `dotnet user-secrets` (in development) or from environment variables."
   },
   {
    "type": "Video",
@@ -513,37 +513,37 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 7 — المصادقة والهوية (ASP.NET Core Identity و JWT)",
+   "text": "Task 7 — Authentication & Identity (ASP.NET Core Identity & JWT)",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "طبّق متطلبات الهوية من SRS §5.1:"
+   "markdown": "Implement the identity requirements from SRS §5.1:"
   },
   {
    "type": "Checklist",
    "items": [
-    "**IDN-01:** التسجيل `POST /auth/register` بـ Email و FullName و Password و `PreferredLanguage` (`en` | `ar`، الافتراضي `en`). المستخدم الجديد يحصل على دور `Donor`.",
-    "**IDN-02:** سياسة كلمة المرور (8 أحرف على الأقل، حرف كبير، حرف صغير، رقم)، والتحقق من عدم تكرار البريد بدون حساسية لحالة الأحرف (`Auth.EmailAlreadyExists` — 409).",
-    "**IDN-03 و IDN-04:** الدخول `POST /auth/login` يُرجع Access Token قصير العمر (15 دقيقة، قابل للضبط) بالـ claims (UserId, Email, Roles) مع Refresh Token آمن.",
-    "**IDN-05 و IDN-06:** تدوير الـ Refresh Token: عمره 7 أيام (قابل للضبط) ويُخزَّن **مُشفَّرًا بالـ hash** في قاعدة البيانات. عند استدعاء `/auth/refresh` يُلغى القديم (`RevokedAt`) ويُربط بالجديد (`ReplacedByTokenId`). الرمز غير الصالح أو المنتهي أو الملغى يُرجع `Auth.RefreshTokenInvalid` (401).",
-    "**IDN-07:** الخروج `POST /auth/logout` يلغي الـ Refresh Token المُرسَل.",
-    "**IDN-08:** endpoint للـ Admin لإنشاء موظفين `POST /admin/staff` (الأدوار `Admin` أو `CampaignManager`) بكلمة مرور مؤقتة. باقي إدارة الموظفين في Sprint 6.",
-    "**IDN-09:** ملف المستخدم الحالي `GET /auth/me`.",
-    "**IDN-10:** المستخدم المعطَّل (`IsActive = false`) ممنوع من الدخول ومن تجديد الرموز (`Auth.AccountDeactivated` — 403).",
-    "**IDN-11:** إنشاء مستخدم Admin أولي عند بدء التشغيل من `SeedAdminOptions` (بدون كلمة مرور مكتوبة في الكود).",
-    "**IDN-12:** نفس الخطأ العام (`Auth.InvalidCredentials` — 401) سواء كان البريد أو كلمة المرور خطأ، لمنع هجمات معرفة المستخدمين (User Enumeration).",
-    "**بيانات البذر (SRS §9.1، للتطوير فقط):** الأدوار `Admin` و `CampaignManager` و `Donor`؛ Admin من الإعدادات؛ مستخدم Campaign Manager ومستخدم Donor للتجربة (بيانات الدخول من user-secrets)؛ خمسة تصنيفات بالعربي والإنجليزي (مثل: صحة، تعليم، إغاثة، أيتام، بيئة)."
+    "**IDN-01:** Registration `POST /auth/register` with Email, FullName, Password, and `PreferredLanguage` (`en` | `ar`, default `en`). The new user gets the `Donor` role.",
+    "**IDN-02:** Password policy (at least 8 characters, upper case, lower case, digit), and case-insensitive unique email check (`Auth.EmailAlreadyExists` — 409).",
+    "**IDN-03 & IDN-04:** Login `POST /auth/login` returns a short-lived Access Token (15 minutes, configurable) with claims (UserId, Email, Roles) along with a secure Refresh Token.",
+    "**IDN-05 & IDN-06:** Refresh Token rotation: its lifetime is 7 days (configurable) and it is stored **hashed** in the database. When `/auth/refresh` is called, the old token is revoked (`RevokedAt`) and linked to the new one (`ReplacedByTokenId`). An invalid, expired, or revoked token returns `Auth.RefreshTokenInvalid` (401).",
+    "**IDN-07:** Logout `POST /auth/logout` revokes the supplied Refresh Token.",
+    "**IDN-08:** Admin endpoint to create staff users `POST /admin/staff` (roles `Admin` or `CampaignManager`) with a temporary password. Managing the rest of staff comes in Sprint 6.",
+    "**IDN-09:** Current user profile `GET /auth/me`.",
+    "**IDN-10:** Deactivated users (`IsActive = false`) are prohibited from logging in or refreshing tokens (`Auth.AccountDeactivated` — 403).",
+    "**IDN-11:** Seed initial Admin user at startup from `SeedAdminOptions` (never a hard-coded password).",
+    "**IDN-12:** Return the same generic error (`Auth.InvalidCredentials` — 401) whether the email or the password is wrong, to prevent User Enumeration attacks.",
+    "**Seed data (SRS §9.1, development only):** roles `Admin`, `CampaignManager`, and `Donor`; one Admin from options; one Campaign Manager and one Donor test user (credentials from user-secrets); five categories with Arabic and English names (e.g., Health, Education, Relief, Orphans, Environment)."
    ]
   },
   {
    "type": "Paragraph",
-   "markdown": "| Method | Path | الصلاحية | الغرض |\n|---|---|---|---|\n| `POST` | `/auth/register` | Anonymous | تسجيل متبرّع |\n| `POST` | `/auth/login` | Anonymous | تسجيل الدخول |\n| `POST` | `/auth/refresh` | Anonymous | تدوير الرموز |\n| `POST` | `/auth/logout` | أي مستخدم مسجَّل | إلغاء الـ Refresh Token |\n| `GET` | `/auth/me` | أي مستخدم مسجَّل | الملف الحالي |\n| `POST` | `/admin/staff` | Admin فقط | إنشاء Admin أو Campaign Manager |\n\nكل المسارات تبدأ بـ `/api/v1`."
+   "markdown": "| Method | Path | Access | Purpose |\n|---|---|---|---|\n| `POST` | `/auth/register` | Anonymous | Register a donor |\n| `POST` | `/auth/login` | Anonymous | Login |\n| `POST` | `/auth/refresh` | Anonymous | Rotate tokens |\n| `POST` | `/auth/logout` | Any authenticated user | Revoke Refresh Token |\n| `GET` | `/auth/me` | Any authenticated user | Current profile |\n| `POST` | `/admin/staff` | Admin only | Create Admin or Campaign Manager |\n\nAll routes start with `/api/v1`."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "إلى أن يصل Result Pattern في Sprint 2، أرجِع أكواد الأخطاء التالية بشكل ثابت من الـ endpoints: `Auth.InvalidCredentials` (401)، `Auth.EmailAlreadyExists` (409)، `Auth.RefreshTokenInvalid` (401)، `Auth.AccountDeactivated` (403)."
+   "markdown": "Until the Result Pattern arrives in Sprint 2, return these error codes consistently from your endpoints: `Auth.InvalidCredentials` (401), `Auth.EmailAlreadyExists` (409), `Auth.RefreshTokenInvalid` (401), `Auth.AccountDeactivated` (403)."
   },
   {
    "type": "Video",
@@ -553,10 +553,10 @@
   },
   {
    "type": "Resource",
-   "title": "⭐1 (بديل لـ .NET 10) Auth made easy with ASP.NET Core Identity — Remigiusz Zalewski (14:50)",
+   "title": "⭐1 (.NET 10 alternative) Auth made easy with ASP.NET Core Identity — Remigiusz Zalewski (14:50)",
    "url": "https://youtu.be/g9YSB4bXhes",
    "kind": "video",
-   "description": "⭐1 (بديل لـ .NET 10) Auth made easy with ASP.NET Core Identity — Remigiusz Zalewski (14:50)"
+   "description": "⭐1 (.NET 10 alternative) Auth made easy with ASP.NET Core Identity — Remigiusz Zalewski (14:50)"
   },
   {
    "type": "Video",
@@ -603,7 +603,7 @@
    "title": "🔄 JWT Authentication with .NET 9 Full Course — Patrick God (1:13:38)",
    "url": "https://youtu.be/6EEltKS8AwA",
    "kind": "video",
-   "description": "PasswordHasher عند 10:01، Scalar عند 12:55، إنشاء التوكن عند 19:55، RefreshToken عند 59:07"
+   "description": "PasswordHasher at 10:01, Scalar at 12:55, Token creation at 19:55, RefreshToken at 59:07"
   },
   {
    "type": "Resource",
@@ -649,38 +649,38 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 8 — وحدة التصنيفات (Categories)",
+   "text": "Task 8 — Categories Module",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "طبّق endpoints التصنيفات وقواعدها من SRS §5.2:"
+   "markdown": "Implement the category endpoints and rules from SRS §5.2:"
   },
   {
    "type": "Checklist",
    "items": [
-    "**CAT-01:** الـ Admin ينشئ التصنيفات ويعدّلها ويحذفها.",
-    "**CAT-02:** اسم التصنيف مطلوب بالعربي والإنجليزي (`NameAr` و `NameEn`)، بحد أقصى 100 حرف، وفريد في كل لغة، مع وصف اختياري باللغتين.",
-    "**CAT-03:** عرض كل التصنيفات `GET /categories` وتصنيف واحد `GET /categories/{id}` متاح بدون تسجيل دخول.",
-    "**CAT-04:** محاولة حذف تصنيف مرتبط بحملات تُرفض بـ `Category.HasCampaigns` (409 Conflict) — القاعدة 10. والتصنيف غير الموجود يُرجع `Category.NotFound` (404).",
-    "عمليات الكتابة على التصنيفات محمية بدور `Admin`."
+    "**CAT-01:** Admin creates, updates, and deletes categories.",
+    "**CAT-02:** Category names are required in both Arabic and English (`NameAr` and `NameEn`), max 100 characters, unique per language, with optional bilingual descriptions.",
+    "**CAT-03:** Listing all categories `GET /categories` and fetching a single category `GET /categories/{id}` are available without authentication.",
+    "**CAT-04:** Attempting to delete a category associated with campaigns is rejected with `Category.HasCampaigns` (409 Conflict) — invariant 10. A missing category returns `Category.NotFound` (404).",
+    "Category write operations are protected by the `Admin` role."
    ]
   },
   {
    "type": "Paragraph",
-   "markdown": "| Method | Path | الصلاحية |\n|---|---|---|\n| `GET` | `/categories` | Anonymous |\n| `GET` | `/categories/{id}` | Anonymous |\n| `POST` | `/categories` | Admin فقط |\n| `PUT` | `/categories/{id}` | Admin فقط |\n| `DELETE` | `/categories/{id}` | Admin فقط |"
+   "markdown": "| Method | Path | Access |\n|---|---|---|\n| `GET` | `/categories` | Anonymous |\n| `GET` | `/categories/{id}` | Anonymous |\n| `POST` | `/categories` | Admin Only |\n| `PUT` | `/categories/{id}` | Admin Only |\n| `DELETE` | `/categories/{id}` | Admin Only |"
   },
   {
    "type": "Heading",
-   "text": "المهمة 9 — توثيق الـ API وحماية Bearer (Scalar / OpenAPI / Swagger)",
+   "text": "Task 9 — API Documentation & Bearer Security (Scalar / OpenAPI / Swagger)",
    "level": 3
   },
   {
    "type": "Checklist",
    "items": [
-    "إعداد توثيق تفاعلي للـ API يدعم إدخال Bearer Token لتجربة الـ endpoints المحمية.",
-    "على **.NET 9 / .NET 10**: تثبيت `Scalar.AspNetCore` وإعداد `BearerSecuritySchemeTransformer`.",
-    "على **.NET 8**: إعداد Swashbuckle SwaggerUI مع `AddSecurityDefinition` و `AddSecurityRequirement`."
+    "Set up interactive API documentation with Bearer Token support to test protected endpoints.",
+    "On **.NET 9 / .NET 10**: Install `Scalar.AspNetCore` and configure `BearerSecuritySchemeTransformer`.",
+    "On **.NET 8**: Configure Swashbuckle SwaggerUI with `AddSecurityDefinition` and `AddSecurityRequirement`."
    ]
   },
   {
@@ -691,14 +691,14 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "الـ Bearer transformer عند 09:50."
+   "markdown": "Bearer transformer at 09:50."
   },
   {
    "type": "Resource",
-   "title": "⭐ (بديل Swagger) Swagger is Gone in .NET 9! Replace It With This — Nick Chapsas (09:34)",
+   "title": "⭐ (Swagger alternative) Swagger is Gone in .NET 9! Replace It With This — Nick Chapsas (09:34)",
    "url": "https://youtu.be/8yI4gD1HruY",
    "kind": "video",
-   "description": "⭐ (بديل Swagger) Swagger is Gone in .NET 9! Replace It With This — Nick Chapsas (09:34)"
+   "description": "⭐ (Swagger alternative) Swagger is Gone in .NET 9! Replace It With This — Nick Chapsas (09:34)"
   },
   {
    "type": "Resource",
@@ -716,21 +716,21 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 10 — توثيق المستودع ودليل التشغيل",
+   "text": "Task 10 — Repository Documentation & Run Guide",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "أنشئ `README.md` مبدئيًا في جذر المشروع يوثّق:"
+   "markdown": "Create an initial `README.md` in the project root documenting:"
   },
   {
    "type": "Checklist",
    "items": [
-    "المتطلبات (.NET 10 SDK و SQL Server).",
-    "أوامر الـ Migrations (`dotnet ef database update`).",
-    "كيفية ضبط بيانات الـ Admin ومستخدمي التجربة عبر `dotnet user-secrets` (بدون رفع القيم الحقيقية أبدًا).",
-    "طريقة فتح Scalar / Swagger وتجربة الـ endpoints المحمية.",
-    "قسم قصير بعنوان «Design decisions»، يشرح لماذا تمر الكتابة عبر Generic Repository + Unit of Work بينما تستخدم القراءة الـ `DbContext` مباشرة مع `AsNoTracking` و projection إلى DTOs (SRS §3.3 القاعدة 5)."
+    "Prerequisites (.NET 10 SDK and SQL Server).",
+    "Database migration commands (`dotnet ef database update`).",
+    "How to set the Admin and test-user credentials via `dotnet user-secrets` (never commit the real values).",
+    "Instructions on opening Scalar / Swagger and testing protected endpoints.",
+    "A short \"Design decisions\" section, explaining why writes go through Generic Repository + Unit of Work while reads use the `DbContext` directly with `AsNoTracking` and projection to DTOs (SRS §3.3 rule 5)."
    ]
   },
   {
@@ -738,77 +738,77 @@
   },
   {
    "type": "Heading",
-   "text": "📦 مخرجات السبرنت",
+   "text": "📦 Sprint Deliverables",
    "level": 2
   },
   {
    "type": "Checklist",
    "items": [
-    "حل من أربع طبقات (`Domain`, `Application`, `Infrastructure`, `Api`) بمراجع صحيحة.",
-    "هيكل مجلدات Vertical Slices حسب الميزة داخل `Application`.",
-    "نموذج مجال غني بكيانات مغلّفة و Value Objects وقواعد ثابتة.",
-    "إعدادات Fluent API وعلاقات وفهارس، مع تطبيق الـ Migration الأولى.",
-    "`ISoftDeletable` مع `SoftDeleteInterceptor` وفلاتر الاستعلام العامة.",
-    "واجهات وتطبيقات Generic Repository و Unit of Work.",
-    "Options Pattern مُعدّ مع `ValidateOnStart()`.",
-    "دورة هوية كاملة: تسجيل، دخول، JWT، Refresh Token مُشفَّر بالـ hash مع تدوير، وخروج.",
-    "بذر Admin تلقائي عند بدء التشغيل، وبيانات تطوير (Campaign Manager، Donor، خمسة تصنيفات).",
-    "وحدة CRUD للتصنيفات ثنائية اللغة مع حماية ارتباطها بالحملات.",
-    "توثيق تفاعلي (Scalar / Swagger) مع مصادقة JWT Bearer.",
-    "توثيق واضح لإعداد المشروع في `README.md`."
+    "Four-layer solution (`Domain`, `Application`, `Infrastructure`, `Api`) with correct references.",
+    "Feature-based Vertical Slices folder structure inside `Application`.",
+    "Rich Domain Model with encapsulated entities, Value Objects, and invariants.",
+    "Fluent API configurations, relationships, and indexes, with the initial migration applied.",
+    "`ISoftDeletable` with `SoftDeleteInterceptor` and global query filters.",
+    "Generic Repository and Unit of Work abstractions and implementations.",
+    "Options Pattern configured with `ValidateOnStart()`.",
+    "Full Identity lifecycle: registration, login, JWT, hashed Refresh Token with rotation, and logout.",
+    "Automated Admin seeding at startup, plus development seed data (Campaign Manager, Donor, five categories).",
+    "Bilingual Categories CRUD module with campaign association protection.",
+    "Interactive documentation (Scalar / Swagger) with JWT Bearer authentication.",
+    "Clear project setup documentation in `README.md`."
    ]
   },
   {
    "type": "Heading",
-   "text": "✅ تعريف الإنجاز (Definition of Done)",
+   "text": "✅ Definition of Done",
    "level": 2
   },
   {
    "type": "Checklist",
    "items": [
-    "الحل يُبنى بدون أخطاء (`dotnet build`).",
-    "`Domain` لا يعتمد على أي حزمة خارجية أو مزوّد قاعدة بيانات.",
-    "لا أسرار أو كلمات مرور في Git (`appsettings.json` يحتوي placeholders فقط).",
-    "محاولات الدخول الخاطئة تُرجع رسالة عامة تمنع معرفة المستخدمين.",
-    "الـ Refresh Token القديم يُلغى عند استخدامه ولا يمكن إعادة استخدامه.",
-    "حذف تصنيف مرتبط بحملات يُرجع 409 Conflict.",
-    "الـ endpoints المحمية تُرجع 401 Unauthorized بدون توكن.",
-    "الـ Refresh Tokens مخزّنة بالـ hash، والتسجيل يرفض البريد المكرر (بدون حساسية لحالة الأحرف) بـ `Auth.EmailAlreadyExists`.",
-    "القواعد العشر في SRS §4.5 ممثّلة في الـ Domain، والكيانات لا تُرجع من الـ API أبدًا (DTOs فقط).",
-    "الـ Migrations مرفوعة، والتطبيق يفشل فورًا عند بدء التشغيل إذا نقص إعداد مطلوب.",
-    "كل متطلب أساسي (IDN-01 إلى IDN-12، و CAT-01 إلى CAT-04) يعمل عبر Scalar / Swagger أو Postman.",
-    "الـ tag `sprint-1` موجود ويشير إلى آخر commit.",
-    "`README.md` محدَّث للسبرنت (ما أُضيف، كيف تجرّبه، والقرارات).",
-    "لا أسرار في تاريخ المستودع (استخدم `dotnet user-secrets` أو متغيرات البيئة).",
-    "تستطيع شرح سبب كل قرار معماري وبدائله والمقايضات (trade-offs) أثناء المراجعة."
+    "Solution builds with zero errors (`dotnet build`).",
+    "`Domain` has zero dependencies on external packages or database providers.",
+    "No secrets or passwords in Git (`appsettings.json` contains placeholders only).",
+    "Invalid login attempts return a generic message to prevent user enumeration.",
+    "Old Refresh Tokens are revoked upon use and cannot be replayed.",
+    "Deleting a category with associated campaigns returns 409 Conflict.",
+    "Protected endpoints return 401 Unauthorized without a token.",
+    "Refresh Tokens are stored hashed, and registration rejects a duplicate email (case-insensitive) with `Auth.EmailAlreadyExists`.",
+    "All ten invariants in SRS §4.5 are modeled in the Domain, and entities are never returned from the API (DTOs only).",
+    "Migrations are committed, and the app fails fast on startup if a required setting is missing.",
+    "Every CORE requirement (IDN-01 to IDN-12, and CAT-01 to CAT-04) works through Scalar / Swagger or Postman.",
+    "Tag `sprint-1` exists and points to the final commit.",
+    "`README.md` is updated for the sprint (what was added, how to try it, and design decisions).",
+    "No secrets in the repository history (use `dotnet user-secrets` or environment variables).",
+    "You can explain the rationale behind every architectural decision, its alternatives, and trade-offs during the review."
    ]
   },
   {
    "type": "Heading",
-   "text": "⭐ مهام إضافية (BONUS)",
+   "text": "⭐ BONUS Tasks",
    "level": 2
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "اختيارية — تُحتسب فقط بعد اجتياز **كل** المهام الأساسية (CORE)."
+   "markdown": "Optional — counts only after **all** CORE tasks pass."
   },
   {
    "type": "Checklist",
    "items": [
-    "**IDN-13:** اكتشاف إعادة استخدام الـ Refresh Token — استخدام رمز ملغى مسبقًا يلغي عائلة الرموز كلها.",
-    "**IDN-14:** endpoints لتغيير كلمة المرور وتحديث الملف الشخصي.",
-    "Unit tests لقواعد المجال من الآن (ستصبح أساسية في Sprint 2)."
+    "**IDN-13:** Refresh token reuse detection — using an already-revoked token revokes the entire token family.",
+    "**IDN-14:** Change password and update profile endpoints.",
+    "Unit tests for domain invariants already in Sprint 1 (they become CORE in Sprint 2)."
    ]
   },
   {
    "type": "Heading",
-   "text": "📤 التسليم",
+   "text": "📤 Submission",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "سلّم رابط المستودع على **tawjeh.net** قبل **الساعة 23:59 يوم 06/11/2026** (اليوم 15). اعمل commit لآخر عمل، ثم أنشئ الـ tag وارفعه:"
+   "markdown": "Submit your repository URL on **tawjeh.net** before **23:59 on 06/11/2026** (Day 15). Commit your final work, then create and push the tag:"
   },
   {
    "type": "Code",
@@ -819,25 +819,25 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "التصحيحات مسموحة خلال نافذة المراجعة (**07/11/2026 إلى 09/11/2026**). **لا تحرّك** الـ tag `sprint-1` ولا تعمل له force-push؛ ضع tag جديد `sprint-1-fix` على الـ commit المصحَّح وارفعه: `git tag sprint-1-fix && git push origin sprint-1-fix`."
+   "markdown": "Fixes are allowed during the review window (**07/11/2026 to 09/11/2026**). **Do not move** or force-push the `sprint-1` tag; create a new `sprint-1-fix` tag on the fixed commit and push it: `git tag sprint-1-fix && git push origin sprint-1-fix`."
   },
   {
    "type": "Heading",
-   "text": "🧮 التقييم (100 نقطة)",
+   "text": "🧮 Grading (100 Points)",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "| الجزء | النقاط | الطريقة |\n|---|---|---|\n| تلقائي | 40 | البناء ينجح، `dotnet test` ينجح، الـ tag `sprint-1` موجود، والـ endpoints الأساسية تستجيب كما هو مطلوب (فحص سريع من المنتور) |\n| قائمة التحقق | 40 | بنود «تعريف الإنجاز» أعلاه (الهيكل، القواعد، الأمان، README) |\n| الشرح | 20 | سؤال عن قرار تصميمي، أو مراجعة القرارات المكتوبة في الـ README |\n\nالمهام الإضافية نقاط زائدة فوق الـ 100 (بحد أقصى يحدده المنتورز) وتُحتسب فقط بعد اجتياز كل المهام الأساسية."
+   "markdown": "| Part | Points | How |\n|---|---|---|\n| Automated | 40 | Build succeeds, `dotnet test` passes, tag `sprint-1` exists, and CORE endpoints respond as specified (mentor smoke check) |\n| Checklist | 40 | The \"Definition of Done\" items above (structure, rules, security, README) |\n| Explanation | 20 | A question on a design decision, or a review of the decisions written in your README |\n\nBonus items are extra credit on top of the 100 points (capped by the mentors) and count only when all CORE items pass."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "**عن بند «`dotnet test` ينجح»:** الاختبارات في Sprint 1 اختيارية (BONUS). إن لم يكن في حلّك مشروع اختبارات بعد، فالبند يعني أن الحل يُبنى وأن الأمر ينتهي دون أي فشل. وإن أضفت اختبارات (BONUS) فيجب أن تنجح كلها."
+   "markdown": "**Regarding \"`dotnet test` passes\":** Unit tests are optional (BONUS) in Sprint 1. If your solution has no test project yet, this means the solution builds and the command finishes without any failures. If you added tests (BONUS), they must all pass."
   },
   {
    "type": "Heading",
-   "text": "💡 إثراء بعد السبرنت",
+   "text": "💡 Post-Sprint Enrichment",
    "level": 2
   },
   {
@@ -935,26 +935,26 @@
  "solutionBlocks": [
   {
    "type": "Heading",
-   "text": "الحل النموذجي — Sprint 1",
+   "text": "Reference Solution — Sprint 1",
    "level": 1
   },
   {
    "type": "Paragraph",
-   "markdown": "هذا حل مرجعي يوضّح **طريقة تفكير** صحيحة لكل مهمة، وليس الطريقة الوحيدة. قارن حلك به، وركّز على **سبب** كل قرار لأنك ستُسأل عنه في المراجعة. الأمثلة مكتوبة لـ .NET 10 مع SQL Server و Controllers."
+   "markdown": "This is a reference solution illustrating a sound **approach** for each task, not the only possible one. Compare your solution against it, and focus on the **rationale** behind each decision since you will be asked about it during review. The examples are written for .NET 10 with SQL Server and Controllers."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "لتقليل الطول، بعض الكلاسات المتشابهة (مثل `PaymentAttempt` و `IdempotencyRecord` وإعداداتها) لم تُكتب كاملة — تُبنى بنفس أسلوب الكيانات المعروضة."
+   "markdown": "To keep things concise, some similar classes (such as `PaymentAttempt`, `IdempotencyRecord`, and their configurations) are not written out in full — build them following the same style as the entities shown."
   },
   {
    "type": "Heading",
-   "text": "المهمة 1 — هيكل الحل واتجاه الاعتماد",
+   "text": "Task 1 — Solution Layout & Dependency Direction",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "نبدأ بالـ CLI حتى يكون الإعداد قابلًا للتكرار. لاحظ أن `Api` لا يعتمد على `Domain` مباشرة في القرارات، وأن `Domain` لا يعرف أي طبقة أخرى."
+   "markdown": "We start with the CLI so the setup is repeatable. Notice that `Api` does not depend on `Domain` directly for business decisions, and `Domain` knows nothing about any other layer."
   },
   {
    "type": "Code",
@@ -964,7 +964,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "هيكل مقترح — لاحظ أن `Application` مقسّم حسب **الميزة** وليس حسب النوع التقني:"
+   "markdown": "Suggested layout — notice that `Application` is organized by **feature** rather than by technical type:"
   },
   {
    "type": "Code",
@@ -974,32 +974,32 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "كل طبقة تسجّل خدماتها بنفسها، فيبقى `Program.cs` قصيرًا ويعرف فقط «ماذا» يُسجَّل وليس «كيف»:"
+   "markdown": "Each layer registers its own services, keeping `Program.cs` short so it only knows \"what\" is registered, not \"how\":"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Application.Features.Categories;\nusing Microsoft.Extensions.DependencyInjection;\n\nnamespace DonationHub.Application;\n\npublic static class DependencyInjection\n{\n    public static IServiceCollection AddApplicationServices(this IServiceCollection services)\n    {\n        // كل use case = handler مستقل داخل الـ slice الخاص به.\n        // في Sprint 2 سيحل MediatR محل هذا التسجيل اليدوي.\n        services.AddScoped<CreateCategoryHandler>();\n        services.AddScoped<UpdateCategoryHandler>();\n        services.AddScoped<DeleteCategoryHandler>();\n        services.AddScoped<GetCategoriesHandler>();\n        services.AddScoped<GetCategoryByIdHandler>();\n        return services;\n    }\n}",
+   "code": "using DonationHub.Application.Features.Categories;\nusing Microsoft.Extensions.DependencyInjection;\n\nnamespace DonationHub.Application;\n\npublic static class DependencyInjection\n{\n    public static IServiceCollection AddApplicationServices(this IServiceCollection services)\n    {\n        // Each use case = an independent handler inside its own slice.\n        // In Sprint 2, MediatR will replace this manual registration.\n        services.AddScoped<CreateCategoryHandler>();\n        services.AddScoped<UpdateCategoryHandler>();\n        services.AddScoped<DeleteCategoryHandler>();\n        services.AddScoped<GetCategoriesHandler>();\n        services.AddScoped<GetCategoryByIdHandler>();\n        return services;\n    }\n}",
    "filename": "DonationHub.Application/DependencyInjection.cs"
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "مشروع `Infrastructure` من نوع classlib، فأضف له `<FrameworkReference Include=\"Microsoft.AspNetCore.App\" />` في الـ `.csproj` حتى يصل إلى Identity Core و Options، ثم أضف الحزم `Microsoft.AspNetCore.Identity.EntityFrameworkCore` و `Microsoft.AspNetCore.Authentication.JwtBearer` و `Microsoft.EntityFrameworkCore.SqlServer` (ليست جزءًا من الـ shared framework). أما `Domain` فيبقى بدون أي PackageReference."
+   "markdown": "The `Infrastructure` project is a classlib, so add `<FrameworkReference Include=\"Microsoft.AspNetCore.App\" />` to its `.csproj` to access Identity Core and Options, then install `Microsoft.AspNetCore.Identity.EntityFrameworkCore`, `Microsoft.AspNetCore.Authentication.JwtBearer`, and `Microsoft.EntityFrameworkCore.SqlServer` (which are not part of the shared framework). Meanwhile, `Domain` remains with zero PackageReference entries."
   },
   {
    "type": "Heading",
-   "text": "المهمة 2 — نموذج المجال الغني",
+   "text": "Task 2 — Rich Domain Model",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "الفكرة الأساسية: **الكيان يحمي نفسه**. لا يمكن لأي كود خارجي أن يضع الكيان في حالة غير صالحة، لأن الـ setters خاصة والتغيير يمر فقط عبر دوال تتحقق من القواعد. لاحظ أن الوقت الحالي (`utcNow`) يُمرَّر كمعامل بدل `DateTime.UtcNow`، وهذا ما يجعل الـ Domain قابلًا للاختبار."
+   "markdown": "The core idea: **an entity protects itself**. No external code can put an entity into an invalid state, because setters are private and modifications happen only through methods that enforce invariants. Notice that the current time (`utcNow`) is passed as a parameter instead of calling `DateTime.UtcNow`, which makes the Domain testable."
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "namespace DonationHub.Domain.Common;\n\npublic abstract class Entity\n{\n    protected Entity() { }                 // لـ EF Core\n    protected Entity(Guid id) => Id = id;\n\n    public Guid Id { get; private init; }\n}\n\npublic sealed class DomainException(string code, string message) : Exception(message)\n{\n    public string Code { get; } = code;    // نفس أكواد كتالوج الأخطاء: Campaign.EndDateInPast ...\n}\n\npublic interface ISoftDeletable\n{\n    bool IsDeleted { get; set; }\n    DateTime? DeletedAtUtc { get; set; }\n}",
+   "code": "namespace DonationHub.Domain.Common;\n\npublic abstract class Entity\n{\n    protected Entity() { }                 // For EF Core\n    protected Entity(Guid id) => Id = id;\n\n    public Guid Id { get; private init; }\n}\n\npublic sealed class DomainException(string code, string message) : Exception(message)\n{\n    public string Code { get; } = code;    // Matches error catalog codes: Campaign.EndDateInPast ...\n}\n\npublic interface ISoftDeletable\n{\n    bool IsDeleted { get; set; }\n    DateTime? DeletedAtUtc { get; set; }\n}",
    "filename": "DonationHub.Domain/Common/Entity.cs"
   },
   {
@@ -1016,67 +1016,67 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "كيان `Campaign` يطبّق القواعد 1 و 2 و 3 و 6 و 7 و 8 داخل دواله:"
+   "markdown": "The `Campaign` entity enforces invariants 1, 2, 3, 6, 7, and 8 inside its methods:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Domain.Campaigns;\n\npublic enum CampaignStatus { Active, Completed, Expired }\n\npublic sealed class Campaign : Entity, ISoftDeletable\n{\n    private Campaign() { }                       // EF Core\n    private Campaign(Guid id) : base(id) { }\n\n    public string TitleAr { get; private set; } = default!;\n    public string TitleEn { get; private set; } = default!;\n    public string DescriptionAr { get; private set; } = default!;\n    public string DescriptionEn { get; private set; } = default!;\n    public decimal GoalAmount { get; private set; }\n    public decimal RaisedAmount { get; private set; }\n    public DateTime EndDate { get; private set; }\n    public Guid CategoryId { get; private set; }\n    public string? BannerFileName { get; private set; }\n    public CampaignStatus Status { get; private set; }\n    public Guid CreatedByUserId { get; private set; }\n    public DateTime CreatedAt { get; private set; }\n    public DateTime UpdatedAt { get; private set; }\n    public byte[] RowVersion { get; private set; } = [];\n\n    // يضبطها الـ SoftDeleteInterceptor فقط (الواجهة تفرض set عامًا)\n    // القاعدة 9: ISoftDeletable + الـ interceptor يحوّلان كل حذف للحملة إلى حذف ناعم، فالحذف النهائي مستحيل بالتصميم\n    public bool IsDeleted { get; set; }\n    public DateTime? DeletedAtUtc { get; set; }\n\n    public bool IsFinal => Status is CampaignStatus.Completed or CampaignStatus.Expired;\n\n    public static Campaign Create(\n        string titleAr, string titleEn, string descriptionAr, string descriptionEn,\n        decimal goalAmount, DateTime endDate, Guid categoryId, Guid createdByUserId, DateTime utcNow)\n    {\n        EnsureGoalIsPositive(goalAmount);          // القاعدة 1\n        EnsureEndDateInFuture(endDate, utcNow);    // القاعدة 2\n\n        return new Campaign(Guid.NewGuid())\n        {\n            TitleAr = titleAr.Trim(),\n            TitleEn = titleEn.Trim(),\n            DescriptionAr = descriptionAr.Trim(),\n            DescriptionEn = descriptionEn.Trim(),\n            GoalAmount = goalAmount,\n            RaisedAmount = 0,\n            EndDate = endDate,\n            CategoryId = categoryId,\n            CreatedByUserId = createdByUserId,\n            Status = CampaignStatus.Active,\n            CreatedAt = utcNow,\n            UpdatedAt = utcNow\n        };\n    }\n\n    public void Update(\n        string titleAr, string titleEn, string descriptionAr, string descriptionEn,\n        decimal goalAmount, DateTime endDate, Guid categoryId, DateTime utcNow)\n    {\n        if (IsFinal)                                // القاعدة 8\n            throw new DomainException(\"Campaign.NotActive\", \"A completed or expired campaign cannot be changed.\");\n\n        EnsureGoalIsPositive(goalAmount);\n        if (goalAmount < RaisedAmount)              // القاعدة 7\n            throw new DomainException(\"Campaign.GoalBelowRaised\", \"Goal amount cannot be lower than the raised amount.\");\n        if (endDate != EndDate)                     // القاعدة 2 عند تغيير التاريخ فقط\n            EnsureEndDateInFuture(endDate, utcNow);\n\n        TitleAr = titleAr.Trim();\n        TitleEn = titleEn.Trim();\n        DescriptionAr = descriptionAr.Trim();\n        DescriptionEn = descriptionEn.Trim();\n        GoalAmount = goalAmount;\n        EndDate = endDate;\n        CategoryId = categoryId;\n        UpdatedAt = utcNow;\n    }\n\n    public void EnsureCanAcceptDonation(DateTime utcNow)   // القاعدة 3\n    {\n        if (Status != CampaignStatus.Active || EndDate <= utcNow)\n            throw new DomainException(\"Campaign.NotActive\", \"The campaign is not accepting donations.\");\n    }\n\n    // internal: لا يستدعيها إلا Donation.MarkSucceeded داخل نفس الـ assembly ← القاعدة 5\n    internal void ApplySucceededDonation(decimal amount, DateTime utcNow)\n    {\n        // دفعة متأخرة على حملة منتهية تُقبل (المتبرع دُفع منه بالفعل) لكن الحالة لا تتغيّر\n        RaisedAmount += amount;\n        if (Status == CampaignStatus.Active && RaisedAmount >= GoalAmount)\n            Status = CampaignStatus.Completed;      // القاعدة 6\n        UpdatedAt = utcNow;\n    }\n\n    public void MarkExpiredIfDue(DateTime utcNow)\n    {\n        if (Status == CampaignStatus.Active && EndDate <= utcNow)\n        {\n            Status = CampaignStatus.Expired;\n            UpdatedAt = utcNow;\n        }\n    }\n\n    private static void EnsureGoalIsPositive(decimal goalAmount)\n    {\n        if (goalAmount <= 0)\n            throw new DomainException(\"Validation.Failed\", \"Goal amount must be greater than zero.\");\n    }\n\n    private static void EnsureEndDateInFuture(DateTime endDate, DateTime utcNow)\n    {\n        if (endDate <= utcNow)\n            throw new DomainException(\"Campaign.EndDateInPast\", \"End date must be in the future.\");\n    }\n}",
+   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Domain.Campaigns;\n\npublic enum CampaignStatus { Active, Completed, Expired }\n\npublic sealed class Campaign : Entity, ISoftDeletable\n{\n    private Campaign() { }                       // EF Core\n    private Campaign(Guid id) : base(id) { }\n\n    public string TitleAr { get; private set; } = default!;\n    public string TitleEn { get; private set; } = default!;\n    public string DescriptionAr { get; private set; } = default!;\n    public string DescriptionEn { get; private set; } = default!;\n    public decimal GoalAmount { get; private set; }\n    public decimal RaisedAmount { get; private set; }\n    public DateTime EndDate { get; private set; }\n    public Guid CategoryId { get; private set; }\n    public string? BannerFileName { get; private set; }\n    public CampaignStatus Status { get; private set; }\n    public Guid CreatedByUserId { get; private set; }\n    public DateTime CreatedAt { get; private set; }\n    public DateTime UpdatedAt { get; private set; }\n    public byte[] RowVersion { get; private set; } = [];\n\n    // Set only by SoftDeleteInterceptor (the interface requires a public setter)\n    // Invariant 9: ISoftDeletable + the interceptor turn every campaign deletion into a soft delete, making hard deletion impossible by design\n    public bool IsDeleted { get; set; }\n    public DateTime? DeletedAtUtc { get; set; }\n\n    public bool IsFinal => Status is CampaignStatus.Completed or CampaignStatus.Expired;\n\n    public static Campaign Create(\n        string titleAr, string titleEn, string descriptionAr, string descriptionEn,\n        decimal goalAmount, DateTime endDate, Guid categoryId, Guid createdByUserId, DateTime utcNow)\n    {\n        EnsureGoalIsPositive(goalAmount);          // Invariant 1\n        EnsureEndDateInFuture(endDate, utcNow);    // Invariant 2\n\n        return new Campaign(Guid.NewGuid())\n        {\n            TitleAr = titleAr.Trim(),\n            TitleEn = titleEn.Trim(),\n            DescriptionAr = descriptionAr.Trim(),\n            DescriptionEn = descriptionEn.Trim(),\n            GoalAmount = goalAmount,\n            RaisedAmount = 0,\n            EndDate = endDate,\n            CategoryId = categoryId,\n            CreatedByUserId = createdByUserId,\n            Status = CampaignStatus.Active,\n            CreatedAt = utcNow,\n            UpdatedAt = utcNow\n        };\n    }\n\n    public void Update(\n        string titleAr, string titleEn, string descriptionAr, string descriptionEn,\n        decimal goalAmount, DateTime endDate, Guid categoryId, DateTime utcNow)\n    {\n        if (IsFinal)                                // Invariant 8\n            throw new DomainException(\"Campaign.NotActive\", \"A completed or expired campaign cannot be changed.\");\n\n        EnsureGoalIsPositive(goalAmount);\n        if (goalAmount < RaisedAmount)              // Invariant 7\n            throw new DomainException(\"Campaign.GoalBelowRaised\", \"Goal amount cannot be lower than the raised amount.\");\n        if (endDate != EndDate)                     // Invariant 2 only when the end date changes\n            EnsureEndDateInFuture(endDate, utcNow);\n\n        TitleAr = titleAr.Trim();\n        TitleEn = titleEn.Trim();\n        DescriptionAr = descriptionAr.Trim();\n        DescriptionEn = descriptionEn.Trim();\n        GoalAmount = goalAmount;\n        EndDate = endDate;\n        CategoryId = categoryId;\n        UpdatedAt = utcNow;\n    }\n\n    public void EnsureCanAcceptDonation(DateTime utcNow)   // Invariant 3\n    {\n        if (Status != CampaignStatus.Active || EndDate <= utcNow)\n            throw new DomainException(\"Campaign.NotActive\", \"The campaign is not accepting donations.\");\n    }\n\n    // internal: called only by Donation.MarkSucceeded within the same assembly → Invariant 5\n    internal void ApplySucceededDonation(decimal amount, DateTime utcNow)\n    {\n        // A late payment on an expired campaign is accepted (the donor was already charged), but the status does not change\n        RaisedAmount += amount;\n        if (Status == CampaignStatus.Active && RaisedAmount >= GoalAmount)\n            Status = CampaignStatus.Completed;      // Invariant 6\n        UpdatedAt = utcNow;\n    }\n\n    public void MarkExpiredIfDue(DateTime utcNow)\n    {\n        if (Status == CampaignStatus.Active && EndDate <= utcNow)\n        {\n            Status = CampaignStatus.Expired;\n            UpdatedAt = utcNow;\n        }\n    }\n\n    private static void EnsureGoalIsPositive(decimal goalAmount)\n    {\n        if (goalAmount <= 0)\n            throw new DomainException(\"Validation.Failed\", \"Goal amount must be greater than zero.\");\n    }\n\n    private static void EnsureEndDateInFuture(DateTime endDate, DateTime utcNow)\n    {\n        if (endDate <= utcNow)\n            throw new DomainException(\"Campaign.EndDateInPast\", \"End date must be in the future.\");\n    }\n}",
    "filename": "DonationHub.Domain/Campaigns/Campaign.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "كيان `Donation` يطبّق القواعد 3 و 4 و 5 و 8. لاحظ أن الحدود الدنيا والقصوى **تُمرَّر** إليه، لأن `DonationOptions` من طبقة Infrastructure والـ Domain لا يعرفها:"
+   "markdown": "The `Donation` entity enforces invariants 3, 4, 5, and 8. Notice that the minimum and maximum bounds are **passed in** to it, because `DonationOptions` belongs to Infrastructure and the Domain has no knowledge of it:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\n\nnamespace DonationHub.Domain.Donations;\n\npublic enum DonationStatus { Pending, Succeeded, Failed }\n\npublic sealed class Donation : Entity\n{\n    private Donation() { }\n    private Donation(Guid id) : base(id) { }\n\n    public Guid CampaignId { get; private set; }\n    public Guid DonorUserId { get; private set; }\n    public decimal Amount { get; private set; }\n    public DonationStatus Status { get; private set; }\n    public DateTime CreatedAt { get; private set; }\n    public DateTime? CompletedAt { get; private set; }\n    public string? FailureReason { get; private set; }\n    public string? ReceiptNumber { get; private set; }\n    public string? ReceiptFileName { get; private set; }\n\n    public static Donation Create(Campaign campaign, Guid donorUserId, decimal amount,\n        decimal minAmount, decimal maxAmount, DateTime utcNow)\n    {\n        campaign.EnsureCanAcceptDonation(utcNow);                 // القاعدة 3\n        if (amount < minAmount || amount > maxAmount)             // القاعدة 4\n            throw new DomainException(\"Donation.AmountOutOfRange\",\n                $\"Amount must be between {minAmount} and {maxAmount}.\");\n\n        return new Donation(Guid.NewGuid())\n        {\n            CampaignId = campaign.Id,\n            DonorUserId = donorUserId,\n            Amount = amount,\n            Status = DonationStatus.Pending,\n            CreatedAt = utcNow\n        };\n    }\n\n    public void MarkSucceeded(Campaign campaign, string receiptNumber, DateTime utcNow)\n    {\n        EnsurePending();                                          // القاعدة 8\n        if (campaign.Id != CampaignId)\n            throw new DomainException(\"Donation.InvalidState\", \"Donation does not belong to this campaign.\");\n\n        Status = DonationStatus.Succeeded;\n        CompletedAt = utcNow;\n        ReceiptNumber = receiptNumber;\n        campaign.ApplySucceededDonation(Amount, utcNow);          // القاعدتان 5 و 6\n    }\n\n    public void MarkFailed(string reason, DateTime utcNow)\n    {\n        EnsurePending();\n        Status = DonationStatus.Failed;\n        FailureReason = reason;\n        CompletedAt = utcNow;\n    }\n\n    private void EnsurePending()\n    {\n        if (Status != DonationStatus.Pending)\n            throw new DomainException(\"Donation.InvalidState\", \"Donation is already in a final state.\");\n    }\n}",
+   "code": "using DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\n\nnamespace DonationHub.Domain.Donations;\n\npublic enum DonationStatus { Pending, Succeeded, Failed }\n\npublic sealed class Donation : Entity\n{\n    private Donation() { }\n    private Donation(Guid id) : base(id) { }\n\n    public Guid CampaignId { get; private set; }\n    public Guid DonorUserId { get; private set; }\n    public decimal Amount { get; private set; }\n    public DonationStatus Status { get; private set; }\n    public DateTime CreatedAt { get; private set; }\n    public DateTime? CompletedAt { get; private set; }\n    public string? FailureReason { get; private set; }\n    public string? ReceiptNumber { get; private set; }\n    public string? ReceiptFileName { get; private set; }\n\n    public static Donation Create(Campaign campaign, Guid donorUserId, decimal amount,\n        decimal minAmount, decimal maxAmount, DateTime utcNow)\n    {\n        campaign.EnsureCanAcceptDonation(utcNow);                 // Invariant 3\n        if (amount < minAmount || amount > maxAmount)             // Invariant 4\n            throw new DomainException(\"Donation.AmountOutOfRange\",\n                $\"Amount must be between {minAmount} and {maxAmount}.\");\n\n        return new Donation(Guid.NewGuid())\n        {\n            CampaignId = campaign.Id,\n            DonorUserId = donorUserId,\n            Amount = amount,\n            Status = DonationStatus.Pending,\n            CreatedAt = utcNow\n        };\n    }\n\n    public void MarkSucceeded(Campaign campaign, string receiptNumber, DateTime utcNow)\n    {\n        EnsurePending();                                          // Invariant 8\n        if (campaign.Id != CampaignId)\n            throw new DomainException(\"Donation.InvalidState\", \"Donation does not belong to this campaign.\");\n\n        Status = DonationStatus.Succeeded;\n        CompletedAt = utcNow;\n        ReceiptNumber = receiptNumber;\n        campaign.ApplySucceededDonation(Amount, utcNow);          // Invariants 5 and 6\n    }\n\n    public void MarkFailed(string reason, DateTime utcNow)\n    {\n        EnsurePending();\n        Status = DonationStatus.Failed;\n        FailureReason = reason;\n        CompletedAt = utcNow;\n    }\n\n    private void EnsurePending()\n    {\n        if (Status != DonationStatus.Pending)\n            throw new DomainException(\"Donation.InvalidState\", \"Donation is already in a final state.\");\n    }\n}",
    "filename": "DonationHub.Domain/Donations/Donation.cs"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Domain.Categories;\n\npublic sealed class Category : Entity\n{\n    public const int NameMaxLength = 100;\n\n    private Category() { }\n    private Category(Guid id) : base(id) { }\n\n    public string NameAr { get; private set; } = default!;\n    public string NameEn { get; private set; } = default!;\n    public string? DescriptionAr { get; private set; }\n    public string? DescriptionEn { get; private set; }\n    public DateTime CreatedAt { get; private set; }\n    public DateTime UpdatedAt { get; private set; }\n\n    public static Category Create(string nameAr, string nameEn, string? descriptionAr, string? descriptionEn, DateTime utcNow) =>\n        new(Guid.NewGuid())\n        {\n            NameAr = RequireName(nameAr, nameof(NameAr)),\n            NameEn = RequireName(nameEn, nameof(NameEn)),\n            DescriptionAr = Normalize(descriptionAr),\n            DescriptionEn = Normalize(descriptionEn),\n            CreatedAt = utcNow,\n            UpdatedAt = utcNow\n        };\n\n    public void Update(string nameAr, string nameEn, string? descriptionAr, string? descriptionEn, DateTime utcNow)\n    {\n        NameAr = RequireName(nameAr, nameof(NameAr));\n        NameEn = RequireName(nameEn, nameof(NameEn));\n        DescriptionAr = Normalize(descriptionAr);\n        DescriptionEn = Normalize(descriptionEn);\n        UpdatedAt = utcNow;\n    }\n\n    // القاعدة 10: الكيان لا يستعلم من قاعدة البيانات؛ الـ handler يجلب الحقيقة ويمرّرها، والقرار هنا\n    public void EnsureCanBeDeleted(bool hasCampaigns)\n    {\n        if (hasCampaigns)\n            throw new DomainException(\"Category.HasCampaigns\", \"Cannot delete a category that has campaigns.\");\n    }\n\n    private static string RequireName(string? value, string field)\n    {\n        var name = value?.Trim();\n        if (string.IsNullOrEmpty(name))\n            throw new DomainException(\"Validation.Failed\", $\"{field} is required.\");\n        if (name.Length > NameMaxLength)\n            throw new DomainException(\"Validation.Failed\", $\"{field} must be at most {NameMaxLength} characters.\");\n        return name;\n    }\n\n    private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();\n}",
+   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Domain.Categories;\n\npublic sealed class Category : Entity\n{\n    public const int NameMaxLength = 100;\n\n    private Category() { }\n    private Category(Guid id) : base(id) { }\n\n    public string NameAr { get; private set; } = default!;\n    public string NameEn { get; private set; } = default!;\n    public string? DescriptionAr { get; private set; }\n    public string? DescriptionEn { get; private set; }\n    public DateTime CreatedAt { get; private set; }\n    public DateTime UpdatedAt { get; private set; }\n\n    public static Category Create(string nameAr, string nameEn, string? descriptionAr, string? descriptionEn, DateTime utcNow) =>\n        new(Guid.NewGuid())\n        {\n            NameAr = RequireName(nameAr, nameof(NameAr)),\n            NameEn = RequireName(nameEn, nameof(NameEn)),\n            DescriptionAr = Normalize(descriptionAr),\n            DescriptionEn = Normalize(descriptionEn),\n            CreatedAt = utcNow,\n            UpdatedAt = utcNow\n        };\n\n    public void Update(string nameAr, string nameEn, string? descriptionAr, string? descriptionEn, DateTime utcNow)\n    {\n        NameAr = RequireName(nameAr, nameof(NameAr));\n        NameEn = RequireName(nameEn, nameof(NameEn));\n        DescriptionAr = Normalize(descriptionAr);\n        DescriptionEn = Normalize(descriptionEn);\n        UpdatedAt = utcNow;\n    }\n\n    // Invariant 10: the entity does not query the database; the handler fetches the fact and passes it in, while the decision lives here\n    public void EnsureCanBeDeleted(bool hasCampaigns)\n    {\n        if (hasCampaigns)\n            throw new DomainException(\"Category.HasCampaigns\", \"Cannot delete a category that has campaigns.\");\n    }\n\n    private static string RequireName(string? value, string field)\n    {\n        var name = value?.Trim();\n        if (string.IsNullOrEmpty(name))\n            throw new DomainException(\"Validation.Failed\", $\"{field} is required.\");\n        if (name.Length > NameMaxLength)\n            throw new DomainException(\"Validation.Failed\", $\"{field} must be at most {NameMaxLength} characters.\");\n        return name;\n    }\n\n    private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();\n}",
    "filename": "DonationHub.Domain/Categories/Category.cs"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Domain.Identity;\n\npublic sealed class RefreshToken : Entity\n{\n    private RefreshToken() { }\n    private RefreshToken(Guid id) : base(id) { }\n\n    public Guid UserId { get; private set; }\n    public string TokenHash { get; private set; } = default!;\n    public DateTime CreatedAt { get; private set; }\n    public DateTime ExpiresAt { get; private set; }\n    public DateTime? RevokedAt { get; private set; }\n    public Guid? ReplacedByTokenId { get; private set; }\n\n    public static RefreshToken Issue(Guid userId, string tokenHash, DateTime utcNow, TimeSpan lifetime) =>\n        new(Guid.NewGuid())\n        {\n            UserId = userId,\n            TokenHash = tokenHash,\n            CreatedAt = utcNow,\n            ExpiresAt = utcNow.Add(lifetime)\n        };\n\n    public bool IsActive(DateTime utcNow) => RevokedAt is null && ExpiresAt > utcNow;\n\n    public void Revoke(DateTime utcNow, Guid? replacedByTokenId = null)\n    {\n        if (RevokedAt is not null) return;      // الإلغاء مرة واحدة فقط\n        RevokedAt = utcNow;\n        ReplacedByTokenId = replacedByTokenId;\n    }\n}",
+   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Domain.Identity;\n\npublic sealed class RefreshToken : Entity\n{\n    private RefreshToken() { }\n    private RefreshToken(Guid id) : base(id) { }\n\n    public Guid UserId { get; private set; }\n    public string TokenHash { get; private set; } = default!;\n    public DateTime CreatedAt { get; private set; }\n    public DateTime ExpiresAt { get; private set; }\n    public DateTime? RevokedAt { get; private set; }\n    public Guid? ReplacedByTokenId { get; private set; }\n\n    public static RefreshToken Issue(Guid userId, string tokenHash, DateTime utcNow, TimeSpan lifetime) =>\n        new(Guid.NewGuid())\n        {\n            UserId = userId,\n            TokenHash = tokenHash,\n            CreatedAt = utcNow,\n            ExpiresAt = utcNow.Add(lifetime)\n        };\n\n    public bool IsActive(DateTime utcNow) => RevokedAt is null && ExpiresAt > utcNow;\n\n    public void Revoke(DateTime utcNow, Guid? replacedByTokenId = null)\n    {\n        if (RevokedAt is not null) return;      // Revoke only once\n        RevokedAt = utcNow;\n        ReplacedByTokenId = replacedByTokenId;\n    }\n}",
    "filename": "DonationHub.Domain/Identity/RefreshToken.cs"
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "**أين القاعدتان 9 و 10؟** كلتاهما في الـ Domain. **القاعدة 10** في `Category.EnsureCanBeDeleted(hasCampaigns)`: الكيان لا يستطيع الاستعلام من قاعدة البيانات، لذلك يشغّل الـ handler الاستعلام («هل للتصنيف حملات؟») ويمرّر النتيجة؛ الـ Domain يقرّر والـ handler يجلب الحقيقة فقط (انظر المهمة 8). **القاعدة 9** ممثّلة بـ `ISoftDeletable` مع `SoftDeleteInterceptor` (المهمة 5): كل حذف لحملة يتحوّل إلى حذف ناعم، فالحذف النهائي لحملة لها تبرعات مستحيل بالتصميم (أشد من القاعدة، ويحققها). ويبقى `DeleteBehavior.Restrict` شبكة أمان على مستوى قاعدة البيانات."
+   "markdown": "**Where are invariants 9 and 10?** Both live in the Domain. **Invariant 10** is in `Category.EnsureCanBeDeleted(hasCampaigns)`: an entity cannot query the database, so the handler runs the query (\"Does the category have campaigns?\") and passes in the result; the Domain decides and the handler only fetches the fact (see Task 8). **Invariant 9** is modeled by `ISoftDeletable` together with `SoftDeleteInterceptor` (Task 5): every deletion of a campaign becomes a soft delete, making hard-deleting a campaign with donations impossible by design (stronger than the invariant, and satisfies it). And `DeleteBehavior.Restrict` remains a safety net at the database level."
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "**لماذا `ApplicationUser` ليس في الـ Domain؟** لأنه يرث من `IdentityUser<Guid>`، وهذا يجعل الـ Domain يعتمد على حزمة Identity. الحل الشائع: نضعه في `Infrastructure/Identity`، ونربط الكيانات به عبر `Guid` فقط (`CreatedByUserId` و `DonorUserId`)."
+   "markdown": "**Why is `ApplicationUser` not in the Domain?** Because it inherits from `IdentityUser<Guid>`, which would make the Domain depend on the Identity package. The common solution: place it in `Infrastructure/Identity`, and reference it from entities via `Guid` only (`CreatedByUserId` and `DonorUserId`)."
   },
   {
    "type": "Heading",
-   "text": "المهمة 3 — AppDbContext والإعدادات",
+   "text": "Task 3 — AppDbContext & Configurations",
    "level": 2
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Categories;\nusing DonationHub.Domain.Donations;\nusing DonationHub.Domain.Identity;\nusing DonationHub.Infrastructure.Identity;\nusing Microsoft.AspNetCore.Identity;\nusing Microsoft.AspNetCore.Identity.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Infrastructure.Persistence;\n\npublic sealed class AppDbContext(DbContextOptions<AppDbContext> options)\n    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)\n{\n    public DbSet<Category> Categories => Set<Category>();\n    public DbSet<Campaign> Campaigns => Set<Campaign>();\n    public DbSet<Donation> Donations => Set<Donation>();\n    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();\n    // PaymentAttempts, ProcessedStripeEvents, IdempotencyRecords بنفس الطريقة\n\n    protected override void OnModelCreating(ModelBuilder builder)\n    {\n        base.OnModelCreating(builder);   // أولًا: جداول Identity\n        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);\n    }\n}",
+   "code": "using DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Categories;\nusing DonationHub.Domain.Donations;\nusing DonationHub.Domain.Identity;\nusing DonationHub.Infrastructure.Identity;\nusing Microsoft.AspNetCore.Identity;\nusing Microsoft.AspNetCore.Identity.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Infrastructure.Persistence;\n\npublic sealed class AppDbContext(DbContextOptions<AppDbContext> options)\n    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)\n{\n    public DbSet<Category> Categories => Set<Category>();\n    public DbSet<Campaign> Campaigns => Set<Campaign>();\n    public DbSet<Donation> Donations => Set<Donation>();\n    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();\n    // PaymentAttempts, ProcessedStripeEvents, and IdempotencyRecords follow the same pattern\n\n    protected override void OnModelCreating(ModelBuilder builder)\n    {\n        base.OnModelCreating(builder);   // First: Identity tables\n        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);\n    }\n}",
    "filename": "DonationHub.Infrastructure/Persistence/AppDbContext.cs"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Categories;\nusing DonationHub.Infrastructure.Identity;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore.Metadata.Builders;\n\nnamespace DonationHub.Infrastructure.Persistence.Configurations;\n\npublic sealed class CampaignConfiguration : IEntityTypeConfiguration<Campaign>\n{\n    public void Configure(EntityTypeBuilder<Campaign> builder)\n    {\n        builder.ToTable(\"Campaigns\");\n        builder.HasKey(c => c.Id);\n\n        builder.Property(c => c.TitleAr).HasMaxLength(200).IsRequired();\n        builder.Property(c => c.TitleEn).HasMaxLength(200).IsRequired();\n        builder.Property(c => c.DescriptionAr).HasMaxLength(4000).IsRequired();\n        builder.Property(c => c.DescriptionEn).HasMaxLength(4000).IsRequired();\n        builder.Property(c => c.GoalAmount).HasPrecision(18, 2);\n        builder.Property(c => c.RaisedAmount).HasPrecision(18, 2);\n        builder.Property(c => c.BannerFileName).HasMaxLength(260);\n        builder.Property(c => c.Status).HasConversion<string>().HasMaxLength(20);\n        builder.Property(c => c.RowVersion).IsRowVersion();            // concurrency token\n\n        builder.HasOne<Category>()\n            .WithMany()\n            .HasForeignKey(c => c.CategoryId)\n            .OnDelete(DeleteBehavior.Restrict);                          // القاعدة 10 على مستوى DB\n\n        builder.HasOne<ApplicationUser>()\n            .WithMany()\n            .HasForeignKey(c => c.CreatedByUserId)\n            .OnDelete(DeleteBehavior.Restrict);\n\n        builder.HasIndex(c => new { c.Status, c.EndDate });           // للقوائم العامة والـ job الدوري لاحقًا\n        builder.HasQueryFilter(c => !c.IsDeleted);\n    }\n}",
+   "code": "using DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Categories;\nusing DonationHub.Infrastructure.Identity;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore.Metadata.Builders;\n\nnamespace DonationHub.Infrastructure.Persistence.Configurations;\n\npublic sealed class CampaignConfiguration : IEntityTypeConfiguration<Campaign>\n{\n    public void Configure(EntityTypeBuilder<Campaign> builder)\n    {\n        builder.ToTable(\"Campaigns\");\n        builder.HasKey(c => c.Id);\n\n        builder.Property(c => c.TitleAr).HasMaxLength(200).IsRequired();\n        builder.Property(c => c.TitleEn).HasMaxLength(200).IsRequired();\n        builder.Property(c => c.DescriptionAr).HasMaxLength(4000).IsRequired();\n        builder.Property(c => c.DescriptionEn).HasMaxLength(4000).IsRequired();\n        builder.Property(c => c.GoalAmount).HasPrecision(18, 2);\n        builder.Property(c => c.RaisedAmount).HasPrecision(18, 2);\n        builder.Property(c => c.BannerFileName).HasMaxLength(260);\n        builder.Property(c => c.Status).HasConversion<string>().HasMaxLength(20);\n        builder.Property(c => c.RowVersion).IsRowVersion();            // concurrency token\n\n        builder.HasOne<Category>()\n            .WithMany()\n            .HasForeignKey(c => c.CategoryId)\n            .OnDelete(DeleteBehavior.Restrict);                          // Invariant 10 at DB level\n\n        builder.HasOne<ApplicationUser>()\n            .WithMany()\n            .HasForeignKey(c => c.CreatedByUserId)\n            .OnDelete(DeleteBehavior.Restrict);\n\n        builder.HasIndex(c => new { c.Status, c.EndDate });           // For public lists and the recurring job later\n        builder.HasQueryFilter(c => !c.IsDeleted);\n    }\n}",
    "filename": "DonationHub.Infrastructure/Persistence/Configurations/CampaignConfiguration.cs"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Categories;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore.Metadata.Builders;\n\nnamespace DonationHub.Infrastructure.Persistence.Configurations;\n\npublic sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>\n{\n    public void Configure(EntityTypeBuilder<Category> builder)\n    {\n        builder.ToTable(\"Categories\");\n        builder.HasKey(c => c.Id);\n        builder.Property(c => c.NameAr).HasMaxLength(Category.NameMaxLength).IsRequired();\n        builder.Property(c => c.NameEn).HasMaxLength(Category.NameMaxLength).IsRequired();\n        builder.Property(c => c.DescriptionAr).HasMaxLength(1000);\n        builder.Property(c => c.DescriptionEn).HasMaxLength(1000);\n\n        builder.HasIndex(c => c.NameAr).IsUnique();   // CAT-02: فريد في كل لغة\n        builder.HasIndex(c => c.NameEn).IsUnique();\n    }\n}",
+   "code": "using DonationHub.Domain.Categories;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore.Metadata.Builders;\n\nnamespace DonationHub.Infrastructure.Persistence.Configurations;\n\npublic sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>\n{\n    public void Configure(EntityTypeBuilder<Category> builder)\n    {\n        builder.ToTable(\"Categories\");\n        builder.HasKey(c => c.Id);\n        builder.Property(c => c.NameAr).HasMaxLength(Category.NameMaxLength).IsRequired();\n        builder.Property(c => c.NameEn).HasMaxLength(Category.NameMaxLength).IsRequired();\n        builder.Property(c => c.DescriptionAr).HasMaxLength(1000);\n        builder.Property(c => c.DescriptionEn).HasMaxLength(1000);\n\n        builder.HasIndex(c => c.NameAr).IsUnique();   // CAT-02: unique per language\n        builder.HasIndex(c => c.NameEn).IsUnique();\n    }\n}",
    "filename": "DonationHub.Infrastructure/Persistence/Configurations/CategoryConfiguration.cs"
   },
   {
@@ -1089,12 +1089,12 @@
    "type": "Code",
    "language": "csharp",
    "filename": "DonationHub.Infrastructure/Persistence/Configurations/RefreshTokenConfiguration.cs",
-   "code": "using DonationHub.Domain.Identity;\nusing DonationHub.Infrastructure.Identity;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore.Metadata.Builders;\n\nnamespace DonationHub.Infrastructure.Persistence.Configurations;\n\npublic sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>\n{\n    public void Configure(EntityTypeBuilder<RefreshToken> builder)\n    {\n        builder.ToTable(\"RefreshTokens\");\n        builder.HasKey(t => t.Id);\n        builder.Property(t => t.TokenHash).HasMaxLength(64).IsRequired();   // SHA-256 بصيغة hex\n        builder.HasIndex(t => t.TokenHash).IsUnique();                        // البحث يتم بالـ hash\n\n        // طلبا refresh متزامنان بنفس الرمز: الثاني يفشل بدل أن يحصل هو أيضًا على رمز جديد\n        builder.Property(t => t.RevokedAt).IsConcurrencyToken();\n\n        builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);\n    }\n}"
+   "code": "using DonationHub.Domain.Identity;\nusing DonationHub.Infrastructure.Identity;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore.Metadata.Builders;\n\nnamespace DonationHub.Infrastructure.Persistence.Configurations;\n\npublic sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>\n{\n    public void Configure(EntityTypeBuilder<RefreshToken> builder)\n    {\n        builder.ToTable(\"RefreshTokens\");\n        builder.HasKey(t => t.Id);\n        builder.Property(t => t.TokenHash).HasMaxLength(64).IsRequired();   // SHA-256 in hex format\n        builder.HasIndex(t => t.TokenHash).IsUnique();                        // Lookups are done by hash\n\n        // Two concurrent refresh requests with the same token: the second fails instead of also receiving a new token\n        builder.Property(t => t.RevokedAt).IsConcurrencyToken();\n\n        builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);\n    }\n}"
   },
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "سيُظهر EF Core تحذيرًا لأن `Campaign` عليها query filter وهي الطرف المطلوب في علاقة مع `Donation`. افهم معناه: عند تحميل تبرع لحملة محذوفة ناعمًا ستكون الحملة غير موجودة في النتيجة. الحل إما فلتر مطابق على `Donation`، أو التعامل مع الحالة صراحةً — اكتب قرارك في الـ README."
+   "markdown": "EF Core will emit a warning because `Campaign` has a query filter while being the required end of a relationship with `Donation`. Understand what this means: when loading a donation belonging to a soft-deleted campaign, the campaign will be missing from the result. The fix is either a matching query filter on `Donation` or handling the case explicitly — document your decision in the README."
   },
   {
    "type": "Code",
@@ -1104,49 +1104,49 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 4 — Generic Repository و Unit of Work و فصل القراءة",
+   "text": "Task 4 — Generic Repository, Unit of Work, and Read Separation",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "**الكتابة** تمر عبر Repository + UoW حتى تبقى كل التغييرات في transaction واحدة ويكون الكود قابلًا للـ mock. **القراءة** تستخدم `IQueryable` مع `AsNoTracking` و projection مباشرة إلى DTO، لأن تحميل كيان كامل وتتبّعه لمجرد عرضه هدر للذاكرة والوقت."
+   "markdown": "**Writes** go through Repository + UoW so all changes stay within a single transaction and the code remains mockable. **Reads** use `IQueryable` with `AsNoTracking` and direct projection to DTOs, because loading and change-tracking a full entity just to display it wastes memory and CPU."
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using System.Linq.Expressions;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Categories;\nusing DonationHub.Domain.Common;\n\nnamespace DonationHub.Application.Abstractions;\n\npublic interface IGenericRepository<T> where T : Entity\n{\n    Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default);\n    Task AddAsync(T entity, CancellationToken ct = default);\n    void Remove(T entity);\n    Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken ct = default);\n}\n\npublic interface IUnitOfWork\n{\n    IGenericRepository<T> Repository<T>() where T : Entity;\n    Task<int> SaveChangesAsync(CancellationToken ct = default);\n}\n\n// جانب القراءة: كل الـ IQueryable هنا بدون تتبّع\npublic interface IReadDbContext\n{\n    IQueryable<Category> Categories { get; }\n    IQueryable<Campaign> Campaigns { get; }\n    IQueryable<Campaign> CampaignsIncludingDeleted { get; }\n}",
+   "code": "using System.Linq.Expressions;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Categories;\nusing DonationHub.Domain.Common;\n\nnamespace DonationHub.Application.Abstractions;\n\npublic interface IGenericRepository<T> where T : Entity\n{\n    Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default);\n    Task AddAsync(T entity, CancellationToken ct = default);\n    void Remove(T entity);\n    Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken ct = default);\n}\n\npublic interface IUnitOfWork\n{\n    IGenericRepository<T> Repository<T>() where T : Entity;\n    Task<int> SaveChangesAsync(CancellationToken ct = default);\n}\n\n// Read side: all IQueryable access here is untracked\npublic interface IReadDbContext\n{\n    IQueryable<Category> Categories { get; }\n    IQueryable<Campaign> Campaigns { get; }\n    IQueryable<Campaign> CampaignsIncludingDeleted { get; }\n}",
    "filename": "DonationHub.Application/Abstractions/Persistence.cs"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using System.Linq.Expressions;\nusing DonationHub.Application.Abstractions;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Categories;\nusing DonationHub.Domain.Common;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Infrastructure.Persistence.Repositories;\n\ninternal sealed class GenericRepository<T>(AppDbContext db) : IGenericRepository<T> where T : Entity\n{\n    private readonly DbSet<T> _set = db.Set<T>();\n\n    public Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default) =>\n        _set.FirstOrDefaultAsync(e => e.Id == id, ct);\n\n    public async Task AddAsync(T entity, CancellationToken ct = default) =>\n        await _set.AddAsync(entity, ct);\n\n    public void Remove(T entity) => _set.Remove(entity);   // يتحوّل لحذف ناعم إن كان ISoftDeletable\n\n    public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken ct = default) =>\n        _set.AnyAsync(predicate, ct);\n}\n\ninternal sealed class UnitOfWork(AppDbContext db) : IUnitOfWork\n{\n    private readonly Dictionary<Type, object> _repositories = [];\n\n    public IGenericRepository<T> Repository<T>() where T : Entity\n    {\n        if (!_repositories.TryGetValue(typeof(T), out var repository))\n        {\n            repository = new GenericRepository<T>(db);\n            _repositories[typeof(T)] = repository;\n        }\n        return (IGenericRepository<T>)repository;\n    }\n\n    public Task<int> SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);\n}\n\ninternal sealed class ReadDbContext(AppDbContext db) : IReadDbContext\n{\n    public IQueryable<Category> Categories => db.Categories.AsNoTracking();\n    public IQueryable<Campaign> Campaigns => db.Campaigns.AsNoTracking();\n    public IQueryable<Campaign> CampaignsIncludingDeleted => db.Campaigns.IgnoreQueryFilters().AsNoTracking();\n}",
+   "code": "using System.Linq.Expressions;\nusing DonationHub.Application.Abstractions;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Categories;\nusing DonationHub.Domain.Common;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Infrastructure.Persistence.Repositories;\n\ninternal sealed class GenericRepository<T>(AppDbContext db) : IGenericRepository<T> where T : Entity\n{\n    private readonly DbSet<T> _set = db.Set<T>();\n\n    public Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default) =>\n        _set.FirstOrDefaultAsync(e => e.Id == id, ct);\n\n    public async Task AddAsync(T entity, CancellationToken ct = default) =>\n        await _set.AddAsync(entity, ct);\n\n    public void Remove(T entity) => _set.Remove(entity);   // Becomes a soft delete if ISoftDeletable\n\n    public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken ct = default) =>\n        _set.AnyAsync(predicate, ct);\n}\n\ninternal sealed class UnitOfWork(AppDbContext db) : IUnitOfWork\n{\n    private readonly Dictionary<Type, object> _repositories = [];\n\n    public IGenericRepository<T> Repository<T>() where T : Entity\n    {\n        if (!_repositories.TryGetValue(typeof(T), out var repository))\n        {\n            repository = new GenericRepository<T>(db);\n            _repositories[typeof(T)] = repository;\n        }\n        return (IGenericRepository<T>)repository;\n    }\n\n    public Task<int> SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);\n}\n\ninternal sealed class ReadDbContext(AppDbContext db) : IReadDbContext\n{\n    public IQueryable<Category> Categories => db.Categories.AsNoTracking();\n    public IQueryable<Campaign> Campaigns => db.Campaigns.AsNoTracking();\n    public IQueryable<Campaign> CampaignsIncludingDeleted => db.Campaigns.IgnoreQueryFilters().AsNoTracking();\n}",
    "filename": "DonationHub.Infrastructure/Persistence/Repositories/UnitOfWork.cs"
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "لا توجد دالة `Update` في الـ Repository: الكيان المحمَّل عبر `GetByIdAsync` **متتبَّع** أصلًا، وأي تغيير عليه يُحفظ عند `SaveChangesAsync`. استدعاء `Update` يجعل EF يعلّم كل الأعمدة كمتغيّرة بلا داعٍ."
+   "markdown": "There is no `Update` method in the Repository: an entity loaded via `GetByIdAsync` is already **tracked**, and any change to it is saved on `SaveChangesAsync`. Calling `Update` causes EF to mark all columns as modified unnecessarily."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "لاستخدام `ToListAsync` و `AnyAsync` على `IQueryable` داخل Application ستحتاج حزمة `Microsoft.EntityFrameworkCore` (بدون مزوّد SQL Server). هذه مقايضة مقبولة وشائعة؛ البديل الأنقى أن تبقى استعلامات القراءة كلها في Infrastructure خلف واجهات. اذكر اختيارك في الـ README."
+   "markdown": "To use `ToListAsync` and `AnyAsync` on `IQueryable` inside Application, you will need the `Microsoft.EntityFrameworkCore` package (without the SQL Server provider). This is an acceptable and common trade-off; the purer alternative is keeping all read queries in Infrastructure behind interfaces. Document your choice in the README."
   },
   {
    "type": "Heading",
-   "text": "المهمة 5 — Soft Delete Interceptor",
+   "text": "Task 5 — Soft Delete Interceptor",
    "level": 2
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Common;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore.Diagnostics;\n\nnamespace DonationHub.Infrastructure.Persistence.Interceptors;\n\npublic sealed class SoftDeleteInterceptor(TimeProvider timeProvider) : SaveChangesInterceptor\n{\n    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)\n    {\n        ConvertDeletesToSoftDeletes(eventData.Context);\n        return base.SavingChanges(eventData, result);\n    }\n\n    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(\n        DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)\n    {\n        ConvertDeletesToSoftDeletes(eventData.Context);\n        return base.SavingChangesAsync(eventData, result, cancellationToken);\n    }\n\n    private void ConvertDeletesToSoftDeletes(DbContext? context)\n    {\n        if (context is null) return;\n\n        var now = timeProvider.GetUtcNow().UtcDateTime;\n        foreach (var entry in context.ChangeTracker.Entries<ISoftDeletable>())\n        {\n            if (entry.State != EntityState.Deleted) continue;\n\n            entry.State = EntityState.Modified;      // بدل DELETE يصبح UPDATE\n            entry.Entity.IsDeleted = true;\n            entry.Entity.DeletedAtUtc = now;\n        }\n    }\n}",
+   "code": "using DonationHub.Domain.Common;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.EntityFrameworkCore.Diagnostics;\n\nnamespace DonationHub.Infrastructure.Persistence.Interceptors;\n\npublic sealed class SoftDeleteInterceptor(TimeProvider timeProvider) : SaveChangesInterceptor\n{\n    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)\n    {\n        ConvertDeletesToSoftDeletes(eventData.Context);\n        return base.SavingChanges(eventData, result);\n    }\n\n    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(\n        DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)\n    {\n        ConvertDeletesToSoftDeletes(eventData.Context);\n        return base.SavingChangesAsync(eventData, result, cancellationToken);\n    }\n\n    private void ConvertDeletesToSoftDeletes(DbContext? context)\n    {\n        if (context is null) return;\n\n        var now = timeProvider.GetUtcNow().UtcDateTime;\n        foreach (var entry in context.ChangeTracker.Entries<ISoftDeletable>())\n        {\n            if (entry.State != EntityState.Deleted) continue;\n\n            entry.State = EntityState.Modified;      // UPDATE instead of DELETE\n            entry.Entity.IsDeleted = true;\n            entry.Entity.DeletedAtUtc = now;\n        }\n    }\n}",
    "filename": "DonationHub.Infrastructure/Persistence/Interceptors/SoftDeleteInterceptor.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "والتسجيل في `AddInfrastructureServices` (يُكمل في المهمة 6):"
+   "markdown": "And the registration in `AddInfrastructureServices` (completed in Task 6):"
   },
   {
    "type": "Code",
@@ -1157,11 +1157,11 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "**`ExecuteDelete` يتجاوز الـ Interceptor!** `ExecuteDeleteAsync` و `ExecuteUpdateAsync` تُرسل SQL مباشرة ولا تمر بالـ ChangeTracker، فلن يحدث حذف ناعم. استخدم `Remove` + `SaveChangesAsync` للكيانات القابلة للحذف الناعم."
+   "markdown": "**`ExecuteDelete` bypasses the Interceptor!** `ExecuteDeleteAsync` and `ExecuteUpdateAsync` send SQL directly and skip the ChangeTracker, so soft delete will not run. Use `Remove` + `SaveChangesAsync` for soft-deletable entities."
   },
   {
    "type": "Heading",
-   "text": "المهمة 6 — Options Pattern و Fail Fast",
+   "text": "Task 6 — Options Pattern & Fail Fast",
    "level": 2
   },
   {
@@ -1178,7 +1178,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "`appsettings.json` يحتوي القيم غير السرية فقط، والأسرار فارغة عمدًا حتى **يفشل التطبيق فورًا** إن لم تُضبط:"
+   "markdown": "`appsettings.json` contains non-secret values only, and secrets are intentionally empty so the app **fails fast** if they are not configured:"
   },
   {
    "type": "Code",
@@ -1195,16 +1195,16 @@
   {
    "type": "Callout",
    "variant": "Success",
-   "markdown": "جرّب بنفسك: احذف `Jwt:SecretKey` من الـ user-secrets وشغّل التطبيق — يجب أن يتوقف فورًا مع `OptionsValidationException` بدل أن يعمل ثم ينهار عند أول تسجيل دخول. هذا هو معنى Fail Fast."
+   "markdown": "Try it yourself: remove `Jwt:SecretKey` from user-secrets and run the app — it must stop immediately with `OptionsValidationException` instead of starting up and crashing on the first login. That is what Fail Fast means."
   },
   {
    "type": "Heading",
-   "text": "المهمة 7 — الهوية و JWT وتدوير الـ Refresh Token",
+   "text": "Task 7 — Identity, JWT, and Refresh Token Rotation",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "نستخدم `AddIdentityCore` (بدون cookies لأنه API)، ونضبط سياسة كلمة المرور حسب IDN-02. Identity يخزّن `NormalizedEmail` بأحرف كبيرة، لذلك `FindByEmailAsync` تبحث بدون حساسية لحالة الأحرف تلقائيًا."
+   "markdown": "We use `AddIdentityCore` (without cookies since this is an API), and configure the password policy per IDN-02. Identity stores `NormalizedEmail` in uppercase, so `FindByEmailAsync` searches case-insensitively automatically."
   },
   {
    "type": "Code",
@@ -1215,12 +1215,12 @@
   {
    "type": "Code",
    "language": "csharp",
-   "code": "services.AddIdentityCore<ApplicationUser>(options =>\n    {\n        options.User.RequireUniqueEmail = true;\n        options.Password.RequiredLength = 8;\n        options.Password.RequireDigit = true;\n        options.Password.RequireLowercase = true;\n        options.Password.RequireUppercase = true;\n        options.Password.RequireNonAlphanumeric = false;\n    })\n    .AddRoles<IdentityRole<Guid>>()\n    .AddEntityFrameworkStores<AppDbContext>();\n\nservices.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();\n\n// نقرأ إعدادات JWT من JwtOptions بدل IConfiguration\nservices.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)\n    .Configure<IOptions<JwtOptions>>((bearer, jwtOptions) =>\n    {\n        var jwt = jwtOptions.Value;\n        bearer.TokenValidationParameters = new TokenValidationParameters\n        {\n            ValidateIssuer = true,\n            ValidIssuer = jwt.Issuer,\n            ValidateAudience = true,\n            ValidAudience = jwt.Audience,\n            ValidateIssuerSigningKey = true,\n            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SecretKey)),\n            ValidateLifetime = true,\n            ClockSkew = TimeSpan.FromSeconds(30)\n        };\n    });\n\nservices.AddAuthorization();\nservices.AddScoped<JwtTokenService>();\nservices.AddScoped<IAuthService, AuthService>();",
+   "code": "services.AddIdentityCore<ApplicationUser>(options =>\n    {\n        options.User.RequireUniqueEmail = true;\n        options.Password.RequiredLength = 8;\n        options.Password.RequireDigit = true;\n        options.Password.RequireLowercase = true;\n        options.Password.RequireUppercase = true;\n        options.Password.RequireNonAlphanumeric = false;\n    })\n    .AddRoles<IdentityRole<Guid>>()\n    .AddEntityFrameworkStores<AppDbContext>();\n\nservices.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();\n\n// Read JWT settings from JwtOptions instead of IConfiguration\nservices.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)\n    .Configure<IOptions<JwtOptions>>((bearer, jwtOptions) =>\n    {\n        var jwt = jwtOptions.Value;\n        bearer.TokenValidationParameters = new TokenValidationParameters\n        {\n            ValidateIssuer = true,\n            ValidIssuer = jwt.Issuer,\n            ValidateAudience = true,\n            ValidAudience = jwt.Audience,\n            ValidateIssuerSigningKey = true,\n            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SecretKey)),\n            ValidateLifetime = true,\n            ClockSkew = TimeSpan.FromSeconds(30)\n        };\n    });\n\nservices.AddAuthorization();\nservices.AddScoped<JwtTokenService>();\nservices.AddScoped<IAuthService, AuthService>();",
    "filename": "DonationHub.Infrastructure/DependencyInjection.Part3.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "إنشاء الـ Access Token وتوليد الـ Refresh Token. الـ Refresh Token عشوائي آمن (64 بايت)، ونخزّن **الـ SHA-256 hash** فقط، فلو تسرّبت قاعدة البيانات لا يمكن استخدام الرموز:"
+   "markdown": "Creating the Access Token and generating the Refresh Token. The Refresh Token is a cryptographically secure random value (64 bytes), and we store **only its SHA-256 hash**, so even if the database leaks, the tokens cannot be used:"
   },
   {
    "type": "Code",
@@ -1230,12 +1230,12 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "في Sprint 1 (قبل Result Pattern) نستخدم استثناءً مؤقتًا يحمل كود الخطأ وحالة HTTP، ويحوّله `IExceptionHandler` إلى ProblemDetails:"
+   "markdown": "In Sprint 1 (before the Result Pattern), we use a temporary exception carrying the error code and HTTP status, which `IExceptionHandler` maps to ProblemDetails:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "namespace DonationHub.Application.Common;\n\n// مؤقت لـ Sprint 1 فقط — يُستبدل بـ Result<T> في Sprint 2\npublic sealed class AppException(string code, int statusCode, string message) : Exception(message)\n{\n    public string Code { get; } = code;\n    public int StatusCode { get; } = statusCode;\n}\n\npublic static class AuthErrors\n{\n    public static AppException InvalidCredentials() => new(\"Auth.InvalidCredentials\", 401, \"Invalid email or password.\");\n    public static AppException EmailAlreadyExists() => new(\"Auth.EmailAlreadyExists\", 409, \"This email is already registered.\");\n    public static AppException RefreshTokenInvalid() => new(\"Auth.RefreshTokenInvalid\", 401, \"The refresh token is invalid or expired.\");\n    public static AppException AccountDeactivated() => new(\"Auth.AccountDeactivated\", 403, \"This account is deactivated.\");\n}\n\npublic static class Roles\n{\n    public const string Admin = \"Admin\";\n    public const string CampaignManager = \"CampaignManager\";\n    public const string Donor = \"Donor\";\n}",
+   "code": "namespace DonationHub.Application.Common;\n\n// Temporary for Sprint 1 only — replaced by Result<T> in Sprint 2\npublic sealed class AppException(string code, int statusCode, string message) : Exception(message)\n{\n    public string Code { get; } = code;\n    public int StatusCode { get; } = statusCode;\n}\n\npublic static class AuthErrors\n{\n    public static AppException InvalidCredentials() => new(\"Auth.InvalidCredentials\", 401, \"Invalid email or password.\");\n    public static AppException EmailAlreadyExists() => new(\"Auth.EmailAlreadyExists\", 409, \"This email is already registered.\");\n    public static AppException RefreshTokenInvalid() => new(\"Auth.RefreshTokenInvalid\", 401, \"The refresh token is invalid or expired.\");\n    public static AppException AccountDeactivated() => new(\"Auth.AccountDeactivated\", 403, \"This account is deactivated.\");\n}\n\npublic static class Roles\n{\n    public const string Admin = \"Admin\";\n    public const string CampaignManager = \"CampaignManager\";\n    public const string Donor = \"Donor\";\n}",
    "filename": "DonationHub.Application/Common/AppException.cs"
   },
   {
@@ -1248,62 +1248,62 @@
    "type": "Code",
    "language": "csharp",
    "filename": "DonationHub.Application/Abstractions/IAuthService.cs",
-   "code": "using DonationHub.Application.Features.Auth;\n\nnamespace DonationHub.Application.Abstractions;\n\n// الواجهة في Application، والتطبيق في Infrastructure لأنه يحتاج UserManager (Identity)\npublic interface IAuthService\n{\n    Task<CurrentUserResponse> RegisterAsync(RegisterRequest request, CancellationToken ct);\n    Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct);\n    Task<AuthResponse> RefreshAsync(string refreshToken, CancellationToken ct);\n    Task LogoutAsync(Guid userId, string refreshToken, CancellationToken ct);\n    Task<CurrentUserResponse> GetCurrentUserAsync(Guid userId, CancellationToken ct);\n    Task<CurrentUserResponse> CreateStaffAsync(CreateStaffRequest request, CancellationToken ct);\n}"
+   "code": "using DonationHub.Application.Features.Auth;\n\nnamespace DonationHub.Application.Abstractions;\n\n// Interface lives in Application, implementation in Infrastructure because it needs UserManager (Identity)\npublic interface IAuthService\n{\n    Task<CurrentUserResponse> RegisterAsync(RegisterRequest request, CancellationToken ct);\n    Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct);\n    Task<AuthResponse> RefreshAsync(string refreshToken, CancellationToken ct);\n    Task LogoutAsync(Guid userId, string refreshToken, CancellationToken ct);\n    Task<CurrentUserResponse> GetCurrentUserAsync(Guid userId, CancellationToken ct);\n    Task<CurrentUserResponse> CreateStaffAsync(CreateStaffRequest request, CancellationToken ct);\n}"
   },
   {
    "type": "Paragraph",
-   "markdown": "قلب المصادقة. انتبه للترتيب في `LoginAsync`: نتحقق من كلمة المرور **قبل** فحص `IsActive`، وإلا يستطيع المهاجم معرفة أن الحساب موجود ومعطَّل دون أن يعرف كلمة المرور:"
+   "markdown": "The heart of authentication. Pay attention to the order in `LoginAsync`: we verify the password **before** checking `IsActive`, otherwise an attacker could learn that an account exists and is deactivated without knowing the password:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "internal sealed class AuthService(\n    UserManager<ApplicationUser> userManager,\n    AppDbContext db,\n    JwtTokenService tokenService,\n    IOptions<JwtOptions> jwtOptions,\n    TimeProvider timeProvider) : IAuthService\n{\n    private readonly JwtOptions _jwt = jwtOptions.Value;\n\n    public async Task<CurrentUserResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)\n    {\n        var language = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? \"en\" : request.PreferredLanguage;\n        if (language is not (\"en\" or \"ar\"))\n            throw new AppException(\"Validation.Failed\", 400, \"PreferredLanguage must be 'en' or 'ar'.\");\n\n        if (await userManager.FindByEmailAsync(request.Email) is not null)   // بدون حساسية لحالة الأحرف\n            throw AuthErrors.EmailAlreadyExists();\n\n        var user = new ApplicationUser\n        {\n            Id = Guid.NewGuid(),\n            UserName = request.Email,\n            Email = request.Email,\n            FullName = request.FullName.Trim(),\n            PreferredLanguage = language,\n            IsActive = true,\n            CreatedAt = timeProvider.GetUtcNow().UtcDateTime\n        };\n\n        var result = await userManager.CreateAsync(user, request.Password);   // يطبّق سياسة IDN-02\n        if (!result.Succeeded)\n            throw new AppException(\"Validation.Failed\", 400, string.Join(\" \", result.Errors.Select(e => e.Description)));\n\n        var roleResult = await userManager.AddToRoleAsync(user, Roles.Donor);   // لا نتجاهل النتيجة\n        if (!roleResult.Succeeded)\n            throw new InvalidOperationException(\"Assigning the Donor role failed. Were the roles seeded?\");\n\n        return ToResponse(user, [Roles.Donor]);\n    }\n\n    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct)\n    {\n        var user = await userManager.FindByEmailAsync(request.Email);\n        if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))\n            throw AuthErrors.InvalidCredentials();      // IDN-12: نفس الخطأ للحالتين\n\n        if (!user.IsActive)\n            throw AuthErrors.AccountDeactivated();      // IDN-10\n\n        return await IssueTokensAsync(user, replacing: null, ct);\n    }\n\n    public async Task<AuthResponse> RefreshAsync(string refreshToken, CancellationToken ct)\n    {\n        var now = timeProvider.GetUtcNow().UtcDateTime;\n        var hash = RefreshTokenGenerator.Hash(refreshToken);\n        var stored = await db.RefreshTokens.SingleOrDefaultAsync(t => t.TokenHash == hash, ct);\n\n        if (stored is null || !stored.IsActive(now))\n            throw AuthErrors.RefreshTokenInvalid();     // غير موجود أو منتهٍ أو ملغى\n\n        var user = await userManager.FindByIdAsync(stored.UserId.ToString())\n                   ?? throw AuthErrors.RefreshTokenInvalid();\n        if (!user.IsActive)\n            throw AuthErrors.AccountDeactivated();\n\n        return await IssueTokensAsync(user, replacing: stored, ct);   // IDN-06: تدوير\n    }\n\n    public async Task LogoutAsync(Guid userId, string refreshToken, CancellationToken ct)\n    {\n        var hash = RefreshTokenGenerator.Hash(refreshToken);\n        var stored = await db.RefreshTokens.SingleOrDefaultAsync(t => t.TokenHash == hash && t.UserId == userId, ct);\n        if (stored is null) return;                     // لا نكشف شيئًا؛ الخروج دائمًا 204\n\n        stored.Revoke(timeProvider.GetUtcNow().UtcDateTime);\n        await db.SaveChangesAsync(ct);\n    }\n\n    private async Task<AuthResponse> IssueTokensAsync(ApplicationUser user, RefreshToken? replacing, CancellationToken ct)\n    {\n        var now = timeProvider.GetUtcNow().UtcDateTime;\n        var rawRefreshToken = RefreshTokenGenerator.Generate();\n        var newToken = RefreshToken.Issue(user.Id, RefreshTokenGenerator.Hash(rawRefreshToken), now,\n            TimeSpan.FromDays(_jwt.RefreshTokenExpiryDays));\n\n        replacing?.Revoke(now, newToken.Id);            // القديم يُلغى ويُربط بالجديد\n        db.RefreshTokens.Add(newToken);\n        try\n        {\n            await db.SaveChangesAsync(ct);              // الإلغاء والإضافة في نفس الـ SaveChanges\n        }\n        catch (DbUpdateConcurrencyException) when (replacing is not null)\n        {\n            throw AuthErrors.RefreshTokenInvalid();     // طلب متزامن استخدم نفس الرمز قبلنا (RevokedAt concurrency token)\n        }\n\n        var roles = await userManager.GetRolesAsync(user);\n        var (accessToken, expiresAt) = tokenService.CreateAccessToken(user, roles);\n        return new AuthResponse(accessToken, expiresAt, rawRefreshToken);   // الخام يُرسل للعميل مرة واحدة فقط\n    }\n\n    public async Task<CurrentUserResponse> GetCurrentUserAsync(Guid userId, CancellationToken ct)   // IDN-09\n    {\n        var user = await userManager.FindByIdAsync(userId.ToString())\n                   ?? throw AuthErrors.InvalidCredentials();   // توكن صالح لمستخدم غير موجود\n        return ToResponse(user, await userManager.GetRolesAsync(user));\n    }\n\n    public async Task<CurrentUserResponse> CreateStaffAsync(CreateStaffRequest request, CancellationToken ct)   // IDN-08\n    {\n        if (request.Role is not (Roles.Admin or Roles.CampaignManager))   // لا يُنشأ Donor من هنا\n            throw new AppException(\"Validation.Failed\", 400, \"Role must be Admin or CampaignManager.\");\n        if (await userManager.FindByEmailAsync(request.Email) is not null)\n            throw AuthErrors.EmailAlreadyExists();\n\n        var user = new ApplicationUser\n        {\n            Id = Guid.NewGuid(), UserName = request.Email, Email = request.Email,\n            FullName = request.FullName.Trim(), IsActive = true,\n            CreatedAt = timeProvider.GetUtcNow().UtcDateTime\n        };\n\n        var result = await userManager.CreateAsync(user, request.TemporaryPassword);   // نفس سياسة IDN-02\n        if (!result.Succeeded)\n            throw new AppException(\"Validation.Failed\", 400, string.Join(\" \", result.Errors.Select(e => e.Description)));\n\n        var roleResult = await userManager.AddToRoleAsync(user, request.Role);\n        if (!roleResult.Succeeded)\n            throw new InvalidOperationException($\"Assigning the {request.Role} role failed.\");\n\n        return ToResponse(user, [request.Role]);\n    }\n\n    private static CurrentUserResponse ToResponse(ApplicationUser user, IEnumerable<string> roles) =>\n        new(user.Id, user.Email!, user.FullName, user.PreferredLanguage, [.. roles]);\n}",
+   "code": "internal sealed class AuthService(\n    UserManager<ApplicationUser> userManager,\n    AppDbContext db,\n    JwtTokenService tokenService,\n    IOptions<JwtOptions> jwtOptions,\n    TimeProvider timeProvider) : IAuthService\n{\n    private readonly JwtOptions _jwt = jwtOptions.Value;\n\n    public async Task<CurrentUserResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)\n    {\n        var language = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? \"en\" : request.PreferredLanguage;\n        if (language is not (\"en\" or \"ar\"))\n            throw new AppException(\"Validation.Failed\", 400, \"PreferredLanguage must be 'en' or 'ar'.\");\n\n        if (await userManager.FindByEmailAsync(request.Email) is not null)   // Case-insensitive\n            throw AuthErrors.EmailAlreadyExists();\n\n        var user = new ApplicationUser\n        {\n            Id = Guid.NewGuid(),\n            UserName = request.Email,\n            Email = request.Email,\n            FullName = request.FullName.Trim(),\n            PreferredLanguage = language,\n            IsActive = true,\n            CreatedAt = timeProvider.GetUtcNow().UtcDateTime\n        };\n\n        var result = await userManager.CreateAsync(user, request.Password);   // Enforces IDN-02 password policy\n        if (!result.Succeeded)\n            throw new AppException(\"Validation.Failed\", 400, string.Join(\" \", result.Errors.Select(e => e.Description)));\n\n        var roleResult = await userManager.AddToRoleAsync(user, Roles.Donor);   // Do not ignore the result\n        if (!roleResult.Succeeded)\n            throw new InvalidOperationException(\"Assigning the Donor role failed. Were the roles seeded?\");\n\n        return ToResponse(user, [Roles.Donor]);\n    }\n\n    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct)\n    {\n        var user = await userManager.FindByEmailAsync(request.Email);\n        if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))\n            throw AuthErrors.InvalidCredentials();      // IDN-12: same error for both cases\n\n        if (!user.IsActive)\n            throw AuthErrors.AccountDeactivated();      // IDN-10\n\n        return await IssueTokensAsync(user, replacing: null, ct);\n    }\n\n    public async Task<AuthResponse> RefreshAsync(string refreshToken, CancellationToken ct)\n    {\n        var now = timeProvider.GetUtcNow().UtcDateTime;\n        var hash = RefreshTokenGenerator.Hash(refreshToken);\n        var stored = await db.RefreshTokens.SingleOrDefaultAsync(t => t.TokenHash == hash, ct);\n\n        if (stored is null || !stored.IsActive(now))\n            throw AuthErrors.RefreshTokenInvalid();     // Not found, expired, or revoked\n\n        var user = await userManager.FindByIdAsync(stored.UserId.ToString())\n                   ?? throw AuthErrors.RefreshTokenInvalid();\n        if (!user.IsActive)\n            throw AuthErrors.AccountDeactivated();\n\n        return await IssueTokensAsync(user, replacing: stored, ct);   // IDN-06: rotation\n    }\n\n    public async Task LogoutAsync(Guid userId, string refreshToken, CancellationToken ct)\n    {\n        var hash = RefreshTokenGenerator.Hash(refreshToken);\n        var stored = await db.RefreshTokens.SingleOrDefaultAsync(t => t.TokenHash == hash && t.UserId == userId, ct);\n        if (stored is null) return;                     // Reveal nothing; logout always returns 204\n\n        stored.Revoke(timeProvider.GetUtcNow().UtcDateTime);\n        await db.SaveChangesAsync(ct);\n    }\n\n    private async Task<AuthResponse> IssueTokensAsync(ApplicationUser user, RefreshToken? replacing, CancellationToken ct)\n    {\n        var now = timeProvider.GetUtcNow().UtcDateTime;\n        var rawRefreshToken = RefreshTokenGenerator.Generate();\n        var newToken = RefreshToken.Issue(user.Id, RefreshTokenGenerator.Hash(rawRefreshToken), now,\n            TimeSpan.FromDays(_jwt.RefreshTokenExpiryDays));\n\n        replacing?.Revoke(now, newToken.Id);            // Old token is revoked and linked to the new one\n        db.RefreshTokens.Add(newToken);\n        try\n        {\n            await db.SaveChangesAsync(ct);              // Revoke and insert in the same SaveChanges\n        }\n        catch (DbUpdateConcurrencyException) when (replacing is not null)\n        {\n            throw AuthErrors.RefreshTokenInvalid();     // Concurrent request used the same token first (RevokedAt concurrency token)\n        }\n\n        var roles = await userManager.GetRolesAsync(user);\n        var (accessToken, expiresAt) = tokenService.CreateAccessToken(user, roles);\n        return new AuthResponse(accessToken, expiresAt, rawRefreshToken);   // Raw token is sent to the client only once\n    }\n\n    public async Task<CurrentUserResponse> GetCurrentUserAsync(Guid userId, CancellationToken ct)   // IDN-09\n    {\n        var user = await userManager.FindByIdAsync(userId.ToString())\n                   ?? throw AuthErrors.InvalidCredentials();   // Valid token for a missing user\n        return ToResponse(user, await userManager.GetRolesAsync(user));\n    }\n\n    public async Task<CurrentUserResponse> CreateStaffAsync(CreateStaffRequest request, CancellationToken ct)   // IDN-08\n    {\n        if (request.Role is not (Roles.Admin or Roles.CampaignManager))   // Donors cannot be created here\n            throw new AppException(\"Validation.Failed\", 400, \"Role must be Admin or CampaignManager.\");\n        if (await userManager.FindByEmailAsync(request.Email) is not null)\n            throw AuthErrors.EmailAlreadyExists();\n\n        var user = new ApplicationUser\n        {\n            Id = Guid.NewGuid(), UserName = request.Email, Email = request.Email,\n            FullName = request.FullName.Trim(), IsActive = true,\n            CreatedAt = timeProvider.GetUtcNow().UtcDateTime\n        };\n\n        var result = await userManager.CreateAsync(user, request.TemporaryPassword);   // Same IDN-02 policy\n        if (!result.Succeeded)\n            throw new AppException(\"Validation.Failed\", 400, string.Join(\" \", result.Errors.Select(e => e.Description)));\n\n        var roleResult = await userManager.AddToRoleAsync(user, request.Role);\n        if (!roleResult.Succeeded)\n            throw new InvalidOperationException($\"Assigning the {request.Role} role failed.\");\n\n        return ToResponse(user, [request.Role]);\n    }\n\n    private static CurrentUserResponse ToResponse(ApplicationUser user, IEnumerable<string> roles) =>\n        new(user.Id, user.Email!, user.FullName, user.PreferredLanguage, [.. roles]);\n}",
    "filename": "DonationHub.Infrastructure/Identity/AuthService.cs"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "[ApiController]\n[Route(\"api/v1/auth\")]\npublic sealed class AuthController(IAuthService auth) : ControllerBase\n{\n    [HttpPost(\"register\"), AllowAnonymous]\n    public async Task<ActionResult<CurrentUserResponse>> Register(RegisterRequest request, CancellationToken ct)\n    {\n        var user = await auth.RegisterAsync(request, ct);\n        return CreatedAtAction(nameof(Me), user);\n    }\n\n    [HttpPost(\"login\"), AllowAnonymous]\n    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request, CancellationToken ct) =>\n        Ok(await auth.LoginAsync(request, ct));\n\n    [HttpPost(\"refresh\"), AllowAnonymous]\n    public async Task<ActionResult<AuthResponse>> Refresh(RefreshRequest request, CancellationToken ct) =>\n        Ok(await auth.RefreshAsync(request.RefreshToken, ct));\n\n    [HttpPost(\"logout\"), Authorize]\n    public async Task<IActionResult> Logout(RefreshRequest request, CancellationToken ct)\n    {\n        await auth.LogoutAsync(User.GetUserId(), request.RefreshToken, ct);\n        return NoContent();\n    }\n\n    [HttpGet(\"me\"), Authorize]\n    public async Task<ActionResult<CurrentUserResponse>> Me(CancellationToken ct) =>\n        Ok(await auth.GetCurrentUserAsync(User.GetUserId(), ct));\n}\n\n[ApiController]\n[Route(\"api/v1/admin/staff\")]\n[Authorize(Roles = Roles.Admin)]                 // IDN-08: Admin فقط\npublic sealed class AdminStaffController(IAuthService auth) : ControllerBase\n{\n    [HttpPost]\n    public async Task<ActionResult<CurrentUserResponse>> Create(CreateStaffRequest request, CancellationToken ct) =>\n        StatusCode(StatusCodes.Status201Created, await auth.CreateStaffAsync(request, ct));\n}\n\npublic static class ClaimsPrincipalExtensions\n{\n    // JwtBearer يحوّل claim الـ sub إلى NameIdentifier افتراضيًا\n    public static Guid GetUserId(this ClaimsPrincipal user) =>\n        Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);\n}",
+   "code": "[ApiController]\n[Route(\"api/v1/auth\")]\npublic sealed class AuthController(IAuthService auth) : ControllerBase\n{\n    [HttpPost(\"register\"), AllowAnonymous]\n    public async Task<ActionResult<CurrentUserResponse>> Register(RegisterRequest request, CancellationToken ct)\n    {\n        var user = await auth.RegisterAsync(request, ct);\n        return CreatedAtAction(nameof(Me), user);\n    }\n\n    [HttpPost(\"login\"), AllowAnonymous]\n    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request, CancellationToken ct) =>\n        Ok(await auth.LoginAsync(request, ct));\n\n    [HttpPost(\"refresh\"), AllowAnonymous]\n    public async Task<ActionResult<AuthResponse>> Refresh(RefreshRequest request, CancellationToken ct) =>\n        Ok(await auth.RefreshAsync(request.RefreshToken, ct));\n\n    [HttpPost(\"logout\"), Authorize]\n    public async Task<IActionResult> Logout(RefreshRequest request, CancellationToken ct)\n    {\n        await auth.LogoutAsync(User.GetUserId(), request.RefreshToken, ct);\n        return NoContent();\n    }\n\n    [HttpGet(\"me\"), Authorize]\n    public async Task<ActionResult<CurrentUserResponse>> Me(CancellationToken ct) =>\n        Ok(await auth.GetCurrentUserAsync(User.GetUserId(), ct));\n}\n\n[ApiController]\n[Route(\"api/v1/admin/staff\")]\n[Authorize(Roles = Roles.Admin)]                 // IDN-08: Admin only\npublic sealed class AdminStaffController(IAuthService auth) : ControllerBase\n{\n    [HttpPost]\n    public async Task<ActionResult<CurrentUserResponse>> Create(CreateStaffRequest request, CancellationToken ct) =>\n        StatusCode(StatusCodes.Status201Created, await auth.CreateStaffAsync(request, ct));\n}\n\npublic static class ClaimsPrincipalExtensions\n{\n    // JwtBearer maps the sub claim to NameIdentifier by default\n    public static Guid GetUserId(this ClaimsPrincipal user) =>\n        Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);\n}",
    "filename": "DonationHub.Api/Controllers/AuthController.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "تحويل الأخطاء إلى RFC 9457 ProblemDetails مع حقل `code` (نسخة مبسّطة؛ النسخة الكاملة في Sprint 2):"
+   "markdown": "Converting errors to RFC 9457 ProblemDetails with a `code` field (simplified version; full version in Sprint 2):"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "internal sealed class AppExceptionHandler(IProblemDetailsService problemDetailsService, ILogger<AppExceptionHandler> logger)\n    : IExceptionHandler\n{\n    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken ct)\n    {\n        var (status, code, title) = exception switch\n        {\n            AppException app => (app.StatusCode, app.Code, app.Message),\n            DomainException domain when domain.Code == \"Validation.Failed\" => (StatusCodes.Status400BadRequest, domain.Code, domain.Message),\n            DomainException domain when domain.Code is \"Campaign.NotActive\" or \"Donation.InvalidState\" or \"Category.HasCampaigns\"\n                => (StatusCodes.Status409Conflict, domain.Code, domain.Message),            // حسب كتالوج SRS §6.1\n            DomainException domain => (StatusCodes.Status422UnprocessableEntity, domain.Code, domain.Message),\n            _ => (StatusCodes.Status500InternalServerError, \"Server.Error\", \"An unexpected error occurred.\")\n        };\n\n        if (status == StatusCodes.Status500InternalServerError)\n            logger.LogError(exception, \"Unhandled exception\");   // التفاصيل في الـ log فقط، لا للعميل\n\n        var problem = new ProblemDetails { Status = status, Title = title };\n        problem.Extensions[\"code\"] = code;\n        problem.Extensions[\"traceId\"] = httpContext.TraceIdentifier;\n\n        httpContext.Response.StatusCode = status;\n        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext\n        {\n            HttpContext = httpContext,\n            Exception = exception,\n            ProblemDetails = problem\n        });\n    }\n}",
+   "code": "internal sealed class AppExceptionHandler(IProblemDetailsService problemDetailsService, ILogger<AppExceptionHandler> logger)\n    : IExceptionHandler\n{\n    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken ct)\n    {\n        var (status, code, title) = exception switch\n        {\n            AppException app => (app.StatusCode, app.Code, app.Message),\n            DomainException domain when domain.Code == \"Validation.Failed\" => (StatusCodes.Status400BadRequest, domain.Code, domain.Message),\n            DomainException domain when domain.Code is \"Campaign.NotActive\" or \"Donation.InvalidState\" or \"Category.HasCampaigns\"\n                => (StatusCodes.Status409Conflict, domain.Code, domain.Message),            // Per SRS §6.1 catalog\n            DomainException domain => (StatusCodes.Status422UnprocessableEntity, domain.Code, domain.Message),\n            _ => (StatusCodes.Status500InternalServerError, \"Server.Error\", \"An unexpected error occurred.\")\n        };\n\n        if (status == StatusCodes.Status500InternalServerError)\n            logger.LogError(exception, \"Unhandled exception\");   // Details in log only, never exposed to client\n\n        var problem = new ProblemDetails { Status = status, Title = title };\n        problem.Extensions[\"code\"] = code;\n        problem.Extensions[\"traceId\"] = httpContext.TraceIdentifier;\n\n        httpContext.Response.StatusCode = status;\n        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext\n        {\n            HttpContext = httpContext,\n            Exception = exception,\n            ProblemDetails = problem\n        });\n    }\n}",
    "filename": "DonationHub.Api/Infrastructure/AppExceptionHandler.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "بذر البيانات عند بدء التشغيل — idempotent (تشغيله مرتين لا يكرّر شيئًا):"
+   "markdown": "Seeding data at startup — idempotent (running it twice duplicates nothing):"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "public static class DbSeeder\n{\n    public static async Task SeedAsync(IServiceProvider services, bool isDevelopment)\n    {\n        using var scope = services.CreateScope();\n        var sp = scope.ServiceProvider;\n        var roleManager = sp.GetRequiredService<RoleManager<IdentityRole<Guid>>>();\n        var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();\n        var admin = sp.GetRequiredService<IOptions<SeedAdminOptions>>().Value;\n        var db = sp.GetRequiredService<AppDbContext>();\n        var now = sp.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;\n\n        foreach (var role in new[] { Roles.Admin, Roles.CampaignManager, Roles.Donor })\n        {\n            if (!await roleManager.RoleExistsAsync(role)\n                && !(await roleManager.CreateAsync(new IdentityRole<Guid>(role))).Succeeded)\n                throw new InvalidOperationException($\"Seeding role {role} failed.\");\n        }\n\n        await EnsureUserAsync(userManager, admin.Email, admin.Password, admin.FullName, Roles.Admin, now);  // IDN-11\n\n        if (!isDevelopment) return;\n\n        // مستخدما التجربة: بياناتهما من user-secrets عبر DevSeedUsersOptions (لا تُكتب في الكود)\n        // await EnsureUserAsync(userManager, dev.ManagerEmail, dev.ManagerPassword, \"Test Manager\", Roles.CampaignManager, now);\n        // await EnsureUserAsync(userManager, dev.DonorEmail, dev.DonorPassword, \"Test Donor\", Roles.Donor, now);\n\n        if (!await db.Categories.AnyAsync())\n        {\n            db.Categories.AddRange(\n                Category.Create(\"صحة\", \"Health\", null, null, now),\n                Category.Create(\"تعليم\", \"Education\", null, null, now),\n                Category.Create(\"إغاثة\", \"Relief\", null, null, now),\n                Category.Create(\"أيتام\", \"Orphans\", null, null, now),\n                Category.Create(\"بيئة\", \"Environment\", null, null, now));\n            await db.SaveChangesAsync();\n        }\n    }\n\n    private static async Task EnsureUserAsync(UserManager<ApplicationUser> userManager,\n        string email, string password, string fullName, string role, DateTime now)\n    {\n        if (await userManager.FindByEmailAsync(email) is not null) return;\n\n        var user = new ApplicationUser\n        {\n            Id = Guid.NewGuid(), UserName = email, Email = email, EmailConfirmed = true,\n            FullName = fullName, IsActive = true, CreatedAt = now\n        };\n        var result = await userManager.CreateAsync(user, password);\n        if (!result.Succeeded)\n            throw new InvalidOperationException(\n                $\"Seeding {email} failed: {string.Join(\", \", result.Errors.Select(e => e.Description))}\");\n\n        var roleResult = await userManager.AddToRoleAsync(user, role);\n        if (!roleResult.Succeeded)\n            throw new InvalidOperationException($\"Assigning {role} to {email} failed.\");\n    }\n}",
+   "code": "public static class DbSeeder\n{\n    public static async Task SeedAsync(IServiceProvider services, bool isDevelopment)\n    {\n        using var scope = services.CreateScope();\n        var sp = scope.ServiceProvider;\n        var roleManager = sp.GetRequiredService<RoleManager<IdentityRole<Guid>>>();\n        var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();\n        var admin = sp.GetRequiredService<IOptions<SeedAdminOptions>>().Value;\n        var db = sp.GetRequiredService<AppDbContext>();\n        var now = sp.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;\n\n        foreach (var role in new[] { Roles.Admin, Roles.CampaignManager, Roles.Donor })\n        {\n            if (!await roleManager.RoleExistsAsync(role)\n                && !(await roleManager.CreateAsync(new IdentityRole<Guid>(role))).Succeeded)\n                throw new InvalidOperationException($\"Seeding role {role} failed.\");\n        }\n\n        await EnsureUserAsync(userManager, admin.Email, admin.Password, admin.FullName, Roles.Admin, now);  // IDN-11\n\n        if (!isDevelopment) return;\n\n        // Two test users: credentials come from user-secrets via DevSeedUsersOptions (never hard-coded)\n        // await EnsureUserAsync(userManager, dev.ManagerEmail, dev.ManagerPassword, \"Test Manager\", Roles.CampaignManager, now);\n        // await EnsureUserAsync(userManager, dev.DonorEmail, dev.DonorPassword, \"Test Donor\", Roles.Donor, now);\n\n        if (!await db.Categories.AnyAsync())\n        {\n            db.Categories.AddRange(\n                Category.Create(\"صحة\", \"Health\", null, null, now),\n                Category.Create(\"تعليم\", \"Education\", null, null, now),\n                Category.Create(\"إغاثة\", \"Relief\", null, null, now),\n                Category.Create(\"أيتام\", \"Orphans\", null, null, now),\n                Category.Create(\"بيئة\", \"Environment\", null, null, now));\n            await db.SaveChangesAsync();\n        }\n    }\n\n    private static async Task EnsureUserAsync(UserManager<ApplicationUser> userManager,\n        string email, string password, string fullName, string role, DateTime now)\n    {\n        if (await userManager.FindByEmailAsync(email) is not null) return;\n\n        var user = new ApplicationUser\n        {\n            Id = Guid.NewGuid(), UserName = email, Email = email, EmailConfirmed = true,\n            FullName = fullName, IsActive = true, CreatedAt = now\n        };\n        var result = await userManager.CreateAsync(user, password);\n        if (!result.Succeeded)\n            throw new InvalidOperationException(\n                $\"Seeding {email} failed: {string.Join(\", \", result.Errors.Select(e => e.Description))}\");\n\n        var roleResult = await userManager.AddToRoleAsync(user, role);\n        if (!roleResult.Succeeded)\n            throw new InvalidOperationException($\"Assigning {role} to {email} failed.\");\n    }\n}",
    "filename": "DonationHub.Infrastructure/Persistence/DbSeeder.cs"
   },
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "**مقايضة يجب أن تعرفها:** تعطيل المستخدم يمنعه من الدخول والتجديد فورًا، لكن الـ Access Token الذي معه **يبقى صالحًا حتى ينتهي** (15 دقيقة). لهذا نجعل عمره قصيرًا. منعه فورًا يحتاج فحصًا لكل طلب أو قائمة رموز ملغاة — وهذا خارج نطاق هذا السبرنت."
+   "markdown": "**A trade-off you should know:** deactivating a user immediately blocks them from logging in or refreshing, yet any Access Token they already hold **remains valid until it expires** (15 minutes). That is why we keep its lifetime short. Blocking it immediately requires a per-request check or a token revocation list — which is out of scope for this sprint."
   },
   {
    "type": "Heading",
-   "text": "المهمة 8 — وحدة التصنيفات",
+   "text": "Task 8 — Categories Module",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "كل use case في ملفه داخل الـ slice (جُمعت هنا في ملف واحد للاختصار). لاحظ أن الكتابة تمر بالـ UoW، والقراءة تعمل projection مباشرة إلى DTO:"
+   "markdown": "Each use case lives in its own file inside the slice (combined here into one file for brevity). Notice that writes go through UoW, while reads project directly to DTOs:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common;\nusing DonationHub.Domain.Categories;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Application.Features.Categories;\n\npublic sealed record CategoryResponse(Guid Id, string NameAr, string NameEn, string? DescriptionAr, string? DescriptionEn);\npublic sealed record UpsertCategoryRequest(string NameAr, string NameEn, string? DescriptionAr, string? DescriptionEn);\n\npublic static class CategoryErrors\n{\n    public static AppException NotFound() => new(\"Category.NotFound\", 404, \"Category was not found.\");\n    public static AppException DuplicateName() => new(\"Validation.Failed\", 400, \"A category with the same Arabic or English name already exists.\");\n}\n\npublic sealed class GetCategoriesHandler(IReadDbContext read)\n{\n    public async Task<IReadOnlyList<CategoryResponse>> HandleAsync(CancellationToken ct) =>\n        await read.Categories\n            .OrderBy(c => c.NameEn)\n            .Select(c => new CategoryResponse(c.Id, c.NameAr, c.NameEn, c.DescriptionAr, c.DescriptionEn))\n            .ToListAsync(ct);\n}\n\npublic sealed class GetCategoryByIdHandler(IReadDbContext read)\n{\n    public async Task<CategoryResponse> HandleAsync(Guid id, CancellationToken ct) =>\n        await read.Categories\n            .Where(c => c.Id == id)\n            .Select(c => new CategoryResponse(c.Id, c.NameAr, c.NameEn, c.DescriptionAr, c.DescriptionEn))\n            .FirstOrDefaultAsync(ct)\n        ?? throw CategoryErrors.NotFound();               // CAT-04: 404\n}\n\npublic sealed class CreateCategoryHandler(IUnitOfWork uow, IReadDbContext read, TimeProvider timeProvider)\n{\n    public async Task<CategoryResponse> HandleAsync(UpsertCategoryRequest request, CancellationToken ct)\n    {\n        var category = Category.Create(request.NameAr, request.NameEn,\n            request.DescriptionAr, request.DescriptionEn, timeProvider.GetUtcNow().UtcDateTime);\n\n        // فحص مسبق برسالة واضحة؛ والـ unique index يحمي من التزامن\n        if (await read.Categories.AnyAsync(c => c.NameAr == category.NameAr || c.NameEn == category.NameEn, ct))\n            throw CategoryErrors.DuplicateName();\n\n        await uow.Repository<Category>().AddAsync(category, ct);\n        await uow.SaveChangesAsync(ct);\n        return new CategoryResponse(category.Id, category.NameAr, category.NameEn, category.DescriptionAr, category.DescriptionEn);\n    }\n}\n\npublic sealed class UpdateCategoryHandler(IUnitOfWork uow, IReadDbContext read, TimeProvider timeProvider)\n{\n    public async Task<CategoryResponse> HandleAsync(Guid id, UpsertCategoryRequest request, CancellationToken ct)\n    {\n        var category = await uow.Repository<Category>().GetByIdAsync(id, ct) ?? throw CategoryErrors.NotFound();\n        category.Update(request.NameAr, request.NameEn,\n            request.DescriptionAr, request.DescriptionEn, timeProvider.GetUtcNow().UtcDateTime);\n\n        // التفرد يُفحص مع استثناء التصنيف نفسه، وإلا يفشل تعديل الوصف وحده\n        if (await read.Categories.AnyAsync(c => c.Id != id && (c.NameAr == category.NameAr || c.NameEn == category.NameEn), ct))\n            throw CategoryErrors.DuplicateName();\n\n        await uow.SaveChangesAsync(ct);                   // الكيان متتبَّع؛ لا حاجة لـ Update\n        return new CategoryResponse(category.Id, category.NameAr, category.NameEn, category.DescriptionAr, category.DescriptionEn);\n    }\n}\n\npublic sealed class DeleteCategoryHandler(IUnitOfWork uow, IReadDbContext read)\n{\n    public async Task HandleAsync(Guid id, CancellationToken ct)\n    {\n        var categories = uow.Repository<Category>();\n        var category = await categories.GetByIdAsync(id, ct) ?? throw CategoryErrors.NotFound();\n\n        // IgnoreQueryFilters: الحملات المحذوفة ناعمًا ما زالت صفوفًا تمنع الحذف بسبب FK Restrict\n        var hasCampaigns = await read.CampaignsIncludingDeleted.AnyAsync(c => c.CategoryId == id, ct);\n        category.EnsureCanBeDeleted(hasCampaigns);        // CAT-04 / القاعدة 10: القرار في الـ Domain (409)\n\n        categories.Remove(category);\n        await uow.SaveChangesAsync(ct);\n    }\n}",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common;\nusing DonationHub.Domain.Categories;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Application.Features.Categories;\n\npublic sealed record CategoryResponse(Guid Id, string NameAr, string NameEn, string? DescriptionAr, string? DescriptionEn);\npublic sealed record UpsertCategoryRequest(string NameAr, string NameEn, string? DescriptionAr, string? DescriptionEn);\n\npublic static class CategoryErrors\n{\n    public static AppException NotFound() => new(\"Category.NotFound\", 404, \"Category was not found.\");\n    public static AppException DuplicateName() => new(\"Validation.Failed\", 400, \"A category with the same Arabic or English name already exists.\");\n}\n\npublic sealed class GetCategoriesHandler(IReadDbContext read)\n{\n    public async Task<IReadOnlyList<CategoryResponse>> HandleAsync(CancellationToken ct) =>\n        await read.Categories\n            .OrderBy(c => c.NameEn)\n            .Select(c => new CategoryResponse(c.Id, c.NameAr, c.NameEn, c.DescriptionAr, c.DescriptionEn))\n            .ToListAsync(ct);\n}\n\npublic sealed class GetCategoryByIdHandler(IReadDbContext read)\n{\n    public async Task<CategoryResponse> HandleAsync(Guid id, CancellationToken ct) =>\n        await read.Categories\n            .Where(c => c.Id == id)\n            .Select(c => new CategoryResponse(c.Id, c.NameAr, c.NameEn, c.DescriptionAr, c.DescriptionEn))\n            .FirstOrDefaultAsync(ct)\n        ?? throw CategoryErrors.NotFound();               // CAT-04: 404\n}\n\npublic sealed class CreateCategoryHandler(IUnitOfWork uow, IReadDbContext read, TimeProvider timeProvider)\n{\n    public async Task<CategoryResponse> HandleAsync(UpsertCategoryRequest request, CancellationToken ct)\n    {\n        var category = Category.Create(request.NameAr, request.NameEn,\n            request.DescriptionAr, request.DescriptionEn, timeProvider.GetUtcNow().UtcDateTime);\n\n        // Pre-check with a clear message; the unique index protects against race conditions\n        if (await read.Categories.AnyAsync(c => c.NameAr == category.NameAr || c.NameEn == category.NameEn, ct))\n            throw CategoryErrors.DuplicateName();\n\n        await uow.Repository<Category>().AddAsync(category, ct);\n        await uow.SaveChangesAsync(ct);\n        return new CategoryResponse(category.Id, category.NameAr, category.NameEn, category.DescriptionAr, category.DescriptionEn);\n    }\n}\n\npublic sealed class UpdateCategoryHandler(IUnitOfWork uow, IReadDbContext read, TimeProvider timeProvider)\n{\n    public async Task<CategoryResponse> HandleAsync(Guid id, UpsertCategoryRequest request, CancellationToken ct)\n    {\n        var category = await uow.Repository<Category>().GetByIdAsync(id, ct) ?? throw CategoryErrors.NotFound();\n        category.Update(request.NameAr, request.NameEn,\n            request.DescriptionAr, request.DescriptionEn, timeProvider.GetUtcNow().UtcDateTime);\n\n        // Uniqueness check excludes the category itself, otherwise updating only the description would fail\n        if (await read.Categories.AnyAsync(c => c.Id != id && (c.NameAr == category.NameAr || c.NameEn == category.NameEn), ct))\n            throw CategoryErrors.DuplicateName();\n\n        await uow.SaveChangesAsync(ct);                   // Entity is tracked; no need for Update\n        return new CategoryResponse(category.Id, category.NameAr, category.NameEn, category.DescriptionAr, category.DescriptionEn);\n    }\n}\n\npublic sealed class DeleteCategoryHandler(IUnitOfWork uow, IReadDbContext read)\n{\n    public async Task HandleAsync(Guid id, CancellationToken ct)\n    {\n        var categories = uow.Repository<Category>();\n        var category = await categories.GetByIdAsync(id, ct) ?? throw CategoryErrors.NotFound();\n\n        // IgnoreQueryFilters: soft-deleted campaigns are still rows that block deletion due to FK Restrict\n        var hasCampaigns = await read.CampaignsIncludingDeleted.AnyAsync(c => c.CategoryId == id, ct);\n        category.EnsureCanBeDeleted(hasCampaigns);        // CAT-04 / Invariant 10: decision lives in Domain (409)\n\n        categories.Remove(category);\n        await uow.SaveChangesAsync(ct);\n    }\n}",
    "filename": "DonationHub.Application/Features/Categories/CategoryHandlers.cs"
   },
   {
@@ -1315,16 +1315,16 @@
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "الـ Controller **رفيع**: لا يعرف أي قاعدة عمل، فقط يستقبل الطلب ويستدعي الـ handler ويُرجع كود HTTP المناسب. هذا ما سيجعل الانتقال إلى MediatR في Sprint 2 مجرد استبدال بسيط."
+   "markdown": "The Controller is **thin**: it knows no business rules — it simply receives the request, invokes the handler, and returns the appropriate HTTP status code. This is what makes migrating to MediatR in Sprint 2 a straightforward swap."
   },
   {
    "type": "Heading",
-   "text": "المهمة 9 — Scalar مع Bearer",
+   "text": "Task 9 — Scalar with Bearer",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "على .NET 10 (حزمة `Microsoft.OpenApi` v2) نضيف document transformer يعرّف مخطط Bearer:"
+   "markdown": "On .NET 10 (`Microsoft.OpenApi` v2 package), we add a document transformer that defines the Bearer security scheme:"
   },
   {
    "type": "Code",
@@ -1335,11 +1335,11 @@
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "على **.NET 9** الأنواع في namespace `Microsoft.OpenApi.Models`، والمرجع يُكتب بـ `new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = \"Bearer\" } }` كما في فيديو Israel Quiroz."
+   "markdown": "On **.NET 9**, the types live in the `Microsoft.OpenApi.Models` namespace, and the reference is written as `new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = \"Bearer\" } }`, as shown in Israel Quiroz's video."
   },
   {
    "type": "Paragraph",
-   "markdown": "وأخيرًا `Program.cs` يجمع كل شيء:"
+   "markdown": "Finally, `Program.cs` wires everything together:"
   },
   {
    "type": "Code",
@@ -1349,7 +1349,7 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 10 — README",
+   "text": "Task 10 — README",
    "level": 2
   },
   {
@@ -1363,48 +1363,48 @@
   },
   {
    "type": "Heading",
-   "text": "أخطاء شائعة تخسّر نقاطًا",
+   "text": "Common Mistakes That Lose Points",
    "level": 2
   },
   {
    "type": "Checklist",
    "items": [
-    "`Domain` يحتوي `PackageReference` (مثل EF Core أو Identity) — يخالف قاعدة الاعتماد.",
-    "استخدام `DateTime.UtcNow` داخل الكيانات بدل تمرير الوقت كمعامل.",
-    "Setters عامة على الكيانات، أو قواعد العمل داخل الـ Controller.",
-    "إرجاع الكيان نفسه من الـ API بدل DTO (يسرّب `RowVersion` و `IsDeleted` وغيرها).",
-    "تخزين الـ Refresh Token كنص خام، أو عدم إلغاء القديم عند التجديد.",
-    "رسالة خطأ مختلفة لـ «البريد غير موجود» و «كلمة المرور خاطئة».",
-    "وضع `Jwt:SecretKey` أو كلمة مرور حقيقية في `appsettings.json` ثم عمل commit — حتى لو حُذفت لاحقًا تبقى في تاريخ Git.",
-    "فحص `CategoryId` على الحملات غير المحذوفة فقط عند حذف التصنيف، فيفشل الحذف بخطأ FK 500 بدل 409.",
-    "نسيان `base.OnModelCreating(builder)` في `AppDbContext` فتختفي إعدادات جداول Identity."
+    "`Domain` contains a `PackageReference` (such as EF Core or Identity) — violates the dependency rule.",
+    "Using `DateTime.UtcNow` inside entities instead of passing the current time as a parameter.",
+    "Public setters on entities, or business rules inside the Controller.",
+    "Returning the entity itself from the API instead of a DTO (leaks `RowVersion`, `IsDeleted`, etc.).",
+    "Storing the Refresh Token in plain text, or failing to revoke the old token upon refresh.",
+    "Returning different error messages for \"email not found\" and \"wrong password\".",
+    "Putting `Jwt:SecretKey` or a real password in `appsettings.json` and committing it — even if deleted later, it remains in Git history.",
+    "Checking `CategoryId` only on non-deleted campaigns when deleting a category, causing deletion to fail with a 500 FK error instead of 409.",
+    "Forgetting `base.OnModelCreating(builder)` in `AppDbContext`, causing Identity table configurations to be lost."
    ]
   },
   {
    "type": "Heading",
-   "text": "أسئلة استعد لها في المراجعة",
+   "text": "Questions to Prepare For in the Review",
    "level": 2
   },
   {
    "type": "Checklist",
    "items": [
-    "لماذا القراءة لا تمر عبر الـ Repository بينما الكتابة تمر؟ ما الذي نكسبه وما الذي نخسره؟",
-    "ما الفرق بين Entity و Value Object؟ ولماذا `Money` يقارن بالقيمة؟",
-    "لماذا نخزّن hash للـ Refresh Token وليس قيمته؟ ولماذا SHA-256 يكفي هنا ولا نحتاج bcrypt؟",
-    "ماذا يحدث لو سرق شخص Refresh Token واستخدمه قبل صاحبه؟ (فكّر في IDN-13)",
-    "لماذا `DbContext` بعمر Scoped بينما `SoftDeleteInterceptor` و `TimeProvider` بعمر Singleton؟ ومتى يصبح Singleton خطرًا (Captive Dependency)؟",
-    "لماذا الـ endpoints تُرجع 404 وليس 403 للموارد غير المملوكة؟ (ستحتاجها في Sprint 3)",
-    "ماذا يحدث لو تم استدعاء `Task.Run` حول `ToListAsync`؟"
+    "Why do reads bypass the Repository while writes go through it? What do we gain and what do we lose?",
+    "What is the difference between an Entity and a Value Object? And why does `Money` compare by value?",
+    "Why do we store a hash of the Refresh Token rather than its raw value? And why is SHA-256 sufficient here without needing bcrypt?",
+    "What happens if someone steals a Refresh Token and uses it before its legitimate owner? (Think about IDN-13)",
+    "Why is `DbContext` Scoped while `SoftDeleteInterceptor` and `TimeProvider` are Singleton? And when does a Singleton become dangerous (Captive Dependency)?",
+    "Why do endpoints return 404 rather than 403 for non-owned resources? (You will need this in Sprint 3)",
+    "What happens if `Task.Run` is called around `ToListAsync`?"
    ]
   },
   {
    "type": "Heading",
-   "text": "تلميحات للمهام الإضافية",
+   "text": "Hints for BONUS Tasks",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "**IDN-13 (اكتشاف إعادة الاستخدام):** إذا وصل رمز **ملغى** وليس منتهيًا، فهذا مؤشر سرقة. تتبّع سلسلة `ReplacedByTokenId` وألغِ كل الرموز النشطة للعائلة، ثم أرجِع `Auth.RefreshTokenInvalid`:"
+   "markdown": "**IDN-13 (Reuse detection):** If a **revoked** (not merely expired) token is presented, that signals theft. Walk the `ReplacedByTokenId` chain, revoke all active tokens in the family, and return `Auth.RefreshTokenInvalid`:"
   },
   {
    "type": "Code",
@@ -1414,18 +1414,18 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "**Unit tests مبكرة:** اختبار القواعد في الـ Domain سهل جدًا لأن الوقت يُمرَّر كمعامل:"
+   "markdown": "**Early unit tests:** Testing invariants in the Domain is very easy because the current time is passed as a parameter:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "public class CampaignTests\n{\n    private static readonly DateTime Now = new(2026, 10, 23, 12, 0, 0, DateTimeKind.Utc);\n\n    [Fact]\n    public void Create_WithNonPositiveGoal_Throws()\n    {\n        var ex = Assert.Throws<DomainException>(() =>\n            Campaign.Create(\"عنوان\", \"Title\", \"وصف\", \"Description\", 0m, Now.AddDays(10), Guid.NewGuid(), Guid.NewGuid(), Now));\n\n        Assert.Equal(\"Validation.Failed\", ex.Code);\n    }\n\n    [Fact]\n    public void Update_GoalBelowRaised_Throws()\n    {\n        var campaign = Campaign.Create(\"عنوان\", \"Title\", \"وصف\", \"Description\", 100m, Now.AddDays(10), Guid.NewGuid(), Guid.NewGuid(), Now);\n        var donation = Donation.Create(campaign, Guid.NewGuid(), 60m, 1m, 10_000m, Now);\n        donation.MarkSucceeded(campaign, \"DN-2026-000001\", Now);\n\n        var ex = Assert.Throws<DomainException>(() =>\n            campaign.Update(\"عنوان\", \"Title\", \"وصف\", \"Description\", 50m, campaign.EndDate, campaign.CategoryId, Now));\n\n        Assert.Equal(\"Campaign.GoalBelowRaised\", ex.Code);\n    }\n}\n\npublic class CategoryTests\n{\n    [Fact]\n    public void EnsureCanBeDeleted_WithCampaigns_Throws()   // القاعدة 10\n    {\n        var category = Category.Create(\"تعليم\", \"Education\", null, null, new DateTime(2026, 10, 23, 0, 0, 0, DateTimeKind.Utc));\n\n        var ex = Assert.Throws<DomainException>(() => category.EnsureCanBeDeleted(hasCampaigns: true));\n\n        Assert.Equal(\"Category.HasCampaigns\", ex.Code);\n    }\n}",
+   "code": "public class CampaignTests\n{\n    private static readonly DateTime Now = new(2026, 10, 23, 12, 0, 0, DateTimeKind.Utc);\n\n    [Fact]\n    public void Create_WithNonPositiveGoal_Throws()\n    {\n        var ex = Assert.Throws<DomainException>(() =>\n            Campaign.Create(\"عنوان\", \"Title\", \"وصف\", \"Description\", 0m, Now.AddDays(10), Guid.NewGuid(), Guid.NewGuid(), Now));\n\n        Assert.Equal(\"Validation.Failed\", ex.Code);\n    }\n\n    [Fact]\n    public void Update_GoalBelowRaised_Throws()\n    {\n        var campaign = Campaign.Create(\"عنوان\", \"Title\", \"وصف\", \"Description\", 100m, Now.AddDays(10), Guid.NewGuid(), Guid.NewGuid(), Now);\n        var donation = Donation.Create(campaign, Guid.NewGuid(), 60m, 1m, 10_000m, Now);\n        donation.MarkSucceeded(campaign, \"DN-2026-000001\", Now);\n\n        var ex = Assert.Throws<DomainException>(() =>\n            campaign.Update(\"عنوان\", \"Title\", \"وصف\", \"Description\", 50m, campaign.EndDate, campaign.CategoryId, Now));\n\n        Assert.Equal(\"Campaign.GoalBelowRaised\", ex.Code);\n    }\n}\n\npublic class CategoryTests\n{\n    [Fact]\n    public void EnsureCanBeDeleted_WithCampaigns_Throws()   // Invariant 10\n    {\n        var category = Category.Create(\"تعليم\", \"Education\", null, null, new DateTime(2026, 10, 23, 0, 0, 0, DateTimeKind.Utc));\n\n        var ex = Assert.Throws<DomainException>(() => category.EnsureCanBeDeleted(hasCampaigns: true));\n\n        Assert.Equal(\"Category.HasCampaigns\", ex.Code);\n    }\n}",
    "filename": "DonationHub.UnitTests/CampaignTests.cs"
   },
   {
    "type": "Callout",
    "variant": "Success",
-   "markdown": "لو حلّك يحقق نفس **المبادئ** (اعتماد في اتجاه واحد، كيانات تحمي نفسها، أسرار خارج Git، فصل القراءة عن الكتابة، رموز مشفّرة ومدوَّرة) فأنت على الطريق الصحيح حتى لو اختلفت التفاصيل."
+   "markdown": "If your solution upholds the same **principles** (unidirectional dependencies, self-protecting entities, secrets outside Git, read/write separation, hashed and rotated tokens), you are on the right track even if the details differ."
   }
  ]
 }

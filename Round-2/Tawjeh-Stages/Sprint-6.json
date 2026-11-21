@@ -1,6 +1,6 @@
 {
- "title": "Sprint 6 — تجميعات EF Core وDocker وفحوص الصحة وCI/CD والتسليم النهائي",
- "summary": "اجعل DonationHub جاهزًا للإنتاج: لوحة تقارير، حاويات Docker، فحوص صحة، CI، وتوثيق للدفاع النهائي.",
+ "title": "Sprint 6 — EF Core Aggregations, Docker, Health Checks, CI/CD & Final Delivery",
+ "summary": "Make DonationHub production-ready: reporting dashboard, Docker containers, health checks, CI, and documentation for the final defense.",
  "isGraded": true,
  "basePoints": 100,
  "lateMultiplier": 0.4,
@@ -11,30 +11,30 @@
  "briefBlocks": [
   {
    "type": "Heading",
-   "text": "Sprint 6 — تجميعات EF Core وDocker وفحوص الصحة وCI/CD والتسليم النهائي",
+   "text": "Sprint 6 — EF Core Aggregations, Docker, Health Checks, CI/CD & Final Delivery",
    "level": 1
   },
   {
    "type": "Paragraph",
-   "markdown": "هذا هو **السبرنت الأخير** في مشروع **DonationHub** — منصّة إدارة التبرعات والحملات الخيرية التي بنيتها طبقةً بعد طبقة: معمارية نظيفة وهوية في Sprint 1، ثم CQRS والتحقق في Sprint 2، والتبرعات والتخزين المؤقت في Sprint 3، والإشعارات والملفات والمهام الخلفية في Sprint 4، والدفع عبر Stripe والاختبارات التكاملية في Sprint 5. في هذا السبرنت تنقل المشروع من مرحلة «يعمل على جهازي» إلى نظام **مؤتمت، داخل حاويات، وجاهز للإنتاج**: لوحة تقارير للمسؤول، وإدارة المستخدمين والموظفين، و Dockerfile متعدد المراحل، و Docker Compose لكامل البيئة، وفحوص صحة، وخط CI على GitHub Actions، ثم توثيق احترافي تدافع به عن مشروعك في **الدفاع النهائي**."
+   "markdown": "This is the **final sprint** of the **DonationHub** project — the Donation Management & Crowdfunding Platform that you built layer by layer: Clean Architecture and identity in Sprint 1, CQRS and validation in Sprint 2, donations and caching in Sprint 3, notifications, files, and background jobs in Sprint 4, and Stripe payments and integration tests in Sprint 5. In this sprint, you take the project from \"it works on my machine\" to an **automated, containerized, and production-ready** system: an admin reporting dashboard, user and staff management, a multi-stage Dockerfile, Docker Compose for the full stack, health checks, a GitHub Actions CI pipeline, and professional documentation to defend your project in the **Final Defense**."
   },
   {
    "type": "Paragraph",
-   "markdown": "- **المدة:** 15 يومًا (من 06/01/2027 إلى 20/01/2027)\n- **Stand-up 1 (اليوم 5):** 10/01/2027 — يقودها **Kareem Zein**\n- **Stand-up 2 (اليوم 10):** 15/01/2027 — يقودها **Mohamed Atef**\n- **الختام وآخر موعد للتسليم (اليوم 15):** 20/01/2027 — تقودها **Asma ELhadidy**\n- **مراجعة الكود والتصحيحات النهائية (الأيام 16–18):** من 21/01/2027 إلى 23/01/2027\n- **الدفاع النهائي (Final Defense):** من 21/01/2027 إلى 23/01/2027\n- **التقييم:** 100 نقطة"
+   "markdown": "- **Duration:** 15 Days (06/01/2027 to 20/01/2027)\n- **Stand-up 1 (Day 5):** 10/01/2027 — Session Leader: **Kareem Zein**\n- **Stand-up 2 (Day 10):** 15/01/2027 — Session Leader: **Mohamed Atef**\n- **Closing & Deadline (Day 15):** 20/01/2027 — Session Leader: **Asma ELhadidy**\n- **Code Review & Final Corrections (Days 16–18):** 21/01/2027 to 23/01/2027\n- **Final Defense:** 21/01/2027 to 23/01/2027\n- **Evaluation:** 100 Points"
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "**الإطار المستهدف:** .NET 10 (`net10.0`) بصيغة الحل `.slnx` (متوافق بالكامل مع .NET 8 و .NET 9). الصور المستخدمة في Docker هي `mcr.microsoft.com/dotnet/sdk:10.0` و `mcr.microsoft.com/dotnet/aspnet:10.0`، وخط الـ CI يثبّت `10.0.x`."
+   "markdown": "**Target Framework:** .NET 10 (`net10.0`) using the `.slnx` solution format (fully compatible with .NET 8 and .NET 9). The Docker images used are `mcr.microsoft.com/dotnet/sdk:10.0` and `mcr.microsoft.com/dotnet/aspnet:10.0`, and the CI pipeline installs `10.0.x`."
   },
   {
    "type": "Heading",
-   "text": "🎯 هدف السبرنت",
+   "text": "🎯 Sprint Goal",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "انقل DonationHub من «يعمل على جهازي» إلى نظام مؤتمت وجاهز للإنتاج: طبّق لوحة **تحليلات وتقارير المسؤول** باستعلامات **EF Core Aggregations و Projections** محسّنة، وضع التطبيق في حاوية عبر **Dockerfile متعدد المراحل** وفعّال، وشغّل البيئة كاملة (API و SQL Server و Redis و Mailpit) عبر **Docker Compose**، واضبط **Health Checks**، وابنِ خط تكامل مستمر عبر **GitHub Actions**، واكتب توثيقًا هندسيًا شاملًا للدفاع النهائي."
+   "markdown": "Take DonationHub from \"it works on my machine\" to an automated and production-ready system: implement the **Admin Analytics & Reports** dashboard using optimized **EF Core Aggregations and Projections**, containerize the application using an efficient **Multi-stage Dockerfile**, run the entire environment (API, SQL Server, Redis, and Mailpit) via **Docker Compose**, configure **Health Checks**, build a continuous integration pipeline via **GitHub Actions**, and write comprehensive engineering documentation for the final defense."
   },
   {
    "type": "Code",
@@ -44,83 +44,83 @@
   },
   {
    "type": "Heading",
-   "text": "📌 المتطلبات المسبقة",
+   "text": "📌 Sprint Prerequisites",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "قبل البدء تأكّد أنك تفهم المفاهيم التالية؛ ستحتاجها مباشرة في مهام Docker Compose و GitHub Actions."
+   "markdown": "Before starting, make sure you understand the following concepts; you will need them directly in the Docker Compose and GitHub Actions tasks."
   },
   {
    "type": "Heading",
-   "text": "1. تنسيق الحاويات المتعددة وأساسيات CI",
+   "text": "1. Multi-Container Orchestration & CI Basics",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "يجب أن تكون على دراية بمفاهيم الشبكات في Docker وبصيغة YAML:\n\n- افهم كيف تسمح شبكات Docker للحاويات بالتواصل عبر **اسم الخدمة** (مثلًا `Server=sqlserver` بدل `localhost`). داخل الحاوية، `localhost` يعني الحاوية نفسها وليس جهازك ولا حاوية قاعدة البيانات.\n- إلمام أساسي بإعدادات مستودع GitHub: **Repository Secrets** و **GitHub Actions runners**."
+   "markdown": "You must be familiar with Docker networking concepts and YAML syntax:\n\n- Understand how Docker networks allow containers to communicate by **service name** (e.g., `Server=sqlserver` instead of `localhost`). Inside a container, `localhost` refers to the container itself, not your host machine or the database container.\n- Basic familiarity with GitHub repository settings: **Repository Secrets** and **GitHub Actions runners**."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "الـ Repository Secrets تُضاف من **Settings ← Secrets and variables ← Actions** وتُقرأ داخل الـ workflow فقط، ولا تظهر في الـ logs. والـ runner هو الآلة (مثل `ubuntu-latest`) التي ينفّذ عليها GitHub خطوات الـ job، وفيها Docker جاهز لتشغيل service containers."
+   "markdown": "Repository Secrets are added under **Settings → Secrets and variables → Actions**, are read only inside the workflow, and do not appear in the logs. A runner is the machine (such as `ubuntu-latest`) on which GitHub executes the job steps, with Docker preinstalled to run service containers."
   },
   {
    "type": "Heading",
-   "text": "🛠️ مهام السبرنت",
+   "text": "🛠️ Sprint Tasks",
    "level": 2
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "كل المهام التالية **أساسية (CORE)** ما لم يُذكر أنها BONUS. كل المسارات في الجداول تقع تحت البادئة `/api/v1`."
+   "markdown": "All tasks below are **CORE** unless marked BONUS. All routes in the tables sit under the `/api/v1` prefix."
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "الروابط المعلَّمة بـ 📘 من كورس [.NET Web API Zero to Hero](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) المجاني (مقالات .NET 10 مع كود كامل). أمثلته تستخدم **PostgreSQL** و **Minimal APIs** — طبّق نفس الأفكار على **SQL Server** و **Controllers رفيعة** كما في مشروعنا."
+   "markdown": "Links marked with 📘 are from the free [.NET Web API Zero to Hero](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) course (.NET 10 articles with full code). Its samples use **PostgreSQL** and **Minimal APIs** — apply the same ideas using **SQL Server** and **thin Controllers** as in our project."
   },
   {
    "type": "Heading",
-   "text": "المهمة 1 — لوحة تحليلات المسؤول وتجميعات EF Core",
+   "text": "Task 1 — Admin Analytics Dashboard & EF Core Aggregations",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "طبّق التقارير واستعلامات التجميع حسب SRS §5.10. الهدف أن **يُنفَّذ الحساب كله داخل SQL Server** (`SUM` و `COUNT` و `GROUP BY`) ولا يصل إلى التطبيق إلا الأرقام النهائية — لا تحمّل آلاف التبرعات إلى الذاكرة لتجمعها بـ LINQ to Objects."
+   "markdown": "Implement reporting and aggregate queries according to SRS §5.10. The goal is for **all computation to execute inside SQL Server** (`SUM`, `COUNT`, and `GROUP BY`) so that only the final numbers reach the application — do not load thousands of donations into memory to aggregate them with LINQ to Objects."
   },
   {
    "type": "Checklist",
    "items": [
-    "**RPT-01 (المؤشرات الإجمالية):** إجمالي المبالغ المجمَّعة من كل التبرعات بحالة `Succeeded` (`Sum`).",
-    "**RPT-01:** إجمالي عدد التبرعات بحالة `Succeeded` (`Count`).",
-    "**RPT-01:** إجمالي عدد المتبرعين المميَّزين (distinct donors).",
-    "**RPT-01:** عدد الحملات مجمَّعًا حسب الحالة (`Active` و `Completed` و `Expired`).",
-    "**RPT-02 (الحملات الأعلى أداءً):** أعلى N حملة مرتّبة حسب `RaisedAmount` (`OrderByDescending` + `Take`).",
-    "**RPT-03 (التبرعات عبر الزمن):** مجاميع يومية ضمن نطاق تاريخ (`GroupBy(d => d.CreatedAt.Date)` تُترجَم مباشرة إلى `GROUP BY` في SQL)."
+    "**RPT-01 (Summary Metrics):** Total funds raised across all `Succeeded` donations (`Sum`).",
+    "**RPT-01:** Total count of `Succeeded` donations (`Count`).",
+    "**RPT-01:** Total count of distinct donors.",
+    "**RPT-01:** Campaign counts grouped by status (`Active`, `Completed`, and `Expired`).",
+    "**RPT-02 (Top Performing Campaigns):** Top N campaigns ranked by `RaisedAmount` (`OrderByDescending` + `Take`).",
+    "**RPT-03 (Donations Over Time):** Daily aggregated totals within a date range (`GroupBy(d => d.CreatedAt.Date)` translated directly to SQL `GROUP BY`)."
    ]
   },
   {
    "type": "Paragraph",
-   "markdown": "**قواعد الأداء:**"
+   "markdown": "**Performance Rules:**"
   },
   {
    "type": "Checklist",
    "items": [
-    "فرض `AsNoTracking()` على كل استعلامات التقارير.",
-    "الإسقاط مباشرة إلى DTOs الاستجابة عبر `.Select()` لجلب الأعمدة المطلوبة فقط.",
-    "استخدام `.AsSplitQuery()` حيث يلزم لتجنّب انفجار الضرب الديكارتي (Cartesian explosion) عند ضمّ مجموعات (collections).",
-    "**RPT-04:** خزّن استجابات اللوحة مؤقتًا في Redis عبر `IDistributedCache` (مدة انتهاء افتراضية 5 دقائق، قابلة للضبط عبر Options).",
-    "**RPT-04:** يجب أن تطابق الأرقام قاعدة البيانات: تحقّق منها مقابل استعلام SQL مكتوب يدويًا، ووثّق هذا الاستعلام في الـ README."
+    "Enforce `AsNoTracking()` on all reporting queries.",
+    "Project directly into response DTOs via `.Select()` to fetch only required columns.",
+    "Use `.AsSplitQuery()` where appropriate to avoid Cartesian product explosion on joined collections.",
+    "**RPT-04:** Cache the dashboard responses in Redis via `IDistributedCache` (default 5-minute expiration, configured through Options).",
+    "**RPT-04:** The numbers must match the database: verify them against a hand-written SQL query and document that query in your README."
    ]
   },
   {
    "type": "Paragraph",
-   "markdown": "| Method | Path | الصلاحية |\n|---|---|---|\n| `GET` | `/admin/dashboard/summary` | Admin فقط |\n| `GET` | `/admin/dashboard/top-campaigns?count=5` | Admin فقط |\n| `GET` | `/admin/dashboard/donations-over-time?from=&to=` | Admin فقط |"
+   "markdown": "| Method | Path | Access |\n|---|---|---|\n| `GET` | `/admin/dashboard/summary` | Admin Only |\n| `GET` | `/admin/dashboard/top-campaigns?count=5` | Admin Only |\n| `GET` | `/admin/dashboard/donations-over-time?from=&to=` | Admin Only |"
   },
   {
    "type": "Paragraph",
-   "markdown": "مثال مقترح لشكل استجابة `GET /api/v1/admin/dashboard/summary` (JSON بأسماء camelCase وحالات كنصوص كما في SRS §6.8):"
+   "markdown": "Suggested sample response shape for `GET /api/v1/admin/dashboard/summary` (camelCase JSON with enum statuses as strings per SRS §6.8):"
   },
   {
    "type": "Code",
@@ -131,7 +131,7 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "**احذر التقييم في جهة العميل (client-side evaluation):** إذا كتبت `ToListAsync()` قبل `GroupBy` أو `Sum` فأنت تسحب الجدول كله إلى الذاكرة. راجع الـ SQL المولَّد (عبر الـ logging أو `ToQueryString()`) وتأكّد أنه يحتوي `GROUP BY` و `SUM` فعلًا — هذا بند صريح في تعريف الإنجاز."
+   "markdown": "**Beware of client-side evaluation:** If you call `ToListAsync()` before `GroupBy` or `Sum`, you pull the entire table into memory. Inspect the generated SQL (via logging or `ToQueryString()`) and verify that it actually contains `GROUP BY` and `SUM` — this is an explicit item in the Definition of Done."
   },
   {
    "type": "Video",
@@ -141,82 +141,82 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "Projections و `AsNoTracking` عند 08:13، و `AsSplitQuery` عند 13:38، و GroupBy في SQL عند 44:17."
+   "markdown": "Projections & `AsNoTracking` at 08:13, `AsSplitQuery` at 13:38, and GroupBy in SQL at 44:17."
   },
   {
    "type": "Resource",
    "title": "⭐2 Microsoft Learn — Complex Query Operators (GroupBy in EF Core)",
    "url": "https://learn.microsoft.com/en-us/ef/core/querying/complex-query-operators",
    "kind": "doc",
-   "description": "المرجع الرسمي لعوامل الاستعلام المعقدة في EF Core: GroupBy و Join و SelectMany وما يُترجَم منها إلى SQL."
+   "description": "Official reference for complex query operators in EF Core: GroupBy, Join, SelectMany, and what translates to SQL."
   },
   {
    "type": "Resource",
    "title": "🔄 📘 Tracking vs No-Tracking Queries in EF Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/tracking-vs-no-tracking-queries-efcore/",
    "kind": "article",
-   "description": "مرجع مكتوب بأمثلة .NET 10 على PostgreSQL: متى تستخدم الاستعلامات المتتبَّعة وغير المتتبَّعة وأثرها على الأداء."
+   "description": "Written reference with .NET 10 samples on PostgreSQL: when to use tracked vs. no-tracking queries and their performance impact."
   },
   {
    "type": "Heading",
-   "text": "المهمة 2 — إدارة المستخدمين والموظفين (Admin)",
+   "text": "Task 2 — Admin User & Staff Management",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "طبّق إدارة المستخدمين والموظفين حسب SRS §5.10. هذه المهمة تختبر قدرتك على حماية **قواعد العمل الحساسة**: لا يجوز أن يقفل المسؤول النظام على نفسه، ولا أن يبقى النظام بلا أي Admin نشط."
+   "markdown": "Implement user and staff management according to SRS §5.10. This task tests your ability to protect **critical business rules**: an Admin must not lock themself out of the system, and the system must never be left without any active Admin."
   },
   {
    "type": "Checklist",
    "items": [
-    "**ADM-01:** المسؤول يعرض كل المستخدمين — مع ترقيم صفحات (paged)، وتصفية حسب الدور، وبحث بالاسم أو البريد الإلكتروني.",
-    "**ADM-02:** المسؤول يفعّل أو يعطّل مستخدمًا. المستخدم المعطَّل لا يستطيع تسجيل الدخول (ولا تجديد الرموز، IDN-10).",
-    "**ADM-03:** المسؤول يعرض ويعدّل ويحذف المستخدمين الموظفين (`Admin` و `CampaignManager`). **الحذف يعني التعطيل** (لا حذف فعلي hard delete).",
-    "**قاعدة عمل:** لا يستطيع الـ Admin تعطيل نفسه.",
-    "**قاعدة عمل:** آخر Admin نشط لا يمكن حذفه ولا تعطيله.",
-    "الإخفاقات المتوقعة تُرجَع كأخطاء `Result` تتحوّل إلى `ProblemDetails` (لا استثناءات لقواعد العمل).",
-    "أضف unit tests لقواعد الإدارة: منع التعطيل الذاتي، وحماية آخر Admin نشط، ومنع المستخدم المعطَّل من تسجيل الدخول."
+    "**ADM-01:** Admin lists all users — paged, filter by role, search by name or email.",
+    "**ADM-02:** Admin activates or deactivates a user. A deactivated user cannot log in (and cannot refresh tokens, IDN-10).",
+    "**ADM-03:** Admin lists, updates, and deletes staff users (`Admin` and `CampaignManager`). **Delete means deactivate** (no hard delete).",
+    "**Business rule:** An Admin cannot deactivate themself.",
+    "**Business rule:** The last active Admin cannot be deleted or deactivated.",
+    "Expected failures return `Result` errors mapped to `ProblemDetails` (no exceptions for business rules).",
+    "Add unit tests for the admin rules: blocking self-deactivation, protecting the last active Admin, and preventing a deactivated user from logging in."
    ]
   },
   {
    "type": "Paragraph",
-   "markdown": "| Method | Path | الصلاحية |\n|---|---|---|\n| `GET` | `/admin/users?page=&role=&search=` | Admin فقط |\n| `PATCH` | `/admin/users/{id}/status` | Admin فقط |\n| `GET` | `/admin/staff` | Admin فقط |\n| `PUT` | `/admin/staff/{id}` | Admin فقط |\n| `DELETE` | `/admin/staff/{id}` | Admin فقط |"
+   "markdown": "| Method | Path | Access |\n|---|---|---|\n| `GET` | `/admin/users?page=&role=&search=` | Admin Only |\n| `PATCH` | `/admin/users/{id}/status` | Admin Only |\n| `GET` | `/admin/staff` | Admin Only |\n| `PUT` | `/admin/staff/{id}` | Admin Only |\n| `DELETE` | `/admin/staff/{id}` | Admin Only |"
   },
   {
    "type": "Paragraph",
-   "markdown": "قائمة المستخدمين تتبع شكل الصفحات الموحّد من SRS §6.8: `{ \"items\": [], \"page\": 1, \"pageSize\": 20, \"totalCount\": 0, \"totalPages\": 0 }` — حجم الصفحة الافتراضي 20 والحد الأقصى 50. وكل عنصر يعرض الاسم والبريد والأدوار وحالة التفعيل، **ولا يعرض** أي hash أو security stamp."
+   "markdown": "The user list follows the unified paged response shape from SRS §6.8: `{ \"items\": [], \"page\": 1, \"pageSize\": 20, \"totalCount\": 0, \"totalPages\": 0 }` — default page size is 20 and maximum is 50. Each item exposes the name, email, roles, and activation status, and **never exposes** any hash or security stamp."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "أضف أكواد أخطاء جديدة إلى الكتالوج لقواعد الإدارة (مثلًا `Admin.CannotDeactivateSelf` و `Admin.LastActiveAdmin`) واختر لها نوع `Error` المناسب (409 أو 422) مع تبرير قرارك في الـ README."
+   "markdown": "Add new error codes to the catalog for the admin rules (e.g., `Admin.CannotDeactivateSelf` and `Admin.LastActiveAdmin`) and choose the appropriate `Error` type (409 or 422), justifying your decision in the README."
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "`ApplicationUser` موجود في طبقة Infrastructure، لذلك لا يستطيع الـ handler في Application استخدام `UserManager` مباشرة. فكّر في واجهة (port) داخل Application تنفّذها Infrastructure، واترك **قواعد العمل** في الـ handler حتى تختبرها بسهولة بـ Moq."
+   "markdown": "`ApplicationUser` lives in the Infrastructure layer, so a handler in Application cannot use `UserManager` directly. Consider defining an interface (port) in Application implemented by Infrastructure, keeping the **business rules** in the handler so you can test them easily with Moq."
   },
   {
    "type": "Heading",
-   "text": "المهمة 3 — Dockerfile متعدد المراحل للإنتاج",
+   "text": "Task 3 — Production Multi-Stage Dockerfile",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "أنشئ `Dockerfile` محسّنًا في جذر المستودع. الفكرة: مرحلة ثقيلة فيها الـ SDK كاملًا للبناء فقط، ثم صورة تشغيل نحيفة لا تحتوي إلا الملفات المنشورة — فتصغر الصورة وتقل مساحة الهجوم."
+   "markdown": "Create an optimized `Dockerfile` in the repository root. The idea: a heavy stage containing the full SDK for building only, followed by a lean runtime image containing only the published artifacts — producing a smaller image and a reduced attack surface."
   },
   {
    "type": "Checklist",
    "items": [
-    "**المرحلة 1 (Build):** استخدم صورة .NET 10 SDK الرسمية (`mcr.microsoft.com/dotnet/sdk:10.0`)، وانسخ ملفات المشاريع، واستعد الاعتماديات (`dotnet restore`)، ثم انسخ الكود المصدري وانشر ملفات محسّنة (`dotnet publish -c Release -o /app/publish`).",
-    "**المرحلة 2 (Runtime):** استخدم صورة ASP.NET runtime النحيفة (`mcr.microsoft.com/dotnet/aspnet:10.0`)، وانسخ فقط الملفات المنشورة من المرحلة 1، واكشف المنفذ 8080، وشغّل التطبيق بمستخدم آمن **غير root**.",
-    "أضف ملف `.dockerignore` يستثني `bin/` و `obj/` و `.git/` ونتائج الاختبارات المحلية."
+    "**Stage 1 (Build):** Use the official .NET 10 SDK image (`mcr.microsoft.com/dotnet/sdk:10.0`), copy project files, restore dependencies (`dotnet restore`), copy source code, and publish optimized binaries (`dotnet publish -c Release -o /app/publish`).",
+    "**Stage 2 (Runtime):** Use the lean ASP.NET runtime image (`mcr.microsoft.com/dotnet/aspnet:10.0`), copy only the published artifacts from Stage 1, expose port 8080, and run the application under a secure **non-root** user.",
+    "Add a `.dockerignore` file excluding `bin/`, `obj/`, `.git/`, and local test results."
    ]
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "رتّب أوامر `COPY` بحيث تُنسخ ملفات `.csproj` أولًا ثم `dotnet restore`، ثم بقية الكود. بهذا تبقى طبقة الـ restore مخزّنة (cached) ولا تُعاد إلا إذا تغيّرت الحزم."
+   "markdown": "Order the `COPY` instructions so that `.csproj` files are copied first, followed by `dotnet restore`, and then the rest of the source code. This keeps the restore layer cached and only re-runs it when packages change."
   },
   {
    "type": "Video",
@@ -229,38 +229,38 @@
    "title": "🔄 Docker Full Course For .NET — Julio Casal",
    "url": "https://youtu.be/cWMztQwIQNs",
    "kind": "video",
-   "description": "كورس شامل في Docker لمطوّري .NET: الصور والحاويات والطبقات والشبكات والـ volumes."
+   "description": "Comprehensive Docker course for .NET developers: images, containers, layers, networking, and volumes."
   },
   {
    "type": "Heading",
-   "text": "المهمة 4 — تشغيل البيئة كاملة عبر Docker Compose",
+   "text": "Task 4 — Full Stack Orchestration via Docker Compose",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "أنشئ `docker-compose.yml` يشغّل منظومة DonationHub كاملة بأمر واحد (`docker compose up -d`)، حسب SRS §6.12:"
+   "markdown": "Create `docker-compose.yml` to launch the complete DonationHub ecosystem with a single command (`docker compose up -d`), according to SRS §6.12:"
   },
   {
    "type": "Checklist",
    "items": [
-    "**`api`:** يُبنى من الـ `Dockerfile` المحلي. كل الإعدادات تأتي من متغيرات البيئة. لا يبدأ إلا بعد أن تصبح اعتمادياته سليمة (`depends_on` مع `condition: service_healthy`).",
-    "**`sqlserver`:** Microsoft SQL Server داخل حاوية (`mcr.microsoft.com/mssql/server`) مع health check و named volume لبيانات SQL.",
-    "**`redis`:** ذاكرة Redis المؤقتة داخل حاوية (`redis:alpine`) مع health check.",
-    "**`mailpit`:** خادم SMTP محلي داخل حاوية (`axllent/mailpit`) يكشف المنفذ 8025 لواجهة الويب و 1025 لـ SMTP.",
-    "**Named volumes:** واحد لبيانات SQL Server وواحد للملفات المرفوعة (صور الحملات والإيصالات).",
-    "**لا أسرار في المستودع:** القيم تأتي عبر متغيرات بيئة تُحمَّل من ملف `.env`. الملف `.env` مستثنى من git؛ ارفع `.env.example` بقيم وهمية فقط. لا تضع أسرارًا في `appsettings*.json` أبدًا.",
-    "**العمل من نسخة نظيفة (clean clone):** يجب أن ينتج `docker compose up` واجهة API تعمل، مع تطبيق EF Core migrations وبذر حساب الـ Admin عند بدء التشغيل (من `SeedAdminOptions`)."
+    "**`api`:** Builds from the local `Dockerfile`. All settings come from environment variables. Starts only after its dependencies are healthy (`depends_on` with `condition: service_healthy`).",
+    "**`sqlserver`:** Containerized Microsoft SQL Server (`mcr.microsoft.com/mssql/server`) with a health check and a named volume for SQL data.",
+    "**`redis`:** Containerized Redis cache (`redis:alpine`) with a health check.",
+    "**`mailpit`:** Containerized local SMTP server (`axllent/mailpit`) exposing port 8025 for the web UI and 1025 for SMTP.",
+    "**Named volumes:** one for SQL Server data and one for uploaded files (campaign banners and receipts).",
+    "**No secrets in the repository:** values are supplied through environment variables loaded from a `.env` file. `.env` is git-ignored; commit a `.env.example` with placeholder values only. Never put secrets in `appsettings*.json`.",
+    "**Working from a clean clone:** `docker compose up` must produce a working API with EF Core migrations applied and the Admin account seeded on startup (from `SeedAdminOptions`)."
    ]
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "اختبر «النسخة النظيفة» فعليًا قبل التسليم: `git clone` لمستودعك في مجلد جديد، ثم `cp .env.example .env` وعدّل القيم، ثم `docker compose down -v` و `docker compose up --build`. إن احتجت أي خطوة يدوية غير موجودة في الـ README فالمتطلب لم يتحقق."
+   "markdown": "Actually test the \"clean clone\" before submission: run `git clone` of your repository into a new folder, then `cp .env.example .env` and fill in the values, then `docker compose down -v` and `docker compose up --build`. If you need any manual step not documented in the README, the requirement is not met."
   },
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "داخل شبكة Compose يتصل الـ API بقاعدة البيانات عبر `Server=sqlserver,1433` وبـ Redis عبر `redis:6379` وبـ SMTP عبر `mailpit:1025` — وليس `localhost`. والمفاتيح المتداخلة في متغيرات البيئة تُكتب بشرطتين سفليتين: `ConnectionStrings__Default` و `Jwt__SecretKey`."
+   "markdown": "Inside the Compose network, the API connects to the database via `Server=sqlserver,1433`, to Redis via `redis:6379`, and to SMTP via `mailpit:1025` — not `localhost`. Nested configuration keys in environment variables use double underscores: `ConnectionStrings__Default` and `Jwt__SecretKey`."
   },
   {
    "type": "Video",
@@ -273,30 +273,30 @@
    "title": "🔄 Docker Compose Tutorial — Mosh Hamedani",
    "url": "https://youtu.be/HG6yIjZapSA",
    "kind": "video",
-   "description": "شرح Docker Compose من الصفر: الخدمات والشبكات والـ volumes ومتغيرات البيئة."
+   "description": "Docker Compose explained from scratch: services, networks, volumes, and environment variables."
   },
   {
    "type": "Heading",
-   "text": "المهمة 5 — فحوص الصحة في ASP.NET Core (Health Checks)",
+   "text": "Task 5 — ASP.NET Core Health Checks",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "طبّق نقاط مراقبة الصحة حسب SRS §6.11. المنسّقات (Docker و Kubernetes) تحتاج سؤالين مختلفين: «هل العملية حيّة؟» (Liveness) و«هل هي جاهزة لاستقبال الطلبات؟» (Readiness) — ولكل سؤال endpoint مستقل."
+   "markdown": "Implement health monitoring endpoints according to SRS §6.11. Orchestrators (Docker and Kubernetes) ask two distinct questions: \"Is the process alive?\" (Liveness) and \"Is it ready to receive requests?\" (Readiness) — each with its own endpoint."
   },
   {
    "type": "Checklist",
    "items": [
-    "ثبّت الحزمتين `AspNetCore.HealthChecks.SqlServer` و `AspNetCore.HealthChecks.Redis`.",
-    "`/health/live` (Liveness probe): العملية تعمل — **بدون فحص أي اعتمادية**.",
-    "`/health/ready` (Readiness probe): يفحص الاتصال بـ SQL Server، والاتصال بـ Redis، و**صلاحية الكتابة في مجلد تخزين الملفات** (health check مخصّص).",
-    "الاستجابات بصيغة JSON وتتضمن اسم كل فحص وحالته.",
-    "استخدم `/health/ready` كـ health check لحاوية `api` في Docker Compose."
+    "Install `AspNetCore.HealthChecks.SqlServer` and `AspNetCore.HealthChecks.Redis`.",
+    "`/health/live` (Liveness probe): the process is up — **no dependency checks**.",
+    "`/health/ready` (Readiness probe): checks SQL Server connectivity, Redis connectivity, and **write access to the file storage folder** (custom health check).",
+    "Responses are JSON and include each check's name and status.",
+    "Use `/health/ready` as the `api` container health check in Docker Compose."
    ]
   },
   {
    "type": "Paragraph",
-   "markdown": "مثال لشكل الاستجابة المتوقع من `/health/ready` (الأسماء والحقول الإضافية لك، لكن اسم كل فحص وحالته إلزاميان):"
+   "markdown": "Example expected response shape from `/health/ready` (exact names and extra fields are up to you, but each check's name and status are mandatory):"
   },
   {
    "type": "Code",
@@ -307,7 +307,7 @@
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "لماذا لا يفحص `/health/live` قاعدة البيانات؟ لأن المنسّق يعيد تشغيل الحاوية عند فشل الـ liveness. لو تعطّل SQL Server لحظيًا، فإعادة تشغيل الـ API لن تصلح شيئًا وستسبب سلسلة إعادة تشغيل بلا فائدة."
+   "markdown": "Why does `/health/live` not check the database? Because the orchestrator restarts the container when liveness fails. If SQL Server experiences a brief outage, restarting the API will fix nothing and will only cause a pointless restart loop."
   },
   {
    "type": "Video",
@@ -320,47 +320,47 @@
    "title": "🔄 Best Way to Add Health Checks in .NET — Nick Chapsas",
    "url": "https://youtu.be/p2faw9DCSsY",
    "kind": "video",
-   "description": "طريقة إضافة Health Checks وتخصيص استجاباتها وتقسيمها حسب الـ tags."
+   "description": "How to add Health Checks, customize their responses, and filter them by tags."
   },
   {
    "type": "Resource",
    "title": "🔄 📘 Health Checks in ASP.NET Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/health-checks-in-aspnet-core/",
    "kind": "article",
-   "description": "مرجع مكتوب؛ أمثلته تفحص PostgreSQL — استخدم فحص SQL Server في DonationHub."
+   "description": "Written reference; samples check PostgreSQL — use the SQL Server check for DonationHub."
   },
   {
    "type": "Heading",
-   "text": "المهمة 6 — خط CI/CD مؤتمت عبر GitHub Actions",
+   "text": "Task 6 — Automated CI/CD Pipeline via GitHub Actions",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "أنشئ `.github/workflows/ci.yml` حسب SRS §6.14. الهدف أن **كل** تغيير يُبنى ويُختبر تلقائيًا، فلا يصل كود مكسور إلى الفرع الرئيسي دون أن تعرف."
+   "markdown": "Create `.github/workflows/ci.yml` according to SRS §6.14. The goal is for **every** change to be built and tested automatically so broken code never reaches the main branch unnoticed."
   },
   {
    "type": "Checklist",
    "items": [
-    "التشغيل عند **كل** `push` و `pull_request` (كل الفروع).",
-    "الخطوة 1: سحب كود المستودع (Check out).",
-    "الخطوة 2: تثبيت .NET 10 SDK.",
-    "الخطوة 3: استعادة حزم NuGet (`dotnet restore`).",
-    "الخطوة 4: بناء الحل بإعداد Release (`dotnet build --no-restore -c Release`).",
-    "الخطوة 5: تشغيل كل الاختبارات (`dotnet test --no-build -c Release`) — الـ unit tests واختبارات التكامل من Sprint 5 (مثلًا مقابل SQL Server service container). الاختبارات لا تستدعي Stripe الحقيقي ولا SMTP حقيقيًا.",
-    "الخطوة 6: يفشل الخط إذا فشل أي اختبار أو فشل البناء.",
-    "أضف شارة حالة الـ CI (status badge) أعلى `README.md`.",
-    "يجب أن ينجح الخط على الـ commit الذي يحمل الـ tag `sprint-6`."
+    "Trigger on **every** `push` and `pull_request` (all branches).",
+    "Step 1: Check out repository code.",
+    "Step 2: Setup .NET 10 SDK.",
+    "Step 3: Restore NuGet dependencies (`dotnet restore`).",
+    "Step 4: Build the solution in Release configuration (`dotnet build --no-restore -c Release`).",
+    "Step 5: Run all tests (`dotnet test --no-build -c Release`) — unit tests and the Sprint 5 integration tests (e.g., against a SQL Server service container). Tests must not call real Stripe or real SMTP.",
+    "Step 6: Fail the pipeline if any test fails or compilation fails.",
+    "Add the CI status badge at the top of `README.md`.",
+    "The pipeline must pass on the commit tagged `sprint-6`."
    ]
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "قبل وضع الـ tag افتح تبويب **Actions** في مستودعك وتأكّد أن آخر تشغيل على الـ commit النهائي أخضر ✅. الـ tag على commit أحمر يخسّرك بند تعريف الإنجاز الخاص بالـ CI."
+   "markdown": "Before tagging, open the **Actions** tab in your repository and verify that the latest run on the final commit is green ✅. Tagging a red commit fails the CI Definition of Done item."
   },
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "لا تكتب كلمة مرور قاعدة بيانات الاختبار أو أي مفتاح داخل ملف الـ workflow. استخدم **Repository Secrets** (Settings ← Secrets and variables ← Actions) واقرأها بـ `${{ secrets.NAME }}`."
+   "markdown": "Never hardcode the test database password or any key inside the workflow file. Use **Repository Secrets** (Settings → Secrets and variables → Actions) and read them via `${{ secrets.NAME }}`."
   },
   {
    "type": "Video",
@@ -373,42 +373,42 @@
    "title": "🔄 GitHub Actions Full Tutorial — TechWorld with Nana",
    "url": "https://youtu.be/R8_veQiYBjI",
    "kind": "video",
-   "description": "شرح شامل لـ GitHub Actions: الـ workflows والـ jobs والـ runners والـ secrets."
+   "description": "Comprehensive guide to GitHub Actions: workflows, jobs, runners, and secrets."
   },
   {
    "type": "Resource",
    "title": "🔄 GitHub Actions Complete Course — Ahmed El-Fakharany [Arabic]",
    "url": "https://youtu.be/7gJFHjXscr8",
    "kind": "video",
-   "description": "كورس عربي كامل في GitHub Actions من الأساسيات إلى بناء خطوط CI/CD."
+   "description": "Complete Arabic course on GitHub Actions from basics to building CI/CD pipelines."
   },
   {
    "type": "Heading",
-   "text": "المهمة 7 — توثيق المعمارية باحترافية و README.md النهائي",
+   "text": "Task 7 — Professional Architecture Documentation & Final README.md",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "اكتب `README.md` شاملًا وجاهزًا للنشر لمشروع DonationHub. هذا الملف هو **واجهتك أمام المراجع ولجنة الدفاع**: جزء «Explanation» في التقييم وأسئلة الدفاع النهائي ستُبنى على القرارات المكتوبة فيه. يجب أن يوثّق:"
+   "markdown": "Write a comprehensive, publication-ready `README.md` for DonationHub. This file is **your showcase before the reviewer and the defense committee**: the \"Explanation\" grading part and the final defense questions will be based on the decisions documented in it. It must document:"
   },
   {
    "type": "Checklist",
    "items": [
-    "شارة حالة الـ CI في الأعلى.",
-    "**شرح المعمارية:** مخطط ومسؤوليات الطبقات (Domain و Application و Infrastructure و Api)، والـ vertical slices، وفصل القراءة عن الكتابة (Repository + UoW للكتابة، وإسقاطات `AsNoTracking` للقراءة).",
-    "حزمة التقنيات والمكتبات وأنماط التصميم المستخدمة.",
-    "**طريقة التشغيل محليًا:** المتطلبات، و user-secrets، والـ migrations، وحاويتا Redis و Mailpit.",
-    "**طريقة التشغيل بـ Docker:** `cp .env.example .env` ثم `docker compose up`.",
-    "جدول متغيرات البيئة وإعدادات الـ Options.",
-    "**طريقة اختبار Stripe محليًا:** Stripe CLI (`stripe listen --forward-to ...`)، وسرّ توقيع الـ webhook عبر user-secrets أو متغيرات البيئة، وأوامر `stripe trigger`.",
-    "**قرارات التصميم:** قائمة بالقرارات الأساسية والمقايضات (مثل: لماذا نخزّن `RaisedAmount`، و Result مقابل الاستثناءات، واستراتيجية الـ idempotency، وإبطال الكاش، والحذف الناعم).",
-    "ملخّص الـ API endpoints ودليل المصادقة، بالإضافة إلى استعلام SQL المكتوب يدويًا للتحقق من أرقام اللوحة (RPT-04)."
+    "CI status badge at the top.",
+    "**Architecture explanation:** diagram and layer responsibilities (Domain, Application, Infrastructure, Api), vertical slices, and the read/write split (Repository + UoW for writes, `AsNoTracking` projections for reads).",
+    "Technology stack, libraries, and design patterns used.",
+    "**How to run locally:** prerequisites, user-secrets, migrations, and the Redis/Mailpit containers.",
+    "**How to run with Docker:** `cp .env.example .env`, then `docker compose up`.",
+    "Environment variables and Options configuration table.",
+    "**How to test Stripe locally:** Stripe CLI (`stripe listen --forward-to ...`), the webhook signing secret via user-secrets/env vars, and `stripe trigger` commands.",
+    "**Design decisions:** a list of the key decisions and trade-offs (e.g., why `RaisedAmount` is stored, Result vs. exceptions, idempotency strategy, cache invalidation, soft delete).",
+    "API endpoint summary and authentication guide, plus the hand-written SQL used to verify dashboard numbers (RPT-04)."
    ]
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "جزء **الشرح (20 نقطة)** وأسئلة الدفاع النهائي تُبنى على قسم «قرارات التصميم» في الـ README. اكتب قراراتك الحقيقية مع **سببها ومقايضتها** بكلماتك — قرار لا تستطيع الدفاع عنه شفهيًا يضرّك أكثر مما ينفعك."
+   "markdown": "The **Explanation (20 Points)** part and the final defense questions are built around the \"Design decisions\" section in the README. Write your real decisions along with **their rationale and trade-off** in your own words — a decision you cannot defend orally hurts you more than it helps."
   },
   {
    "type": "Video",
@@ -421,76 +421,76 @@
    "title": "🔄 Write an Awesome GitHub README — Learn Fast Make Things",
    "url": "https://youtu.be/E6NO0rgFub4",
    "kind": "video",
-   "description": "نصائح عملية لكتابة README جذّاب ومنظّم على GitHub: الشارات والأقسام والصور."
+   "description": "Practical tips for writing an attractive, well-structured README on GitHub: badges, sections, and images."
   },
   {
    "type": "Divider"
   },
   {
    "type": "Heading",
-   "text": "📦 مخرجات السبرنت",
+   "text": "📦 Sprint Deliverables",
    "level": 2
   },
   {
    "type": "Checklist",
    "items": [
-    "endpoints تقارير المسؤول (RPT-01 إلى RPT-03) تنفّذ استعلامات تجميع محسّنة (`Sum` و `Count` و `GroupBy`).",
-    "استجابات اللوحة مخزّنة مؤقتًا في Redis (5 دقائق افتراضيًا) وأرقامها تطابق قاعدة البيانات (RPT-04).",
-    "endpoints إدارة المستخدمين والموظفين (ADM-01 إلى ADM-03) بقواعد عملها و unit tests لها.",
-    "`Dockerfile` متعدد المراحل ينتج صورة تشغيل نحيفة بمستخدم غير root.",
-    "`docker-compose.yml` يشغّل `api` و `sqlserver` و `redis` و `mailpit` مع named volumes، وإعداد عبر متغيرات البيئة (مع رفع `.env.example`)، و health checks، وشروط `depends_on`.",
-    "فحوص الصحة `/health/live` و `/health/ready` (SQL Server و Redis وصلاحية الكتابة في تخزين الملفات) باستجابات JSON.",
-    "workflow CI يعمل على GitHub Actions وينفّذ restore و build والاختبارات عند كل push و pull request.",
-    "`README.md` احترافي وكامل يوثّق المشروع كله (المعمارية، والتشغيل محليًا وبـ Docker، واختبار Stripe محليًا، وقرارات التصميم)."
+    "Admin reporting endpoints (RPT-01 to RPT-03) executing optimized aggregate queries (`Sum`, `Count`, `GroupBy`).",
+    "Dashboard responses cached in Redis (default 5 minutes) with numbers matching the database (RPT-04).",
+    "Admin user and staff management endpoints (ADM-01 to ADM-03) with their business rules and unit tests.",
+    "Multi-stage `Dockerfile` generating a lean, non-root runtime image.",
+    "`docker-compose.yml` orchestrating `api`, `sqlserver`, `redis`, and `mailpit` with named volumes, env-var configuration (`.env.example` committed), health checks, and `depends_on` conditions.",
+    "Health checks `/health/live` and `/health/ready` (SQL Server, Redis, file storage write access) with JSON responses.",
+    "Working GitHub Actions CI workflow running restore, build, and tests on every push and pull request.",
+    "Professional, complete `README.md` documenting the entire project (architecture, local and Docker run, Stripe local testing, design decisions)."
    ]
   },
   {
    "type": "Heading",
-   "text": "✅ تعريف الإنجاز (Definition of Done)",
+   "text": "✅ Definition of Done",
    "level": 2
   },
   {
    "type": "Checklist",
    "items": [
-    "تشغيل `docker compose up --build` يرفع الخدمات الأربع دون أخطاء.",
-    "`docker compose up` من نسخة نظيفة يعطي API يعمل مع تطبيق الـ migrations وبذر الـ Admin.",
-    "`/health/live` و `/health/ready` يستجيبان بحالة JSON لكل فحص.",
-    "endpoints التقارير تُترجَم إلى `GROUP BY` فعّال في SQL دون تقييم في جهة العميل.",
-    "أرقام اللوحة تطابق استعلام SQL مكتوبًا يدويًا.",
-    "الـ unit tests تغطي قواعد الإدارة الجديدة (التعطيل الذاتي، وآخر Admin نشط، وتسجيل دخول المستخدم المعطَّل).",
-    "كل push و pull request يشغّل workflow الـ GitHub Actions، والـ CI ينجح على الـ commit الموسوم بالـ tag.",
-    "الـ tag `sprint-6` موجود ويشير إلى آخر commit.",
-    "لا أسرار في تاريخ المستودع (`.env` مستثنى من git، و `.env.example` فقط هو المرفوع).",
-    "المتدرّب مستعد لـ **دفاع التخرج النهائي**: أن يشرح المعمارية وأنماط التصميم ويبرّر المقايضات التقنية."
+    "Running `docker compose up --build` spins up all 4 services without errors.",
+    "`docker compose up` from a clean clone gives a working API with migrations applied and the Admin seeded.",
+    "`/health/live` and `/health/ready` respond with JSON status for each check.",
+    "Reporting endpoints translate to efficient SQL `GROUP BY` without client-side evaluation.",
+    "Dashboard numbers match a hand-written SQL query.",
+    "Unit tests cover the new admin rules (self-deactivation, last active Admin, deactivated user login).",
+    "Every push and pull request triggers the GitHub Actions workflow, and CI passes on the tagged commit.",
+    "The `sprint-6` tag exists and points to the final commit.",
+    "No secrets in the repository history (`.env` git-ignored, only `.env.example` committed).",
+    "The learner is prepared for the **Final Graduation Defense**: to walk through the architecture, design patterns, and justify technical trade-offs."
    ]
   },
   {
    "type": "Heading",
-   "text": "⭐ مهام إضافية (BONUS)",
+   "text": "⭐ BONUS Tasks",
    "level": 2
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "اختيارية — تُحتسب فقط بعد اجتياز **كل** المهام الأساسية (CORE)."
+   "markdown": "Optional — counts only after all **CORE** items pass."
   },
   {
    "type": "Checklist",
    "items": [
-    "**RPT-05:** التبرعات حسب التصنيف وحسب الشهر.",
-    "**CMP-12 — إدارة الحملات من المسؤول وتجاوز الحالة:** يستطيع الـ Admin (أو مالك الحملة) ضبط الحملة على `Cancelled` (مثلًا إلغاء حملة احتيالية). عند إغلاق الحملة من الـ Admin تحقّق من معالجة محاولات الدفع المعلّقة (pending payment attempts) بشكل مناسب.",
-    "**النشر السحابي (Cloud deployment):** اختياري ولا يُقيَّم أبدًا.",
-    "**Testcontainers في CI:** شغّل اختبارات التكامل في الخط باستخدام Testcontainers بدل service container مُعَدّ مسبقًا."
+    "**RPT-05:** Donations by category and by month.",
+    "**CMP-12 — Admin Campaign Management & Status Overrides:** Admin (or the campaign owner) can set a campaign to `Cancelled` (e.g., cancel a fraudulent campaign). When a campaign is closed by an Admin, validate that pending payment attempts are handled appropriately.",
+    "**Cloud deployment:** optional and never graded.",
+    "**Testcontainers in CI:** run the integration tests in the pipeline using Testcontainers instead of a pre-provisioned service container."
    ]
   },
   {
    "type": "Heading",
-   "text": "📤 التسليم",
+   "text": "📤 Submission",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "سلّم رابط المستودع على **tawjeh.net** قبل **الساعة 23:59 يوم 20/01/2027** (اليوم 15). اعمل commit لآخر عمل، ثم ضع الـ tag على الـ commit النهائي وارفعه:"
+   "markdown": "Submit your repository URL on **tawjeh.net** before **23:59 on 20/01/2027** (Day 15). Commit your final work, tag the final commit, and push the tag:"
   },
   {
    "type": "Code",
@@ -501,34 +501,34 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "التصحيحات مسموحة خلال نافذة المراجعة (**21/01/2027 إلى 23/01/2027**). **لا تحرّك** الـ tag `sprint-6` ولا تعمل له force-push. في هذا السبرنت تحديدًا، التصحيحات الخاصة بالدفاع النهائي توسَم بالـ tag `final` (بدل `sprint-6-fix`): `git tag final && git push origin final`. **الدفاع النهائي** يُعقد من 21 إلى 23/01/2027 على الـ tag `final`."
+   "markdown": "Corrections are allowed within the review window (**21/01/2027 to 23/01/2027**). **Do not move** or force-push the `sprint-6` tag. Specifically in this sprint, corrections for the final defense are tagged `final` (instead of `sprint-6-fix`): `git tag final && git push origin final`. The **final defense** takes place 21–23/01/2027 on the `final` tag."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "**استعد للدفاع النهائي:** ستُسأل عن قراراتك المكتوبة في الـ README، لا عن تعريفات نظرية. جهّز شرحًا مختصرًا لرحلة الطلب عبر الطبقات، ولماذا اخترت كل نمط (CQRS، Result، Repository + UoW، الـ idempotency، الكاش)، وما المقايضة التي قبلتها في كل قرار."
+   "markdown": "**Prepare for the Final Defense:** You will be asked about the decisions documented in your README, not theoretical definitions. Prepare a concise walkthrough of a request's journey through the layers, why you chose each pattern (CQRS, Result, Repository + UoW, idempotency, caching), and what trade-off you accepted for each decision."
   },
   {
    "type": "Heading",
-   "text": "🧮 التقييم (100 نقطة)",
+   "text": "🧮 Grading (100 Points)",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "| الجزء | النقاط | الطريقة |\n|---|---|---|\n| تلقائي | 40 | البناء ينجح، و `dotnet test` ينجح، والـ tag `sprint-6` موجود، والـ endpoints الأساسية تستجيب كما هو محدد (فحص سريع من المنتور) |\n| الـ Checklist | 40 | تعريف الإنجاز أعلاه (البنية، القواعد، الأمان، الـ README) |\n| الشرح | 20 | سؤال قصير عن أحد قرارات التصميم، أو مراجعة كود للقرارات المكتوبة في الـ README |\n\n- مهام BONUS تضيف درجات إضافية محدودة فوق الـ 100 نقطة، فقط بعد اجتياز كل المهام الأساسية.\n- الدفاع النهائي يُقيَّم بشكل منفصل وفق معايير 5 × 20% الموجودة في Round 2 RoadMap."
+   "markdown": "| Part | Points | How |\n|---|---|---|\n| Automated | 40 | Build succeeds, `dotnet test` passes, the `sprint-6` tag exists, CORE endpoints respond as specified (smoke check by the mentor) |\n| Checklist | 40 | The Definition of Done above (structure, rules, security, README) |\n| Explanation | 20 | A short question on one of your design decisions, or a code review of the decisions written in your README |\n\n- BONUS items add capped extra credit on top of the 100 points, only after all CORE items pass.\n- The final defense is evaluated separately using the 5 × 20% criteria in the Round 2 RoadMap."
   },
   {
    "type": "Heading",
-   "text": "📖 قراءات ما بعد الكورس (التعلّم المستمر)",
+   "text": "📖 Post-Course Reading (Continuous Learning)",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "انتهى الكورس، لكن التعلّم لا ينتهي. هذه مسارات مقترحة للخطوة التالية بعد DonationHub."
+   "markdown": "The course has ended, but learning never ends. Here are suggested paths for your next step after DonationHub."
   },
   {
    "type": "Heading",
-   "text": "1. التواصل اللحظي باستخدام SignalR",
+   "text": "1. Real-Time Communication with SignalR",
    "level": 3
   },
   {
@@ -536,25 +536,25 @@
    "title": "SignalR Full Course — tutorialsEU",
    "url": "https://youtu.be/LEImpa77irI",
    "kind": "video",
-   "description": "كورس كامل في SignalR لبناء تطبيقات لحظية (real-time) مع ASP.NET Core."
+   "description": "Full SignalR course for building real-time applications with ASP.NET Core."
   },
   {
    "type": "Resource",
    "title": "Real-Time Web Apps with SignalR — Mohamad Lawand",
    "url": "https://youtu.be/pvi_ZS_PrSc",
    "kind": "video",
-   "description": "بناء تطبيقات ويب لحظية باستخدام SignalR خطوة بخطوة."
+   "description": "Building real-time web apps with SignalR step by step."
   },
   {
    "type": "Resource",
    "title": "SignalR in ASP.NET Core Playlist — Ahmed Mohamady [Arabic]",
    "url": "https://youtube.com/playlist?list=PL62tSREI9C-e6nQ47brLj00iSGddiee73",
    "kind": "video",
-   "description": "قائمة تشغيل عربية تشرح SignalR في ASP.NET Core."
+   "description": "Arabic playlist explaining SignalR in ASP.NET Core."
   },
   {
    "type": "Heading",
-   "text": "2. Cloud Native و .NET Aspire و Microservices",
+   "text": "2. Cloud Native, .NET Aspire & Microservices",
    "level": 3
   },
   {
@@ -562,60 +562,60 @@
    "title": ".NET Aspire Crash Course — Julio Casal",
    "url": "https://youtu.be/pk6FJfHhfq8",
    "kind": "video",
-   "description": "مقدمة سريعة إلى .NET Aspire لتنسيق التطبيقات السحابية الموزّعة."
+   "description": "Quick crash course on .NET Aspire for orchestrating distributed cloud applications."
   },
   {
    "type": "Resource",
    "title": ".NET Microservices Full Course — Les Jackson",
    "url": "https://youtu.be/DgVjEo3OGBI",
    "kind": "video",
-   "description": "كورس طويل يبني نظام microservices كاملًا بـ .NET مع Docker و Kubernetes."
+   "description": "Comprehensive course building a complete .NET microservices system with Docker and Kubernetes."
   },
   {
    "type": "Resource",
    "title": "Microservices Architecture with .NET — Julio Casal",
    "url": "https://youtu.be/ByYyk8eMG6c",
    "kind": "video",
-   "description": "مفاهيم معمارية الـ microservices وتطبيقها في .NET."
+   "description": "Microservices architectural concepts and applying them with .NET."
   },
   {
    "type": "Resource",
    "title": "Microservices with .NET — DotNetMastery",
    "url": "https://youtu.be/Nw4AZs1kLAs",
    "kind": "video",
-   "description": "بناء microservices عمليًا باستخدام .NET."
+   "description": "Building microservices hands-on with .NET."
   },
   {
    "type": "Resource",
    "title": "📘 When to Use Microservices (And When Not To) — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/when-to-use-microservices/",
    "kind": "article",
-   "description": "متى تكون الـ microservices قرارًا صحيحًا ومتى يكون الـ modular monolith أفضل."
+   "description": "When microservices are the right choice and when a modular monolith is better."
   },
   {
    "type": "Resource",
    "title": "📘 Containerize .NET Without a Dockerfile — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/containerize-dotnet-without-dockerfile/",
    "kind": "article",
-   "description": "بناء صور الحاويات مباشرة من `dotnet publish` دون كتابة Dockerfile."
+   "description": "Building container images directly from `dotnet publish` without writing a Dockerfile."
   },
   {
    "type": "Resource",
    "title": "📘 Anti-Patterns to Avoid in .NET APIs — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/anti-patterns-to-avoid-dotnet-apis/",
    "kind": "article",
-   "description": "أخطاء شائعة في تصميم APIs بـ .NET وكيف تتجنّبها."
+   "description": "Common anti-patterns in .NET API design and how to avoid them."
   },
   {
    "type": "Resource",
    "title": "📘 .NET Web API Zero to Hero — full course",
    "url": "https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/",
    "kind": "article",
-   "description": "الكورس الكامل (تُضاف إليه بانتظام دروس جديدة عن الاختبارات والـ observability و CI/CD)."
+   "description": "Full course (new lessons on testing, observability & CI/CD are added regularly)."
   },
   {
    "type": "Heading",
-   "text": "3. كتب مقترحة",
+   "text": "3. Recommended Books",
    "level": 3
   },
   {
@@ -626,102 +626,102 @@
  "solutionBlocks": [
   {
    "type": "Heading",
-   "text": "الحل النموذجي — Sprint 6",
+   "text": "Model Solution — Sprint 6",
    "level": 1
   },
   {
    "type": "Paragraph",
-   "markdown": "هذا حل مرجعي يكمل نفس الـ codebase الذي بنيناه في الحلول السابقة (`Entity` و `Result`/`Error` و `IReadDbContext` و `IUnitOfWork` و `AppDbContext` و `DbSeeder`). ركّز على **سبب** كل قرار: في هذا السبرنت تحديدًا ستُسأل في المراجعة وفي الدفاع النهائي عن المقايضات أكثر من الكود نفسه. المسارات بصيغة `src/<Project>/...` كما في Sprint 1، والـ Controllers رفيعة تستدعي MediatR `12.5.0` فقط."
+   "markdown": "This is a reference solution that builds on the same codebase established in the previous solutions (`Entity`, `Result`/`Error`, `IReadDbContext`, `IUnitOfWork`, `AppDbContext`, and `DbSeeder`). Focus on **why** each decision is made: in this sprint specifically, you will be asked during code review and the final defense about trade-offs even more than the code itself. File paths follow the `src/<Project>/...` convention from Sprint 1, and Controllers are thin, dispatching only through MediatR `12.5.0`."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "لتقليل الطول لم تُكتب كل الكلاسات كاملة. الأسماء المشتركة تتبع تعريفات Sprint 2–3: `Result`/`Result<T>` في `DonationHub.Domain.Common` (مع `Result.Success()` و `Result.Failure(error)` والتحويل الضمني من القيمة ومن `Error`)، و `ApiControllerBase` بدالتي `FromResult(...)` و `ProblemFrom(error)` (Sprint 2، وطُوّر في Sprint 3)، و `ICurrentUser.UserId` (Sprint 3)، و `ICacheService` مع الامتداد `GetOrCreateAsync` و `CacheProfile` (Sprint 3)، و `PagedList<T>.CreateAsync` (Sprint 3). إن اختلفت الأسماء عندك فطابِقها — المهم هو الفكرة."
+   "markdown": "To keep the length manageable, not every class is shown in full. Shared names follow the Sprint 2–3 definitions: `Result`/`Result<T>` in `DonationHub.Domain.Common` (with `Result.Success()`, `Result.Failure(error)`, and implicit conversions from a value and from `Error`), `ApiControllerBase` with `FromResult(...)` and `ProblemFrom(error)` (Sprint 2, extended in Sprint 3), `ICurrentUser.UserId` (Sprint 3), `ICacheService` with the `GetOrCreateAsync` extension and `CacheProfile` (Sprint 3), and `PagedList<T>.CreateAsync` (Sprint 3). If your naming differs, adapt accordingly — the underlying idea is what matters."
   },
   {
    "type": "Heading",
-   "text": "المهمة 1 — لوحة التحليلات: التجميع داخل SQL لا في الذاكرة",
+   "text": "Task 1 — Analytics Dashboard: Aggregating in SQL, Not in Memory",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "**الفكرة الأساسية:** التقرير سؤال عن **أرقام**، لا عن كيانات. لذلك لا نحمّل `Donation` إلى الذاكرة أبدًا، بل نطلب من SQL Server أن يجمع ويعدّ ويُرجع سطرًا واحدًا أو بضعة أسطر. التقارير تمر عبر جانب القراءة (`IReadDbContext`) الذي يُرجع `IQueryable` بـ `AsNoTracking()` أصلًا — لا Repository ولا UoW، لأننا لا نعدّل شيئًا ولا نحتاج تكلفة الـ change tracker."
+   "markdown": "**Core idea:** A report asks for **numbers**, not entities. Therefore, we never load `Donation` entities into memory; instead, we ask SQL Server to sum, count, and return one row or a handful of rows. Reports go through the read side (`IReadDbContext`), which already returns `IQueryable` with `AsNoTracking()` — no Repository and no UoW, because we modify nothing and do not want the overhead of the change tracker."
   },
   {
    "type": "Paragraph",
-   "markdown": "التبرعات موجودة في جانب القراءة منذ Sprint 3 (قائمة الـ Admin، DON-05) — تذكير بالشكل الذي تعتمد عليه التقارير:"
+   "markdown": "Donations have been on the read side since Sprint 3 (the Admin list, DON-05) — a reminder of the shape the reports rely on:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "namespace DonationHub.Application.Abstractions;\n\npublic interface IReadDbContext\n{\n    IQueryable<Category> Categories { get; }\n    IQueryable<Campaign> Campaigns { get; }\n    IQueryable<Campaign> CampaignsIncludingDeleted { get; }\n    IQueryable<Donation> Donations { get; }          // أُضيف في Sprint 3 (DON-05)\n    IQueryable<PaymentAttempt> PaymentAttempts { get; }   // أُضيف في Sprint 5 (حالة الدفع)\n}\n\n// في Infrastructure — ReadDbContext من Sprint 1 (Repositories/UnitOfWork.cs):\n// public IQueryable<Donation> Donations => db.Donations.AsNoTracking();",
+   "code": "namespace DonationHub.Application.Abstractions;\n\npublic interface IReadDbContext\n{\n    IQueryable<Category> Categories { get; }\n    IQueryable<Campaign> Campaigns { get; }\n    IQueryable<Campaign> CampaignsIncludingDeleted { get; }\n    IQueryable<Donation> Donations { get; }          // added in Sprint 3 (DON-05)\n    IQueryable<PaymentAttempt> PaymentAttempts { get; }   // added in Sprint 5 (payment status)\n}\n\n// In Infrastructure — ReadDbContext from Sprint 1 (Repositories/UnitOfWork.cs):\n// public IQueryable<Donation> Donations => db.Donations.AsNoTracking();",
    "filename": "src/DonationHub.Application/Abstractions/IReadDbContext.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "عقود الاستجابة صغيرة ومسطّحة — هذا ما سيُخزَّن في Redis ويُرسل للعميل:"
+   "markdown": "The response contracts are small and flat — this is what gets cached in Redis and sent to the client:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Campaigns;\n\nnamespace DonationHub.Application.Features.Dashboard;\n\npublic sealed record DashboardSummaryDto(\n    decimal TotalRaised,\n    int SucceededDonations,\n    int DistinctDonors,\n    int ActiveCampaigns,\n    int CompletedCampaigns,\n    int ExpiredCampaigns);\n\npublic sealed record TopCampaignDto(\n    Guid Id,\n    string TitleEn,\n    string TitleAr,\n    CampaignStatus Status,       // يُرسل كنص بفضل JsonStringEnumConverter\n    decimal GoalAmount,\n    decimal RaisedAmount,\n    decimal ProgressPercent);\n\npublic sealed record DailyDonationsDto(DateOnly Day, decimal Total, int Count);\n\npublic static class DashboardCacheKeys\n{\n    public const string Summary = \"dashboard:summary\";\n    public static string TopCampaigns(int count) => $\"dashboard:top-campaigns:{count}\";\n    public static string DonationsOverTime(DateOnly from, DateOnly to) =>\n        $\"dashboard:donations-over-time:{from:yyyy-MM-dd}:{to:yyyy-MM-dd}\";\n}",
+   "code": "using DonationHub.Domain.Campaigns;\n\nnamespace DonationHub.Application.Features.Dashboard;\n\npublic sealed record DashboardSummaryDto(\n    decimal TotalRaised,\n    int SucceededDonations,\n    int DistinctDonors,\n    int ActiveCampaigns,\n    int CompletedCampaigns,\n    int ExpiredCampaigns);\n\npublic sealed record TopCampaignDto(\n    Guid Id,\n    string TitleEn,\n    string TitleAr,\n    CampaignStatus Status,       // serialized as a string via JsonStringEnumConverter\n    decimal GoalAmount,\n    decimal RaisedAmount,\n    decimal ProgressPercent);\n\npublic sealed record DailyDonationsDto(DateOnly Day, decimal Total, int Count);\n\npublic static class DashboardCacheKeys\n{\n    public const string Summary = \"dashboard:summary\";\n    public static string TopCampaigns(int count) => $\"dashboard:top-campaigns:{count}\";\n    public static string DonationsOverTime(DateOnly from, DateOnly to) =>\n        $\"dashboard:donations-over-time:{from:yyyy-MM-dd}:{to:yyyy-MM-dd}\";\n}",
    "filename": "src/DonationHub.Application/Features/Dashboard/DashboardContracts.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "مدة الكاش 5 دقائق افتراضيًا (RPT-04). لا نضيف تجريدًا جديدًا: نعيد استخدام كاش Sprint 3 كما هو (`ICacheService` + الامتداد `GetOrCreateAsync` + `CacheProfile`)، ونضيف فقط profile اسمه `Dashboard` وخاصية في `CacheOptions` — المسجَّل بـ `ValidateDataAnnotations()` و `ValidateOnStart()` منذ Sprint 3، فتفشل القيمة غير الصالحة عند بدء التشغيل:"
+   "markdown": "The default cache duration is 5 minutes (RPT-04). We do not introduce a new abstraction: we reuse Sprint 3's caching setup as-is (`ICacheService` + the `GetOrCreateAsync` extension + `CacheProfile`), adding only a `Dashboard` profile and a property on `CacheOptions` — which has been registered with `ValidateDataAnnotations()` and `ValidateOnStart()` since Sprint 3, so an invalid value fails fast on startup:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "// إضافات Sprint 6 على كاش Sprint 3 — ثلاثة أسطر، بلا واجهة جديدة\n\n// 1) DonationHub.Application/Common/Caching/ICacheService.cs\npublic enum CacheProfile { Categories, CampaignList, CampaignDetails, Version, Dashboard }   // + Dashboard\n\n// 2) DonationHub.Infrastructure/Caching/CacheOptions.cs (القسم \"Cache\")\n[Range(1, 1440)] public int DashboardMinutes { get; init; } = 5;                            // RPT-04\n\n// 3) CacheEntrySettings.For(...) في نفس الملف — انتهاء مطلق فقط\nCacheProfile.Dashboard => new(TimeSpan.FromMinutes(o.DashboardMinutes), null),\n\n// متغير البيئة: Cache__DashboardMinutes",
+   "code": "// Sprint 6 additions to Sprint 3 caching — three lines, no new interface\n\n// 1) DonationHub.Application/Common/Caching/ICacheService.cs\npublic enum CacheProfile { Categories, CampaignList, CampaignDetails, Version, Dashboard }   // + Dashboard\n\n// 2) DonationHub.Infrastructure/Caching/CacheOptions.cs (section \"Cache\")\n[Range(1, 1440)] public int DashboardMinutes { get; init; } = 5;                            // RPT-04\n\n// 3) CacheEntrySettings.For(...) in the same file — absolute expiration only\nCacheProfile.Dashboard => new(TimeSpan.FromMinutes(o.DashboardMinutes), null),\n\n// Environment variable: Cache__DashboardMinutes",
    "filename": "src/DonationHub.Infrastructure/Caching/CacheOptions.Dashboard.cs"
   },
   {
    "type": "Heading",
-   "text": "RPT-01 — الملخّص",
+   "text": "RPT-01 — Summary",
    "level": 3
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Caching;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing MediatR;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Application.Features.Dashboard.GetSummary;\n\npublic sealed record GetDashboardSummaryQuery : IRequest<Result<DashboardSummaryDto>>;\n\npublic sealed class GetDashboardSummaryQueryHandler(IReadDbContext db, ICacheService cache)\n    : IRequestHandler<GetDashboardSummaryQuery, Result<DashboardSummaryDto>>\n{\n    public async Task<Result<DashboardSummaryDto>> Handle(GetDashboardSummaryQuery request, CancellationToken ct)\n    {\n        var summary = await cache.GetOrCreateAsync(     // امتداد cache-aside من Sprint 3\n            DashboardCacheKeys.Summary,\n            LoadAsync,                                  // لا نصل للـ DB إلا عند غياب المفتاح\n            CacheProfile.Dashboard,\n            ct);\n\n        return summary;                                 // تحويل ضمني إلى Result<T> (Sprint 2)\n    }\n\n    private async Task<DashboardSummaryDto> LoadAsync(CancellationToken ct)\n    {\n        var succeeded = db.Donations.Where(d => d.Status == DonationStatus.Succeeded);\n\n        // SELECT COALESCE(SUM([Amount]), 0) ... — الـ cast إلى decimal? يحمي من SUM على مجموعة فارغة\n        var totalRaised = await succeeded.SumAsync(d => (decimal?)d.Amount, ct) ?? 0m;\n        var donationsCount = await succeeded.CountAsync(ct);\n        var distinctDonors = await succeeded.Select(d => d.DonorUserId).Distinct().CountAsync(ct);\n\n        // SELECT [Status], COUNT(*) FROM [Campaigns] WHERE [IsDeleted] = 0 GROUP BY [Status]\n        var byStatus = await db.Campaigns\n            .GroupBy(c => c.Status)\n            .Select(g => new { Status = g.Key, Count = g.Count() })\n            .ToDictionaryAsync(x => x.Status, x => x.Count, ct);\n\n        return new DashboardSummaryDto(\n            totalRaised,\n            donationsCount,\n            distinctDonors,\n            byStatus.GetValueOrDefault(CampaignStatus.Active),\n            byStatus.GetValueOrDefault(CampaignStatus.Completed),\n            byStatus.GetValueOrDefault(CampaignStatus.Expired));\n    }\n}",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Caching;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing MediatR;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Application.Features.Dashboard.GetSummary;\n\npublic sealed record GetDashboardSummaryQuery : IRequest<Result<DashboardSummaryDto>>;\n\npublic sealed class GetDashboardSummaryQueryHandler(IReadDbContext db, ICacheService cache)\n    : IRequestHandler<GetDashboardSummaryQuery, Result<DashboardSummaryDto>>\n{\n    public async Task<Result<DashboardSummaryDto>> Handle(GetDashboardSummaryQuery request, CancellationToken ct)\n    {\n        var summary = await cache.GetOrCreateAsync(     // cache-aside extension from Sprint 3\n            DashboardCacheKeys.Summary,\n            LoadAsync,                                  // hits the DB only on cache miss\n            CacheProfile.Dashboard,\n            ct);\n\n        return summary;                                 // implicit conversion to Result<T> (Sprint 2)\n    }\n\n    private async Task<DashboardSummaryDto> LoadAsync(CancellationToken ct)\n    {\n        var succeeded = db.Donations.Where(d => d.Status == DonationStatus.Succeeded);\n\n        // SELECT COALESCE(SUM([Amount]), 0) ... — casting to decimal? guards against SUM on an empty set\n        var totalRaised = await succeeded.SumAsync(d => (decimal?)d.Amount, ct) ?? 0m;\n        var donationsCount = await succeeded.CountAsync(ct);\n        var distinctDonors = await succeeded.Select(d => d.DonorUserId).Distinct().CountAsync(ct);\n\n        // SELECT [Status], COUNT(*) FROM [Campaigns] WHERE [IsDeleted] = 0 GROUP BY [Status]\n        var byStatus = await db.Campaigns\n            .GroupBy(c => c.Status)\n            .Select(g => new { Status = g.Key, Count = g.Count() })\n            .ToDictionaryAsync(x => x.Status, x => x.Count, ct);\n\n        return new DashboardSummaryDto(\n            totalRaised,\n            donationsCount,\n            distinctDonors,\n            byStatus.GetValueOrDefault(CampaignStatus.Active),\n            byStatus.GetValueOrDefault(CampaignStatus.Completed),\n            byStatus.GetValueOrDefault(CampaignStatus.Expired));\n    }\n}",
    "filename": "src/DonationHub.Application/Features/Dashboard/GetSummary/GetDashboardSummaryQuery.cs"
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "**مقايضة:** الملخّص يرسل 4 استعلامات صغيرة. يمكن دمجها في استعلام واحد بحيلة `GroupBy(_ => 1)`، لكن الكود يصبح أصعب قراءة، والنتيجة مخزّنة 5 دقائق أصلًا — أي أن هذه الاستعلامات تُنفَّذ مرة واحدة كل 5 دقائق تقريبًا. هنا الوضوح أهم من توفير ثلاث رحلات إلى قاعدة البيانات."
+   "markdown": "**Trade-off:** The summary executes 4 small queries. They could be combined into a single query using a `GroupBy(_ => 1)` trick, but the code becomes harder to read, and the result is cached for 5 minutes anyway — meaning these queries only run roughly once every 5 minutes. Here, clarity outweighs saving three database round trips."
   },
   {
    "type": "Heading",
-   "text": "RPT-02 — الحملات الأعلى أداءً",
+   "text": "RPT-02 — Top Performing Campaigns",
    "level": 3
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "namespace DonationHub.Application.Features.Dashboard.GetTopCampaigns;\n\npublic sealed record GetTopCampaignsQuery(int Count = 5) : IRequest<Result<List<TopCampaignDto>>>;\n\npublic sealed class GetTopCampaignsQueryValidator : AbstractValidator<GetTopCampaignsQuery>\n{\n    public GetTopCampaignsQueryValidator() =>\n        RuleFor(x => x.Count).InclusiveBetween(1, 50);   // لا نسمح بـ count=100000\n}\n\npublic sealed class GetTopCampaignsQueryHandler(IReadDbContext db, ICacheService cache)\n    : IRequestHandler<GetTopCampaignsQuery, Result<List<TopCampaignDto>>>\n{\n    public async Task<Result<List<TopCampaignDto>>> Handle(GetTopCampaignsQuery request, CancellationToken ct)\n    {\n        var top = await cache.GetOrCreateAsync(\n            DashboardCacheKeys.TopCampaigns(request.Count),\n            token => db.Campaigns\n                .OrderByDescending(c => c.RaisedAmount)\n                .ThenBy(c => c.CreatedAt)                // ترتيب ثابت عند التعادل\n                .Take(request.Count)                     // SELECT TOP(@count)\n                .Select(c => new TopCampaignDto(         // projection: 7 أعمدة فقط، بدون الأوصاف الطويلة\n                    c.Id,\n                    c.TitleEn,\n                    c.TitleAr,\n                    c.Status,\n                    c.GoalAmount,\n                    c.RaisedAmount,\n                    Math.Round(c.RaisedAmount * 100 / c.GoalAmount, 2)))   // GoalAmount > 0 قاعدة مجال\n                .ToListAsync(token),\n            CacheProfile.Dashboard,\n            ct);\n\n        return top;\n    }\n}",
+   "code": "namespace DonationHub.Application.Features.Dashboard.GetTopCampaigns;\n\npublic sealed record GetTopCampaignsQuery(int Count = 5) : IRequest<Result<List<TopCampaignDto>>>;\n\npublic sealed class GetTopCampaignsQueryValidator : AbstractValidator<GetTopCampaignsQuery>\n{\n    public GetTopCampaignsQueryValidator() =>\n        RuleFor(x => x.Count).InclusiveBetween(1, 50);   // prevent count=100000\n}\n\npublic sealed class GetTopCampaignsQueryHandler(IReadDbContext db, ICacheService cache)\n    : IRequestHandler<GetTopCampaignsQuery, Result<List<TopCampaignDto>>>\n{\n    public async Task<Result<List<TopCampaignDto>>> Handle(GetTopCampaignsQuery request, CancellationToken ct)\n    {\n        var top = await cache.GetOrCreateAsync(\n            DashboardCacheKeys.TopCampaigns(request.Count),\n            token => db.Campaigns\n                .OrderByDescending(c => c.RaisedAmount)\n                .ThenBy(c => c.CreatedAt)                // deterministic tie-breaker\n                .Take(request.Count)                     // SELECT TOP(@count)\n                .Select(c => new TopCampaignDto(         // projection: 7 columns only, omitting long descriptions\n                    c.Id,\n                    c.TitleEn,\n                    c.TitleAr,\n                    c.Status,\n                    c.GoalAmount,\n                    c.RaisedAmount,\n                    Math.Round(c.RaisedAmount * 100 / c.GoalAmount, 2)))   // domain invariant: GoalAmount > 0\n                .ToListAsync(token),\n            CacheProfile.Dashboard,\n            ct);\n\n        return top;\n    }\n}",
    "filename": "src/DonationHub.Application/Features/Dashboard/GetTopCampaigns/GetTopCampaignsQuery.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "لماذا نرتّب على `RaisedAmount` المخزّن بدل `SUM` من جدول التبرعات؟ لأننا قرّرنا منذ Sprint 3 أن يُحدَّث `RaisedAmount` داخل نفس الـ transaction التي تنجح فيها التبرعة (مع `RowVersion` للتزامن). هذا يجعل الترتيب استعلامًا بسيطًا على جدول واحد يمكن فهرسته، بدل تجميع كل التبرعات في كل طلب. **ثمن هذا القرار:** يجب أن نثبت أن الرقم المخزّن يطابق المجموع الفعلي — وهذا بالضبط دور استعلام التحقق في RPT-04."
+   "markdown": "Why sort by the stored `RaisedAmount` instead of computing `SUM` from the donations table? Because back in Sprint 3 we decided to update `RaisedAmount` inside the same transaction where a donation succeeds (with `RowVersion` for concurrency). This turns the ranking into a simple single-table query that can be indexed, instead of aggregating all donations on every request. **The cost of this decision:** we must prove that the stored number matches the actual sum — which is exactly what the verification query in RPT-04 is for."
   },
   {
    "type": "Heading",
-   "text": "RPT-03 — التبرعات عبر الزمن (GROUP BY على التاريخ)",
+   "text": "RPT-03 — Donations Over Time (GROUP BY on Date)",
    "level": 3
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "namespace DonationHub.Application.Features.Dashboard.GetDonationsOverTime;\n\npublic sealed record GetDonationsOverTimeQuery(DateOnly From, DateOnly To)\n    : IRequest<Result<List<DailyDonationsDto>>>;\n\npublic sealed class GetDonationsOverTimeQueryValidator : AbstractValidator<GetDonationsOverTimeQuery>\n{\n    public GetDonationsOverTimeQueryValidator()\n    {\n        RuleFor(x => x.From).NotEmpty();                // default(DateOnly) يعني أن المعامل لم يُرسل\n        RuleFor(x => x.To).NotEmpty()\n            .GreaterThanOrEqualTo(x => x.From);\n        RuleFor(x => x)\n            .Must(x => x.To.DayNumber - x.From.DayNumber <= 366)\n            .WithMessage(\"The date range cannot exceed 366 days.\");\n    }\n}\n\npublic sealed class GetDonationsOverTimeQueryHandler(IReadDbContext db, ICacheService cache)\n    : IRequestHandler<GetDonationsOverTimeQuery, Result<List<DailyDonationsDto>>>\n{\n    public async Task<Result<List<DailyDonationsDto>>> Handle(GetDonationsOverTimeQuery request, CancellationToken ct)\n    {\n        var days = await cache.GetOrCreateAsync(\n            DashboardCacheKeys.DonationsOverTime(request.From, request.To),\n            token => LoadAsync(request.From, request.To, token),\n            CacheProfile.Dashboard,\n            ct);\n\n        return days;\n    }\n\n    private async Task<List<DailyDonationsDto>> LoadAsync(DateOnly from, DateOnly to, CancellationToken ct)\n    {\n        // نطاق نصف مفتوح [start, endExclusive) حتى لا نفقد تبرعات اليوم الأخير بعد 00:00\n        var start = from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);\n        var endExclusive = to.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);\n\n        var rows = await db.Donations\n            .Where(d => d.Status == DonationStatus.Succeeded\n                        && d.CreatedAt >= start\n                        && d.CreatedAt < endExclusive)\n            .GroupBy(d => d.CreatedAt.Date)              // CONVERT(date, [CreatedAt])\n            .Select(g => new { Day = g.Key, Total = g.Sum(d => d.Amount), Count = g.Count() })\n            .OrderBy(x => x.Day)\n            .ToListAsync(ct);\n\n        // SQL لا يُرجع الأيام التي ليس فيها تبرعات؛ نملأ الفراغات بأصفار في الذاكرة (بضع عشرات من الأسطر فقط)\n        var byDay = rows.ToDictionary(r => DateOnly.FromDateTime(r.Day));\n        var result = new List<DailyDonationsDto>();\n        for (var day = from; day <= to; day = day.AddDays(1))\n        {\n            result.Add(byDay.TryGetValue(day, out var row)\n                ? new DailyDonationsDto(day, row.Total, row.Count)\n                : new DailyDonationsDto(day, 0m, 0));\n        }\n        return result;\n    }\n}",
+   "code": "namespace DonationHub.Application.Features.Dashboard.GetDonationsOverTime;\n\npublic sealed record GetDonationsOverTimeQuery(DateOnly From, DateOnly To)\n    : IRequest<Result<List<DailyDonationsDto>>>;\n\npublic sealed class GetDonationsOverTimeQueryValidator : AbstractValidator<GetDonationsOverTimeQuery>\n{\n    public GetDonationsOverTimeQueryValidator()\n    {\n        RuleFor(x => x.From).NotEmpty();                // default(DateOnly) means the parameter was omitted\n        RuleFor(x => x.To).NotEmpty()\n            .GreaterThanOrEqualTo(x => x.From);\n        RuleFor(x => x)\n            .Must(x => x.To.DayNumber - x.From.DayNumber <= 366)\n            .WithMessage(\"The date range cannot exceed 366 days.\");\n    }\n}\n\npublic sealed class GetDonationsOverTimeQueryHandler(IReadDbContext db, ICacheService cache)\n    : IRequestHandler<GetDonationsOverTimeQuery, Result<List<DailyDonationsDto>>>\n{\n    public async Task<Result<List<DailyDonationsDto>>> Handle(GetDonationsOverTimeQuery request, CancellationToken ct)\n    {\n        var days = await cache.GetOrCreateAsync(\n            DashboardCacheKeys.DonationsOverTime(request.From, request.To),\n            token => LoadAsync(request.From, request.To, token),\n            CacheProfile.Dashboard,\n            ct);\n\n        return days;\n    }\n\n    private async Task<List<DailyDonationsDto>> LoadAsync(DateOnly from, DateOnly to, CancellationToken ct)\n    {\n        // Half-open range [start, endExclusive) so we don't miss donations on the last day after 00:00\n        var start = from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);\n        var endExclusive = to.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);\n\n        var rows = await db.Donations\n            .Where(d => d.Status == DonationStatus.Succeeded\n                        && d.CreatedAt >= start\n                        && d.CreatedAt < endExclusive)\n            .GroupBy(d => d.CreatedAt.Date)              // CONVERT(date, [CreatedAt])\n            .Select(g => new { Day = g.Key, Total = g.Sum(d => d.Amount), Count = g.Count() })\n            .OrderBy(x => x.Day)\n            .ToListAsync(ct);\n\n        // SQL omits days with no donations; we zero-fill gaps in memory (only a few dozen rows)\n        var byDay = rows.ToDictionary(r => DateOnly.FromDateTime(r.Day));\n        var result = new List<DailyDonationsDto>();\n        for (var day = from; day <= to; day = day.AddDays(1))\n        {\n            result.Add(byDay.TryGetValue(day, out var row)\n                ? new DailyDonationsDto(day, row.Total, row.Count)\n                : new DailyDonationsDto(day, 0m, 0));\n        }\n        return result;\n    }\n}",
    "filename": "src/DonationHub.Application/Features/Dashboard/GetDonationsOverTime/GetDonationsOverTimeQuery.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "هذا هو الـ SQL الذي يجب أن تراه في الـ log (تقريبًا) — لاحظ أن التجميع كله داخل قاعدة البيانات:"
+   "markdown": "This is roughly the SQL you should see in the log — notice that all aggregation happens inside the database:"
   },
   {
    "type": "Code",
@@ -732,32 +732,32 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "**أخطاء تُسقط الترجمة إلى SQL:** التجميع على `d.CreatedAt.ToString(\"yyyy-MM-dd\")` أو على دالة C# خاصة بك، أو استدعاء `ToListAsync()`/`AsEnumerable()` قبل `GroupBy`. الأولى قد ترمي استثناء ترجمة، والثانية تعمل «بصمت» لكنها تسحب الجدول كله. تحقّق دائمًا بـ `query.ToQueryString()` أو بتفعيل `Microsoft.EntityFrameworkCore.Database.Command` في الـ logging."
+   "markdown": "**Mistakes that break SQL translation:** Grouping on `d.CreatedAt.ToString(\"yyyy-MM-dd\")` or a custom C# method, or calling `ToListAsync()`/`AsEnumerable()` before `GroupBy`. The first may throw a translation exception, while the second runs \"silently\" but pulls the entire table into memory. Always verify with `query.ToQueryString()` or by enabling `Microsoft.EntityFrameworkCore.Database.Command` logging."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "**أي تاريخ نجمّع عليه؟** المتطلب ينص على `CreatedAt`. منطقيًا قد تفضّل `CompletedAt` (لحظة نجاح الدفع)؛ إن غيّرتها فاذكر ذلك صراحةً في قرارات التصميم في الـ README واستخدم نفس العمود في استعلام التحقق اليدوي. كل الأوقات UTC، فـ «اليوم» هنا يوم UTC."
+   "markdown": "**Which timestamp should we group by?** The requirement specifies `CreatedAt`. Logically, you might prefer `CompletedAt` (the moment payment succeeded); if you switch to it, state that explicitly under Design Decisions in the README and use the same column in your manual verification query. All timestamps are UTC, so a \"day\" here means a UTC day."
   },
   {
    "type": "Heading",
-   "text": "الـ Controller وإبطال الكاش",
+   "text": "Controller & Cache Invalidation",
    "level": 3
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using Asp.Versioning;\nusing DonationHub.Application.Common;            // Roles\nusing MediatR;\nusing Microsoft.AspNetCore.Authorization;\nusing Microsoft.AspNetCore.Mvc;\n\nnamespace DonationHub.Api.Controllers.Admin;\n\n[ApiController]\n[ApiVersion(\"1.0\")]                                  // نفس نمط Sprint 3–5\n[Route(\"api/v{version:apiVersion}/admin/dashboard\")]\n[Authorize(Roles = Roles.Admin)]\npublic sealed class AdminDashboardController(ISender sender) : ApiControllerBase\n{\n    [HttpGet(\"summary\")]\n    public async Task<IActionResult> Summary(CancellationToken ct) =>\n        FromResult(await sender.Send(new GetDashboardSummaryQuery(), ct));\n\n    [HttpGet(\"top-campaigns\")]\n    public async Task<IActionResult> TopCampaigns([FromQuery] int count = 5, CancellationToken ct = default) =>\n        FromResult(await sender.Send(new GetTopCampaignsQuery(count), ct));\n\n    [HttpGet(\"donations-over-time\")]\n    public async Task<IActionResult> DonationsOverTime(\n        [FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken ct) =>   // ?from=2027-01-01&to=2027-01-15\n        FromResult(await sender.Send(new GetDonationsOverTimeQuery(from, to), ct));\n}",
+   "code": "using Asp.Versioning;\nusing DonationHub.Application.Common;            // Roles\nusing MediatR;\nusing Microsoft.AspNetCore.Authorization;\nusing Microsoft.AspNetCore.Mvc;\n\nnamespace DonationHub.Api.Controllers.Admin;\n\n[ApiController]\n[ApiVersion(\"1.0\")]                                  // same pattern as Sprints 3–5\n[Route(\"api/v{version:apiVersion}/admin/dashboard\")]\n[Authorize(Roles = Roles.Admin)]\npublic sealed class AdminDashboardController(ISender sender) : ApiControllerBase\n{\n    [HttpGet(\"summary\")]\n    public async Task<IActionResult> Summary(CancellationToken ct) =>\n        FromResult(await sender.Send(new GetDashboardSummaryQuery(), ct));\n\n    [HttpGet(\"top-campaigns\")]\n    public async Task<IActionResult> TopCampaigns([FromQuery] int count = 5, CancellationToken ct = default) =>\n        FromResult(await sender.Send(new GetTopCampaignsQuery(count), ct));\n\n    [HttpGet(\"donations-over-time\")]\n    public async Task<IActionResult> DonationsOverTime(\n        [FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken ct) =>   // ?from=2027-01-01&to=2027-01-15\n        FromResult(await sender.Send(new GetDonationsOverTimeQuery(from, to), ct));\n}",
    "filename": "src/DonationHub.Api/Controllers/Admin/AdminDashboardController.cs"
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "**استراتيجية الكاش للوحة:** الاعتماد الأساسي على **TTL قصير** (5 دقائق) لأن مفاتيح `top-campaigns` و `donations-over-time` تتغيّر بتغيّر المعاملات ولا يمكن حصرها كلها. كتحسين بسيط: في معالج نجاح الدفع (Sprint 5) احذف المفتاح الثابت `dashboard:summary` بعد الـ commit، فيبقى أهم رقم شبه فوري. اكتب هذا القرار وحدّه الأقصى للتأخير (5 دقائق) في الـ README — «الأرقام تطابق قاعدة البيانات» تعني: بعد انتهاء الـ TTL أو بعد الإبطال."
+   "markdown": "**Dashboard caching strategy:** Primarily rely on a **short TTL** (5 minutes) because `top-campaigns` and `donations-over-time` keys vary with query parameters and cannot all be enumerated easily. As a simple optimization: in the payment-succeeded handler (Sprint 5), delete the fixed `dashboard:summary` key after commit so the most critical number stays near real-time. Document this decision and its maximum staleness bound (5 minutes) in the README — \"numbers match the database\" means after TTL expiration or invalidation."
   },
   {
    "type": "Paragraph",
-   "markdown": "**استعلام التحقق اليدوي (RPT-04)** — شغّله في SSMS أو Azure Data Studio أو `sqlcmd` وقارن النتائج بالـ endpoints (بعد انتهاء الكاش). ضعه كما هو في الـ README:"
+   "markdown": "**Manual verification query (RPT-04)** — run it in SSMS, Azure Data Studio, or `sqlcmd` and compare the results against the endpoints (after cache expiration). Include it as-is in the README:"
   },
   {
    "type": "Code",
@@ -768,26 +768,26 @@
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "الاستعلام يفترض أن `Status` مخزّن كنص (`HasConversion<string>()` كما في إعدادات Sprint 1). إن خزّنته كرقم فاستبدل `'Succeeded'` بقيمته الرقمية. لاحظ أيضًا أن الحملات المحذوفة ناعمًا مستبعدة تلقائيًا من استعلامات EF بسبب الـ global query filter، لذلك أضفنا `IsDeleted = 0` يدويًا هنا."
+   "markdown": "The query assumes `Status` is stored as a string (`HasConversion<string>()` as configured in Sprint 1). If you stored it as an integer, replace `'Succeeded'` with its numeric value. Also note that soft-deleted campaigns are automatically excluded from EF queries by the global query filter, which is why we added `IsDeleted = 0` manually here."
   },
   {
    "type": "Heading",
-   "text": "المهمة 2 — إدارة المستخدمين: القواعد في Application و UserManager في Infrastructure",
+   "text": "Task 2 — User Administration: Rules in Application, UserManager in Infrastructure",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "**المشكلة المعمارية:** `ApplicationUser` و `UserManager` يعيشان في Infrastructure (حتى يبقى الـ Domain بلا اعتماد على Identity)، لكن قواعد ADM-03 قواعد عمل يجب أن تُختبر بسهولة. **الحل:** واجهة صغيرة (port) في Application اسمها `IUserAdministration` تُرجع **لقطة** بسيطة عن المستخدم (`ManagedUser`: المعرّف، هل هو نشط، أدواره)، وتنفّذها Infrastructure بـ `UserManager` و `AppDbContext`. القواعد نفسها تعيش في الـ handlers، فنختبرها بـ Moq دون قاعدة بيانات."
+   "markdown": "**Architectural challenge:** `ApplicationUser` and `UserManager` live in Infrastructure (so Domain remains free of Identity dependencies), yet ADM-03 rules are business rules that must be easy to test. **Solution:** A small interface (port) in Application named `IUserAdministration` returning a simple user **snapshot** (`ManagedUser`: ID, active flag, roles), implemented in Infrastructure using `UserManager` and `AppDbContext`. The rules themselves live in the handlers, allowing us to unit-test them with Moq without a database."
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Application.Common.Paging;\n\nnamespace DonationHub.Application.Abstractions;\n\n// اسم مختلف عن UserAccount من Sprint 2 (Identity.cs) في نفس الـ namespace\npublic sealed record ManagedUser(Guid Id, bool IsActive, IReadOnlyList<string> Roles);\n\npublic sealed record AdminUserDto(\n    Guid Id, string FullName, string Email, bool IsActive, DateTime CreatedAt, List<string> Roles);\n\npublic sealed record UserListFilter(\n    int Page, int PageSize, string? Role, string? Search, bool StaffOnly = false);\n\npublic interface IUserAdministration\n{\n    Task<PagedList<AdminUserDto>> GetUsersAsync(UserListFilter filter, CancellationToken ct);\n    Task<ManagedUser?> FindAsync(Guid userId, CancellationToken ct);\n    Task<int> CountActiveAdminsAsync(CancellationToken ct);\n    Task SetActiveAsync(Guid userId, bool isActive, CancellationToken ct);\n    Task UpdateStaffAsync(Guid userId, string fullName, string role, CancellationToken ct);\n}",
+   "code": "using DonationHub.Application.Common.Paging;\n\nnamespace DonationHub.Application.Abstractions;\n\n// Distinct name from Sprint 2's UserAccount (Identity.cs) in the same namespace\npublic sealed record ManagedUser(Guid Id, bool IsActive, IReadOnlyList<string> Roles);\n\npublic sealed record AdminUserDto(\n    Guid Id, string FullName, string Email, bool IsActive, DateTime CreatedAt, List<string> Roles);\n\npublic sealed record UserListFilter(\n    int Page, int PageSize, string? Role, string? Search, bool StaffOnly = false);\n\npublic interface IUserAdministration\n{\n    Task<PagedList<AdminUserDto>> GetUsersAsync(UserListFilter filter, CancellationToken ct);\n    Task<ManagedUser?> FindAsync(Guid userId, CancellationToken ct);\n    Task<int> CountActiveAdminsAsync(CancellationToken ct);\n    Task SetActiveAsync(Guid userId, bool isActive, CancellationToken ct);\n    Task UpdateStaffAsync(Guid userId, string fullName, string role, CancellationToken ct);\n}",
    "filename": "src/DonationHub.Application/Abstractions/IUserAdministration.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "أخطاء الكتالوج الجديدة — كلها إخفاقات **متوقعة** تُرجَع كـ `Result` وتتحوّل إلى ProblemDetails بحقل `code`:"
+   "markdown": "New catalog errors — all are **expected** failures returned as a `Result` and mapped to ProblemDetails with a `code` field:"
   },
   {
    "type": "Code",
@@ -797,60 +797,60 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "القاعدتان معًا في مكان واحد، يستخدمه تعطيل المستخدم وحذف الموظف وتغيير دور الموظف من Admin:"
+   "markdown": "Both rules together in one place, shared by user deactivation, staff deletion, and demoting a staff member from Admin:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "namespace DonationHub.Application.Features.Admin;\n\ninternal static class AdminAccountRules\n{\n    // تُستدعى قبل أي عملية «تسحب» صلاحية Admin فعّالة: تعطيل، حذف موظف، أو تخفيض الدور\n    public static async Task<Error?> CheckCanRemoveAccessAsync(\n        ManagedUser target, Guid currentUserId, IUserAdministration users, CancellationToken ct)\n    {\n        if (target.Id == currentUserId)\n            return AdminErrors.CannotDeactivateSelf;\n\n        var targetIsActiveAdmin = target.IsActive && target.Roles.Contains(Roles.Admin);\n        if (targetIsActiveAdmin && await users.CountActiveAdminsAsync(ct) <= 1)\n            return AdminErrors.LastActiveAdmin;\n\n        return null;\n    }\n}",
+   "code": "namespace DonationHub.Application.Features.Admin;\n\ninternal static class AdminAccountRules\n{\n    // Called before any operation that revokes active Admin access: deactivation, staff deletion, or demotion\n    public static async Task<Error?> CheckCanRemoveAccessAsync(\n        ManagedUser target, Guid currentUserId, IUserAdministration users, CancellationToken ct)\n    {\n        if (target.Id == currentUserId)\n            return AdminErrors.CannotDeactivateSelf;\n\n        var targetIsActiveAdmin = target.IsActive && target.Roles.Contains(Roles.Admin);\n        if (targetIsActiveAdmin && await users.CountActiveAdminsAsync(ct) <= 1)\n            return AdminErrors.LastActiveAdmin;\n\n        return null;\n    }\n}",
    "filename": "src/DonationHub.Application/Features/Admin/AdminAccountRules.cs"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "namespace DonationHub.Application.Features.Admin.Users.SetUserStatus;\n\npublic sealed record SetUserStatusCommand(Guid UserId, bool IsActive) : IRequest<Result>;\n\npublic sealed class SetUserStatusCommandHandler(IUserAdministration users, ICurrentUser currentUser)\n    : IRequestHandler<SetUserStatusCommand, Result>\n{\n    public async Task<Result> Handle(SetUserStatusCommand request, CancellationToken ct)\n    {\n        var user = await users.FindAsync(request.UserId, ct);\n        if (user is null)\n            return Result.Failure(AdminErrors.UserNotFound);\n\n        if (user.IsActive == request.IsActive)\n            return Result.Success();                     // idempotent: لا تغيير\n\n        if (!request.IsActive)\n        {\n            var error = await AdminAccountRules.CheckCanRemoveAccessAsync(user, currentUser.UserId, users, ct);\n            if (error is not null)\n                return Result.Failure(error);\n        }\n\n        await users.SetActiveAsync(user.Id, request.IsActive, ct);\n        return Result.Success();\n    }\n}",
+   "code": "namespace DonationHub.Application.Features.Admin.Users.SetUserStatus;\n\npublic sealed record SetUserStatusCommand(Guid UserId, bool IsActive) : IRequest<Result>;\n\npublic sealed class SetUserStatusCommandHandler(IUserAdministration users, ICurrentUser currentUser)\n    : IRequestHandler<SetUserStatusCommand, Result>\n{\n    public async Task<Result> Handle(SetUserStatusCommand request, CancellationToken ct)\n    {\n        var user = await users.FindAsync(request.UserId, ct);\n        if (user is null)\n            return Result.Failure(AdminErrors.UserNotFound);\n\n        if (user.IsActive == request.IsActive)\n            return Result.Success();                     // idempotent: no change\n\n        if (!request.IsActive)\n        {\n            var error = await AdminAccountRules.CheckCanRemoveAccessAsync(user, currentUser.UserId, users, ct);\n            if (error is not null)\n                return Result.Failure(error);\n        }\n\n        await users.SetActiveAsync(user.Id, request.IsActive, ct);\n        return Result.Success();\n    }\n}",
    "filename": "src/DonationHub.Application/Features/Admin/Users/SetUserStatus/SetUserStatusCommand.cs"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "namespace DonationHub.Application.Features.Admin.Staff.UpdateStaff;\n\npublic sealed record UpdateStaffCommand(Guid UserId, string FullName, string Role) : IRequest<Result>;\n\npublic sealed class UpdateStaffCommandValidator : AbstractValidator<UpdateStaffCommand>\n{\n    public UpdateStaffCommandValidator()\n    {\n        RuleFor(x => x.FullName).NotEmpty().MaximumLength(100);\n        RuleFor(x => x.Role).Must(r => r is Roles.Admin or Roles.CampaignManager)\n            .WithMessage(\"Role must be Admin or CampaignManager.\");\n    }\n}\n\npublic sealed class UpdateStaffCommandHandler(IUserAdministration users, ICurrentUser currentUser)\n    : IRequestHandler<UpdateStaffCommand, Result>\n{\n    public async Task<Result> Handle(UpdateStaffCommand request, CancellationToken ct)\n    {\n        var user = await users.FindAsync(request.UserId, ct);\n        if (user is null || !user.Roles.Any(r => r is Roles.Admin or Roles.CampaignManager))\n            return Result.Failure(AdminErrors.StaffNotFound);   // المتبرّع ليس «موظفًا»\n\n        var isDemotion = user.Roles.Contains(Roles.Admin) && request.Role != Roles.Admin;\n        if (isDemotion)\n        {\n            var error = await AdminAccountRules.CheckCanRemoveAccessAsync(user, currentUser.UserId, users, ct);\n            if (error is not null)\n                return Result.Failure(error);\n        }\n\n        await users.UpdateStaffAsync(user.Id, request.FullName.Trim(), request.Role, ct);\n        return Result.Success();\n    }\n}\n\n// DeleteStaffCommand(Guid UserId): نفس فحص StaffNotFound ثم AdminAccountRules\n// ثم users.SetActiveAsync(id, false) — الحذف = تعطيل (ADM-03)، ولا يُستدعى DeleteAsync أبدًا.",
+   "code": "namespace DonationHub.Application.Features.Admin.Staff.UpdateStaff;\n\npublic sealed record UpdateStaffCommand(Guid UserId, string FullName, string Role) : IRequest<Result>;\n\npublic sealed class UpdateStaffCommandValidator : AbstractValidator<UpdateStaffCommand>\n{\n    public UpdateStaffCommandValidator()\n    {\n        RuleFor(x => x.FullName).NotEmpty().MaximumLength(100);\n        RuleFor(x => x.Role).Must(r => r is Roles.Admin or Roles.CampaignManager)\n            .WithMessage(\"Role must be Admin or CampaignManager.\");\n    }\n}\n\npublic sealed class UpdateStaffCommandHandler(IUserAdministration users, ICurrentUser currentUser)\n    : IRequestHandler<UpdateStaffCommand, Result>\n{\n    public async Task<Result> Handle(UpdateStaffCommand request, CancellationToken ct)\n    {\n        var user = await users.FindAsync(request.UserId, ct);\n        if (user is null || !user.Roles.Any(r => r is Roles.Admin or Roles.CampaignManager))\n            return Result.Failure(AdminErrors.StaffNotFound);   // a Donor is not a \"staff\" member\n\n        var isDemotion = user.Roles.Contains(Roles.Admin) && request.Role != Roles.Admin;\n        if (isDemotion)\n        {\n            var error = await AdminAccountRules.CheckCanRemoveAccessAsync(user, currentUser.UserId, users, ct);\n            if (error is not null)\n                return Result.Failure(error);\n        }\n\n        await users.UpdateStaffAsync(user.Id, request.FullName.Trim(), request.Role, ct);\n        return Result.Success();\n    }\n}\n\n// DeleteStaffCommand(Guid UserId): runs the same StaffNotFound and AdminAccountRules checks,\n// then calls users.SetActiveAsync(id, false) — delete = deactivate (ADM-03); DeleteAsync is never called.",
    "filename": "src/DonationHub.Application/Features/Admin/Staff/UpdateStaff/UpdateStaffCommand.cs"
   },
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "**لماذا نفحص «آخر Admin» إذا كان التعطيل الذاتي ممنوعًا أصلًا؟** لأن الـ Access Token يبقى صالحًا حتى ينتهي (15 دقيقة). سيناريو حقيقي: Admin «أ» يعطّل Admin «ب»، لكن «ب» ما زال يحمل token صالحًا فيعطّل «أ» — فيصبح النظام بلا Admin نشط. فحص العدد هو خط الدفاع الثاني. يبقى سباق نظري (طلبان متزامنان تمامًا)؛ حلّه الكامل transaction بعزل `Serializable` أو قفل تطبيقي، وهو مبالغة لهذا النطاق — اذكره كمقايضة واعية في الـ README."
+   "markdown": "**Why check \"last Admin\" if self-deactivation is already blocked?** Because an Access Token remains valid until it expires (15 minutes). Realistic scenario: Admin \"A\" deactivates Admin \"B\", but \"B\" still holds a valid token and immediately deactivates \"A\" — leaving the system with zero active Admins. Counting active Admins is the second line of defense. A theoretical race condition still remains (two strictly concurrent requests); solving it completely requires a `Serializable` transaction or an application lock, which is overkill for this scope — note it as a conscious trade-off in the README."
   },
   {
    "type": "Paragraph",
-   "markdown": "التنفيذ في Infrastructure. لاحظ أن قائمة المستخدمين **projection** مع مجموعة أدوار لكل مستخدم — هذا هو المكان الطبيعي لـ `AsSplitQuery()`:"
+   "markdown": "Implementation in Infrastructure. Notice that the user list is a **projection** including a collection of roles per user — this is the natural place for `AsSplitQuery()`:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common;            // Roles\nusing DonationHub.Application.Common.Paging;\nusing DonationHub.Infrastructure.Persistence;\nusing Microsoft.AspNetCore.Identity;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Infrastructure.Identity;\n\ninternal sealed class UserAdministration(AppDbContext db, UserManager<ApplicationUser> userManager)\n    : IUserAdministration\n{\n    private static readonly string[] StaffRoles = [Roles.Admin, Roles.CampaignManager];\n\n    public async Task<PagedList<AdminUserDto>> GetUsersAsync(UserListFilter filter, CancellationToken ct)\n    {\n        IQueryable<ApplicationUser> query = db.Users.AsNoTracking();\n\n        if (filter.StaffOnly)\n            query = query.Where(u => db.UserRoles.Any(ur => ur.UserId == u.Id &&\n                db.Roles.Any(r => r.Id == ur.RoleId && StaffRoles.Contains(r.Name!))));\n\n        if (!string.IsNullOrWhiteSpace(filter.Role))\n            query = query.Where(u => db.UserRoles.Any(ur => ur.UserId == u.Id &&\n                db.Roles.Any(r => r.Id == ur.RoleId && r.Name == filter.Role)));\n\n        if (!string.IsNullOrWhiteSpace(filter.Search))\n        {\n            var term = filter.Search.Trim();\n            query = query.Where(u => u.FullName.Contains(term) || u.Email!.Contains(term));   // LIKE N'%term%'\n        }\n\n        var projected = query\n            .OrderBy(u => u.FullName).ThenBy(u => u.Id)          // ترتيب فريد: شرط لترقيم صحيح ولـ split query\n            .Select(u => new AdminUserDto(\n                u.Id, u.FullName, u.Email!, u.IsActive, u.CreatedAt,\n                (from ur in db.UserRoles\n                 join r in db.Roles on ur.RoleId equals r.Id\n                 where ur.UserId == u.Id\n                 select r.Name!).ToList()))\n            .AsSplitQuery();                                     // استعلام للمستخدمين + استعلام للأدوار\n\n        // PagedList من Sprint 3: COUNT ثم Skip/Take داخل SQL على الـ IQueryable المُسقَط\n        return await PagedList<AdminUserDto>.CreateAsync(projected, filter.Page, filter.PageSize, ct);\n    }\n\n    public async Task<ManagedUser?> FindAsync(Guid userId, CancellationToken ct)\n    {\n        var user = await userManager.FindByIdAsync(userId.ToString());\n        if (user is null) return null;\n\n        var roles = await userManager.GetRolesAsync(user);\n        return new ManagedUser(user.Id, user.IsActive, roles.ToList());\n    }\n\n    public Task<int> CountActiveAdminsAsync(CancellationToken ct) =>\n        (from u in db.Users\n         join ur in db.UserRoles on u.Id equals ur.UserId\n         join r in db.Roles on ur.RoleId equals r.Id\n         where u.IsActive && r.Name == Roles.Admin\n         select u.Id).Distinct().CountAsync(ct);\n\n    public async Task SetActiveAsync(Guid userId, bool isActive, CancellationToken ct)\n    {\n        var user = await userManager.FindByIdAsync(userId.ToString())\n                   ?? throw new InvalidOperationException($\"User {userId} disappeared.\");\n\n        user.IsActive = isActive;\n        EnsureSucceeded(await userManager.UpdateAsync(user));\n\n        // تسجيل الدخول والتجديد يفحصان IsActive أصلًا (IDN-10)، فالمستخدم المعطَّل\n        // لا يحصل على access token جديد. الـ token الحالي ينتهي خلال دقائق.\n    }\n\n    public async Task UpdateStaffAsync(Guid userId, string fullName, string role, CancellationToken ct)\n    {\n        var strategy = db.Database.CreateExecutionStrategy();   // ضروري مع EnableRetryOnFailure\n        await strategy.ExecuteAsync(async () =>\n        {\n            await using var tx = await db.Database.BeginTransactionAsync(ct);\n\n            var user = await userManager.FindByIdAsync(userId.ToString())\n                       ?? throw new InvalidOperationException($\"User {userId} disappeared.\");\n            user.FullName = fullName;\n            EnsureSucceeded(await userManager.UpdateAsync(user));\n\n            var currentStaffRoles = (await userManager.GetRolesAsync(user)).Intersect(StaffRoles).ToList();\n            if (!currentStaffRoles.SequenceEqual(new[] { role }))\n            {\n                EnsureSucceeded(await userManager.RemoveFromRolesAsync(user, currentStaffRoles));\n                EnsureSucceeded(await userManager.AddToRoleAsync(user, role));\n            }\n\n            await tx.CommitAsync(ct);                            // الاسم والدور يتغيّران معًا أو لا يتغيّران\n        });\n    }\n\n    private static void EnsureSucceeded(IdentityResult result)\n    {\n        if (!result.Succeeded)   // غير متوقع → الـ global handler يُرجع 500 عام\n            throw new InvalidOperationException(string.Join(\"; \", result.Errors.Select(e => e.Description)));\n    }\n}",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common;            // Roles\nusing DonationHub.Application.Common.Paging;\nusing DonationHub.Infrastructure.Persistence;\nusing Microsoft.AspNetCore.Identity;\nusing Microsoft.EntityFrameworkCore;\n\nnamespace DonationHub.Infrastructure.Identity;\n\ninternal sealed class UserAdministration(AppDbContext db, UserManager<ApplicationUser> userManager)\n    : IUserAdministration\n{\n    private static readonly string[] StaffRoles = [Roles.Admin, Roles.CampaignManager];\n\n    public async Task<PagedList<AdminUserDto>> GetUsersAsync(UserListFilter filter, CancellationToken ct)\n    {\n        IQueryable<ApplicationUser> query = db.Users.AsNoTracking();\n\n        if (filter.StaffOnly)\n            query = query.Where(u => db.UserRoles.Any(ur => ur.UserId == u.Id &&\n                db.Roles.Any(r => r.Id == ur.RoleId && StaffRoles.Contains(r.Name!))));\n\n        if (!string.IsNullOrWhiteSpace(filter.Role))\n            query = query.Where(u => db.UserRoles.Any(ur => ur.UserId == u.Id &&\n                db.Roles.Any(r => r.Id == ur.RoleId && r.Name == filter.Role)));\n\n        if (!string.IsNullOrWhiteSpace(filter.Search))\n        {\n            var term = filter.Search.Trim();\n            query = query.Where(u => u.FullName.Contains(term) || u.Email!.Contains(term));   // LIKE N'%term%'\n        }\n\n        var projected = query\n            .OrderBy(u => u.FullName).ThenBy(u => u.Id)          // unique ordering: required for deterministic paging and split queries\n            .Select(u => new AdminUserDto(\n                u.Id, u.FullName, u.Email!, u.IsActive, u.CreatedAt,\n                (from ur in db.UserRoles\n                 join r in db.Roles on ur.RoleId equals r.Id\n                 where ur.UserId == u.Id\n                 select r.Name!).ToList()))\n            .AsSplitQuery();                                     // one query for users + one query for roles\n\n        // Sprint 3's PagedList: executes COUNT then Skip/Take in SQL on the projected IQueryable\n        return await PagedList<AdminUserDto>.CreateAsync(projected, filter.Page, filter.PageSize, ct);\n    }\n\n    public async Task<ManagedUser?> FindAsync(Guid userId, CancellationToken ct)\n    {\n        var user = await userManager.FindByIdAsync(userId.ToString());\n        if (user is null) return null;\n\n        var roles = await userManager.GetRolesAsync(user);\n        return new ManagedUser(user.Id, user.IsActive, roles.ToList());\n    }\n\n    public Task<int> CountActiveAdminsAsync(CancellationToken ct) =>\n        (from u in db.Users\n         join ur in db.UserRoles on u.Id equals ur.UserId\n         join r in db.Roles on ur.RoleId equals r.Id\n         where u.IsActive && r.Name == Roles.Admin\n         select u.Id).Distinct().CountAsync(ct);\n\n    public async Task SetActiveAsync(Guid userId, bool isActive, CancellationToken ct)\n    {\n        var user = await userManager.FindByIdAsync(userId.ToString())\n                   ?? throw new InvalidOperationException($\"User {userId} disappeared.\");\n\n        user.IsActive = isActive;\n        EnsureSucceeded(await userManager.UpdateAsync(user));\n\n        // Login and token refresh already check IsActive (IDN-10), so a deactivated user\n        // cannot obtain a new access token. Any current token expires within minutes.\n    }\n\n    public async Task UpdateStaffAsync(Guid userId, string fullName, string role, CancellationToken ct)\n    {\n        var strategy = db.Database.CreateExecutionStrategy();   // required when EnableRetryOnFailure is active\n        await strategy.ExecuteAsync(async () =>\n        {\n            await using var tx = await db.Database.BeginTransactionAsync(ct);\n\n            var user = await userManager.FindByIdAsync(userId.ToString())\n                       ?? throw new InvalidOperationException($\"User {userId} disappeared.\");\n            user.FullName = fullName;\n            EnsureSucceeded(await userManager.UpdateAsync(user));\n\n            var currentStaffRoles = (await userManager.GetRolesAsync(user)).Intersect(StaffRoles).ToList();\n            if (!currentStaffRoles.SequenceEqual(new[] { role }))\n            {\n                EnsureSucceeded(await userManager.RemoveFromRolesAsync(user, currentStaffRoles));\n                EnsureSucceeded(await userManager.AddToRoleAsync(user, role));\n            }\n\n            await tx.CommitAsync(ct);                            // name and role change together or not at all\n        });\n    }\n\n    private static void EnsureSucceeded(IdentityResult result)\n    {\n        if (!result.Succeeded)   // unexpected → the global handler returns a generic 500\n            throw new InvalidOperationException(string.Join(\"; \", result.Errors.Select(e => e.Description)));\n    }\n}",
    "filename": "src/DonationHub.Infrastructure/Identity/UserAdministration.cs"
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "`UserManager` و `AppDbContext` يتشاركان نفس الـ `AppDbContext` المسجَّل كـ Scoped، لذلك الـ transaction التي نفتحها على `db.Database` تشمل عمليات `UserManager` أيضًا. تحقّق من ذلك بنفسك: اجعل `AddToRoleAsync` يفشل (دور غير موجود) وتأكّد أن الاسم لم يتغيّر."
+   "markdown": "`UserManager` and `AppDbContext` share the same Scoped `AppDbContext` instance, so the transaction opened on `db.Database` covers `UserManager` operations as well. Verify this yourself: force `AddToRoleAsync` to fail (e.g., a nonexistent role) and confirm that the full name did not change."
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "namespace DonationHub.Api.Controllers.Admin;\n\n[ApiController]\n[ApiVersion(\"1.0\")]\n[Route(\"api/v{version:apiVersion}/admin\")]\n[Authorize(Roles = Roles.Admin)]\npublic sealed class AdminUsersController(ISender sender) : ApiControllerBase\n{\n    [HttpGet(\"users\")]   // ?page=1&pageSize=20&role=Donor&search=ahmed\n    public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery query, CancellationToken ct) =>\n        FromResult(await sender.Send(query, ct));\n\n    [HttpPatch(\"users/{id:guid}/status\")]\n    public async Task<IActionResult> SetStatus(Guid id, SetUserStatusRequest request, CancellationToken ct) =>\n        FromResult(await sender.Send(new SetUserStatusCommand(id, request.IsActive), ct));   // 204 أو ProblemDetails\n\n    [HttpGet(\"staff\")]\n    public async Task<IActionResult> GetStaff([FromQuery] GetStaffQuery query, CancellationToken ct) =>\n        FromResult(await sender.Send(query, ct));\n\n    [HttpPut(\"staff/{id:guid}\")]\n    public async Task<IActionResult> UpdateStaff(Guid id, UpdateStaffRequest request, CancellationToken ct) =>\n        FromResult(await sender.Send(new UpdateStaffCommand(id, request.FullName, request.Role), ct));\n\n    [HttpDelete(\"staff/{id:guid}\")]\n    public async Task<IActionResult> DeleteStaff(Guid id, CancellationToken ct) =>\n        FromResult(await sender.Send(new DeleteStaffCommand(id), ct));                      // تعطيل لا حذف\n}\n\npublic sealed record SetUserStatusRequest(bool IsActive);\npublic sealed record UpdateStaffRequest(string FullName, string Role);",
+   "code": "namespace DonationHub.Api.Controllers.Admin;\n\n[ApiController]\n[ApiVersion(\"1.0\")]\n[Route(\"api/v{version:apiVersion}/admin\")]\n[Authorize(Roles = Roles.Admin)]\npublic sealed class AdminUsersController(ISender sender) : ApiControllerBase\n{\n    [HttpGet(\"users\")]   // ?page=1&pageSize=20&role=Donor&search=ahmed\n    public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery query, CancellationToken ct) =>\n        FromResult(await sender.Send(query, ct));\n\n    [HttpPatch(\"users/{id:guid}/status\")]\n    public async Task<IActionResult> SetStatus(Guid id, SetUserStatusRequest request, CancellationToken ct) =>\n        FromResult(await sender.Send(new SetUserStatusCommand(id, request.IsActive), ct));   // 204 or ProblemDetails\n\n    [HttpGet(\"staff\")]\n    public async Task<IActionResult> GetStaff([FromQuery] GetStaffQuery query, CancellationToken ct) =>\n        FromResult(await sender.Send(query, ct));\n\n    [HttpPut(\"staff/{id:guid}\")]\n    public async Task<IActionResult> UpdateStaff(Guid id, UpdateStaffRequest request, CancellationToken ct) =>\n        FromResult(await sender.Send(new UpdateStaffCommand(id, request.FullName, request.Role), ct));\n\n    [HttpDelete(\"staff/{id:guid}\")]\n    public async Task<IActionResult> DeleteStaff(Guid id, CancellationToken ct) =>\n        FromResult(await sender.Send(new DeleteStaffCommand(id), ct));                      // deactivate, not delete\n}\n\npublic sealed record SetUserStatusRequest(bool IsActive);\npublic sealed record UpdateStaffRequest(string FullName, string Role);",
    "filename": "src/DonationHub.Api/Controllers/Admin/AdminUsersController.cs"
   },
   {
    "type": "Heading",
-   "text": "الاختبارات",
+   "text": "Tests",
    "level": 3
   },
   {
    "type": "Paragraph",
-   "markdown": "قواعد الإدارة تُختبر على مستوى الـ handler بـ Moq `4.18.4` و FluentAssertions `7.0.0` — لا قاعدة بيانات ولا HTTP:"
+   "markdown": "Admin rules are tested at the handler level using Moq `4.18.4` and FluentAssertions `7.0.0` — no database and no HTTP:"
   },
   {
    "type": "Code",
@@ -860,31 +860,31 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "قاعدة «المستخدم المعطَّل لا يسجّل الدخول» تعيش في منطق الدخول من Sprint 1 (`Auth.AccountDeactivated`، 403). أوضح طريقة لإثباتها من البداية إلى النهاية: اختبار يستخدم الـ `WebApplicationFactory` من Sprint 5 ويمرّ بالـ endpoint الجديد فعلًا:"
+   "markdown": "The rule \"a deactivated user cannot log in\" lives in the login logic from Sprint 1 (`Auth.AccountDeactivated`, 403). The clearest way to prove it end-to-end is an integration test using Sprint 5's `WebApplicationFactory` that actually exercises the new endpoint:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using System.Net;\nusing System.Net.Http.Json;\nusing System.Text.Json;\nusing DonationHub.Api.IntegrationTests.Infrastructure;\nusing FluentAssertions;\n\nnamespace DonationHub.Api.IntegrationTests.Admin;\n\n[Collection(ApiCollection.Name)]                                     // نفس الـ factory المشتركة من Sprint 5\npublic sealed class DeactivatedUserLoginTests(DonationHubApiFactory factory)\n{\n    [Fact]\n    public async Task Deactivated_user_cannot_log_in()\n    {\n        var client = factory.CreateClient();\n        var email = $\"donor-{Guid.NewGuid():N}@tests.local\";\n        client.UseToken(await client.RegisterAndLoginAsync(email));     // helpers من Sprint 5\n        var donorId = (await client.GetFromJsonAsync<JsonElement>(\"/api/v1/auth/me\")).GetProperty(\"id\").GetGuid();\n\n        client.UseToken(await client.LoginAsync(DonationHubApiFactory.AdminEmail, DonationHubApiFactory.AdminPassword));\n        var patch = await client.PatchAsJsonAsync($\"/api/v1/admin/users/{donorId}/status\", new { isActive = false });\n        patch.StatusCode.Should().Be(HttpStatusCode.NoContent);\n\n        client.DefaultRequestHeaders.Authorization = null;\n        var login = await client.PostAsJsonAsync(\"/api/v1/auth/login\", new { email, password = \"Donor#12345\" });   // كلمة مرور RegisterAndLoginAsync الافتراضية\n\n        login.StatusCode.Should().Be(HttpStatusCode.Forbidden);\n        var problem = await login.Content.ReadFromJsonAsync<JsonElement>();\n        problem.GetProperty(\"code\").GetString().Should().Be(\"Auth.AccountDeactivated\");\n    }\n}",
+   "code": "using System.Net;\nusing System.Net.Http.Json;\nusing System.Text.Json;\nusing DonationHub.Api.IntegrationTests.Infrastructure;\nusing FluentAssertions;\n\nnamespace DonationHub.Api.IntegrationTests.Admin;\n\n[Collection(ApiCollection.Name)]                                     // same shared factory from Sprint 5\npublic sealed class DeactivatedUserLoginTests(DonationHubApiFactory factory)\n{\n    [Fact]\n    public async Task Deactivated_user_cannot_log_in()\n    {\n        var client = factory.CreateClient();\n        var email = $\"donor-{Guid.NewGuid():N}@tests.local\";\n        client.UseToken(await client.RegisterAndLoginAsync(email));     // helpers from Sprint 5\n        var donorId = (await client.GetFromJsonAsync<JsonElement>(\"/api/v1/auth/me\")).GetProperty(\"id\").GetGuid();\n\n        client.UseToken(await client.LoginAsync(DonationHubApiFactory.AdminEmail, DonationHubApiFactory.AdminPassword));\n        var patch = await client.PatchAsJsonAsync($\"/api/v1/admin/users/{donorId}/status\", new { isActive = false });\n        patch.StatusCode.Should().Be(HttpStatusCode.NoContent);\n\n        client.DefaultRequestHeaders.Authorization = null;\n        var login = await client.PostAsJsonAsync(\"/api/v1/auth/login\", new { email, password = \"Donor#12345\" });   // default password used by RegisterAndLoginAsync\n\n        login.StatusCode.Should().Be(HttpStatusCode.Forbidden);\n        var problem = await login.Content.ReadFromJsonAsync<JsonElement>();\n        problem.GetProperty(\"code\").GetString().Should().Be(\"Auth.AccountDeactivated\");\n    }\n}",
    "filename": "tests/DonationHub.Api.IntegrationTests/Admin/DeactivatedUserLoginTests.cs"
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "إن كان منطق الدخول عندك في handler يعتمد على واجهة (مثل `IIdentityService`) فأضف أيضًا unit test سريعًا يُرجع فيه الـ mock مستخدمًا `IsActive = false` ويتأكد أن النتيجة `Auth.AccountDeactivated` وأنه **لم** يُنشأ أي token. الاختباران يكمّلان بعضهما: الأول سريع ومعزول، والثاني يثبت أن السلسلة كلها مربوطة."
+   "markdown": "If your login logic lives in a handler that depends on an interface (such as `IIdentityService`), also add a fast unit test where the mock returns a user with `IsActive = false`, asserting that the result is `Auth.AccountDeactivated` and that **no** token was generated. Both tests complement each other: the first is fast and isolated, while the second proves the entire chain is wired up."
   },
   {
    "type": "Heading",
-   "text": "المهمة 3 — Dockerfile متعدد المراحل",
+   "text": "Task 3 — Multi-Stage Dockerfile",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "**لماذا مرحلتان؟** صورة الـ SDK تحتوي المترجم وأدوات البناء والـ NuGet cache (مئات الميغابايت) — لا نحتاج أيًّا منها وقت التشغيل. المرحلة الأولى تبني وتنشر، والثانية تبدأ من صورة `aspnet` النحيفة وتنسخ **مجلد النشر فقط**. النتيجة: صورة أصغر، وسحب أسرع، وأدوات أقل يستغلها مهاجم لو اخترق الحاوية."
+   "markdown": "**Why two stages?** The SDK image contains the compiler, build tools, and the NuGet cache (hundreds of megabytes) — none of which are needed at runtime. Stage 1 builds and publishes, while Stage 2 starts from the lean `aspnet` image and copies **only the publish folder**. Result: a smaller image, faster pulls, and fewer tools an attacker could exploit if the container were compromised."
   },
   {
    "type": "Paragraph",
-   "markdown": "**لماذا ننسخ ملفات `.csproj` أولًا؟** كل أمر في Dockerfile طبقة مخزّنة. إذا نسخنا الكود كله قبل `dotnet restore` فأي تعديل في سطر C# يبطل الكاش ويعيد تنزيل كل الحزم. بنسخ ملفات المشاريع وحدها أولًا، لا تُعاد طبقة الـ restore إلا عند تغيير الحزم."
+   "markdown": "**Why copy `.csproj` files first?** Every instruction in a Dockerfile creates a cached layer. If we copy all source code before `dotnet restore`, editing any single C# line invalidates the cache and re-downloads all packages. By copying only the project files first, the restore layer is only re-executed when packages change."
   },
   {
    "type": "Code",
@@ -901,12 +901,12 @@
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "منذ .NET 8 تحتوي صور `aspnet` مستخدمًا غير root اسمه `app` ومتغيّر `APP_UID`، والمنفذ الافتراضي 8080 (لأن المستخدم العادي لا يستطيع الاستماع على 80). سطر `ENV ASPNETCORE_HTTP_PORTS=8080` للتوضيح فقط. صورة .NET 10 الافتراضية مبنية على Ubuntu، لذلك نستخدم `apt-get`؛ لو اخترت صورة `-alpine` فالأمر `apk add curl`، ولو اخترت صورة `chiseled` فلا يوجد shell ولا curl أصلًا وتحتاج فحصًا بطريقة أخرى."
+   "markdown": "Since .NET 8, `aspnet` images include a non-root user named `app` and an `APP_UID` variable, with default port 8080 (since a non-root user cannot bind to port 80). The `ENV ASPNETCORE_HTTP_PORTS=8080` line is purely for clarity. The default .NET 10 image is Ubuntu-based, so we use `apt-get`; if you choose an `-alpine` image, the command is `apk add curl`, and if you choose a `chiseled` image, there is no shell or curl at all and you would need a different health check mechanism."
   },
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "**مقايضة curl:** تثبيته يضيف بضعة ميغابايت ويُدخل أداة شبكة إلى الصورة، مقابل health check بسيط وواضح في Compose. البديل الأنظف أمنيًا: مشروع console صغير يستدعي `/health/ready` وينسخ ملفه التنفيذي فقط، أو الاعتماد على probes المنسّق (Kubernetes) من خارج الحاوية. لهذا المشروع، curl مقبول — المهم أن تعرف لماذا."
+   "markdown": "**The curl trade-off:** Installing it adds a few megabytes and introduces a network utility into the image, in exchange for a simple and clear health check in Compose. A cleaner security alternative is a small console project that probes `/health/ready` and copying only its binary, or relying on orchestrator probes (Kubernetes) from outside the container. For this project, curl is acceptable — what matters is knowing why."
   },
   {
    "type": "Code",
@@ -916,12 +916,12 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 4 — Docker Compose: البيئة كاملة بأمر واحد",
+   "text": "Task 4 — Docker Compose: The Entire Stack in One Command",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "**المبادئ الثلاثة هنا:** (1) كل الإعدادات من متغيرات البيئة — نفس الصورة تعمل في أي بيئة دون إعادة بناء. (2) ترتيب الإقلاع يعتمد على **الصحة** لا على مجرد بدء الحاوية: SQL Server يحتاج ثواني طويلة بعد بدء حاويته حتى يقبل الاتصالات. (3) البيانات في **named volumes** فلا تضيع عند `docker compose down`."
+   "markdown": "**The three principles here:** (1) All configuration comes from environment variables — the exact same image runs in any environment without rebuilding. (2) Startup order relies on **health**, not merely container start: SQL Server takes several seconds after its container starts before it accepts connections. (3) Data lives in **named volumes** so it is not lost on `docker compose down`."
   },
   {
    "type": "Code",
@@ -932,11 +932,11 @@
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "**تحقّق من هذه التفاصيل على جهازك:** (1) في صور SQL Server 2022 الحديثة أداة `sqlcmd` موجودة في `/opt/mssql-tools18/bin/` وتحتاج `-C` لقبول الشهادة الذاتية؛ الصور الأقدم كانت تستخدم `/opt/mssql-tools/bin/`. (2) `$$` في ملف compose تعني `$` حرفية، فيُقرأ المتغيّر داخل الحاوية لا من جهازك. (3) أسماء مفاتيح `Email__*` و `FileStorage__*` و `HangfireDashboard__*` يجب أن تطابق أسماء خصائص Options عندك من Sprint 4. كل Options عليها `ValidateOnStart()`، فأي قيمة إلزامية موجودة فقط في `appsettings.Development.json` أو user-secrets (مثل `Email:SenderEmail` وبيانات لوحة Hangfire) يجب أن تُمرَّر هنا كمتغير بيئة، وإلا يتوقف الـ API عند الإقلاع. (4) SQL Server لا يعمل أصليًا على معالجات ARM؛ على Mac بشريحة Apple فعّل محاكاة x86 (Rosetta) في Docker Desktop."
+   "markdown": "**Verify these details on your machine:** (1) In modern SQL Server 2022 images, `sqlcmd` resides at `/opt/mssql-tools18/bin/` and requires `-C` to trust the self-signed certificate; older images used `/opt/mssql-tools/bin/`. (2) `$$` in a compose file escapes to a literal `$`, so the environment variable is evaluated inside the container rather than on your host. (3) Key names like `Email__*`, `FileStorage__*`, and `HangfireDashboard__*` must match your Options property names from Sprint 4. All Options classes use `ValidateOnStart()`, so any required value that previously lived only in `appsettings.Development.json` or user-secrets (such as `Email:SenderEmail` and Hangfire dashboard credentials) must be passed here as an environment variable, otherwise the API will fail on startup. (4) SQL Server does not run natively on ARM CPUs; on an Apple Silicon Mac, enable x86 emulation (Rosetta) in Docker Desktop."
   },
   {
    "type": "Paragraph",
-   "markdown": "ملف `.env.example` هو **عقد** الإعدادات: يُرفع إلى Git بقيم وهمية، ويُنسخ محليًا إلى `.env` الذي لا يُرفع أبدًا:"
+   "markdown": "The `.env.example` file is the configuration **contract**: it is committed to Git with placeholder values, and copied locally to `.env`, which is never committed:"
   },
   {
    "type": "Code",
@@ -953,22 +953,22 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "**لماذا نستخدم `${VAR:?message}`؟** لو نسي أحد ملء `.env` يتوقف `docker compose up` فورًا برسالة واضحة، بدل أن يقلع SQL Server بكلمة مرور فارغة ويفشل لاحقًا بخطأ غامض. هذا نفس مبدأ Fail Fast الذي طبّقناه بـ `ValidateOnStart()` في Sprint 1. وإن كنت قد رفعت أسرارًا حقيقية سابقًا فحذفها من آخر commit **لا يكفي** — هي باقية في التاريخ؛ غيّر المفاتيح نفسها (rotate)."
+   "markdown": "**Why use `${VAR:?message}`?** If someone forgets to populate `.env`, `docker compose up` fails immediately with a clear error message instead of starting SQL Server with an empty password and failing later with a cryptic error. This is the same Fail-Fast principle we applied with `ValidateOnStart()` in Sprint 1. And if you previously committed real secrets, removing them in the latest commit is **not enough** — they remain in Git history; rotate the keys themselves."
   },
   {
    "type": "Paragraph",
-   "markdown": "**العمل من نسخة نظيفة:** الـ API يطبّق الـ migrations ثم يبذر الأدوار والـ Admin قبل أن يبدأ استقبال الطلبات. نتحكم في ذلك بإعداد صريح بدل ربطه بالبيئة:"
+   "markdown": "**Working from a clean clone:** The API applies migrations and then seeds roles and the Admin before accepting requests. We control this via an explicit setting rather than tying it to the environment name:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "var app = builder.Build();\n\n// يُفعَّل في compose عبر Database__ApplyMigrationsOnStartup=true\nif (app.Configuration.GetValue<bool>(\"Database:ApplyMigrationsOnStartup\"))\n{\n    await using var scope = app.Services.CreateAsyncScope();\n    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();\n    await db.Database.MigrateAsync();          // ينشئ قاعدة البيانات إن لم تكن موجودة\n}\n\nawait DbSeeder.SeedAsync(app.Services, app.Environment.IsDevelopment());   // الأدوار + Admin من SeedAdminOptions\n\n// ... middleware و MapControllers و MapHealthChecks\napp.Run();",
+   "code": "var app = builder.Build();\n\n// Enabled in compose via Database__ApplyMigrationsOnStartup=true\nif (app.Configuration.GetValue<bool>(\"Database:ApplyMigrationsOnStartup\"))\n{\n    await using var scope = app.Services.CreateAsyncScope();\n    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();\n    await db.Database.MigrateAsync();          // creates the database if it does not exist\n}\n\nawait DbSeeder.SeedAsync(app.Services, app.Environment.IsDevelopment());   // roles + Admin from SeedAdminOptions\n\n// ... middleware, MapControllers, and MapHealthChecks\napp.Run();",
    "filename": "src/DonationHub.Api/Program.Part1.cs"
   },
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "**مقايضة الـ migrations عند الإقلاع:** مريحة جدًا للتطوير والعرض (`docker compose up` ويعمل كل شيء)، لكنها خطرة في إنتاج فيه عدة نسخ من الـ API تقلع معًا وتحاول ترحيل نفس القاعدة. في الإنتاج الحقيقي يُفضَّل تشغيل الترحيل كخطوة منفصلة في خط النشر (مثل `dotnet ef migrations bundle`). اذكر هذا في قرارات التصميم. وانتبه: يجب أن يتم `MigrateAsync` **قبل** `app.Run()` حتى تكون قاعدة البيانات موجودة قبل أن يبدأ Hangfire server (Sprint 4) بإنشاء جداوله."
+   "markdown": "**Trade-off of startup migrations:** Very convenient for development and demos (`docker compose up` and everything works), but risky in production when multiple API replicas boot concurrently and try to migrate the same database. In real production, it is preferable to run migrations as a separate step in the deployment pipeline (e.g., `dotnet ef migrations bundle`). Mention this in Design Decisions. Also note: `MigrateAsync` must execute **before** `app.Run()` so the database exists before the Hangfire server (Sprint 4) starts creating its tables."
   },
   {
    "type": "Code",
@@ -978,17 +978,17 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 5 — Health Checks: Liveness مقابل Readiness",
+   "text": "Task 5 — Health Checks: Liveness vs. Readiness",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "نسجّل كل الفحوص بالـ tag `ready`. الـ endpoint `/health/live` يستخدم `Predicate = _ => false` أي **لا يشغّل أي فحص** — يكفي أن العملية استجابت للطلب. أما `/health/ready` فيشغّل الفحوص الموسومة فقط، ويُرجع 503 إذا فشل أحدها، فيعرف المنسّق (أو `depends_on` في compose) أن الحاوية غير جاهزة بعد."
+   "markdown": "We register all checks with the `ready` tag. The `/health/live` endpoint uses `Predicate = _ => false`, meaning **it runs no checks** — the process simply responding to the request is enough. Meanwhile, `/health/ready` runs only the tagged checks and returns 503 if any fails, signaling to the orchestrator (or `depends_on` in compose) that the container is not ready yet."
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Application.Common.Files;      // FileStorageOptions (Sprint 4)\nusing Microsoft.Extensions.Diagnostics.HealthChecks;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Infrastructure.Health;\n\n// readiness: هل نستطيع فعلًا حفظ صورة حملة أو إيصال PDF؟\npublic sealed class FileStorageHealthCheck(IOptions<FileStorageOptions> options) : IHealthCheck\n{\n    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken ct = default)\n    {\n        var root = options.Value.RootPath;\n        var probe = Path.Combine(root, $\".health-{Guid.NewGuid():N}.tmp\");\n\n        try\n        {\n            Directory.CreateDirectory(root);\n            await File.WriteAllTextAsync(probe, \"ok\", ct);\n            File.Delete(probe);\n            return HealthCheckResult.Healthy(\"File storage is writable.\");\n        }\n        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)\n        {\n            // لا نُرجع المسار ولا رسالة الاستثناء في الاستجابة العامة؛ التفاصيل في الـ log فقط\n            return new HealthCheckResult(context.Registration.FailureStatus,\n                \"File storage is not writable.\", ex);\n        }\n    }\n}",
+   "code": "using DonationHub.Application.Common.Files;      // FileStorageOptions (Sprint 4)\nusing Microsoft.Extensions.Diagnostics.HealthChecks;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Infrastructure.Health;\n\n// readiness: can we actually save a campaign banner or PDF receipt?\npublic sealed class FileStorageHealthCheck(IOptions<FileStorageOptions> options) : IHealthCheck\n{\n    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken ct = default)\n    {\n        var root = options.Value.RootPath;\n        var probe = Path.Combine(root, $\".health-{Guid.NewGuid():N}.tmp\");\n\n        try\n        {\n            Directory.CreateDirectory(root);\n            await File.WriteAllTextAsync(probe, \"ok\", ct);\n            File.Delete(probe);\n            return HealthCheckResult.Healthy(\"File storage is writable.\");\n        }\n        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)\n        {\n            // Do not expose the file path or exception message in the public response; log details only\n            return new HealthCheckResult(context.Registration.FailureStatus,\n                \"File storage is not writable.\", ex);\n        }\n    }\n}",
    "filename": "src/DonationHub.Infrastructure/Health/FileStorageHealthCheck.cs"
   },
   {
@@ -1005,7 +1005,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "والربط في `Program.cs` سطران فقط:"
+   "markdown": "And the wiring in `Program.cs` is just two lines:"
   },
   {
    "type": "Code",
@@ -1016,21 +1016,21 @@
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "`AllowAnonymous()` ضروري إن كان عندك fallback authorization policy، و `DisableRateLimiting()` يمنع الـ global limiter (100 طلب/دقيقة لكل IP) من رفض فحوص المنسّق المتكررة. جعلنا `FileStorageHealthCheck` كلاسًا `public` لأن التسجيل يتم من مشروع Api؛ البديل أن يبقى `internal` ويُسجَّل من `AddInfrastructureServices`."
+   "markdown": "`AllowAnonymous()` is necessary if you have a fallback authorization policy, and `DisableRateLimiting()` prevents the global limiter (100 requests/minute per IP) from rejecting frequent orchestrator probes. We made `FileStorageHealthCheck` `public` because registration is called from the Api project; the alternative is keeping it `internal` and registering it inside `AddInfrastructureServices`."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "إن رأيت أن `/health/ready` يكشف أسماء البنية التحتية لأي زائر، فهذا قرار يستحق التوثيق: في الإنتاج غالبًا يُقيَّد بشبكة داخلية أو بـ `RequireHost`، بينما `/health/live` يبقى عامًا. للمراجعة يكفي أن تذكر أنك فكّرت في الأمر."
+   "markdown": "If you are concerned that `/health/ready` exposes infrastructure dependency names to arbitrary callers, that is a decision worth documenting: in production it is commonly restricted to an internal network or via `RequireHost`, while `/health/live` stays public. For review, noting that you considered this is sufficient."
   },
   {
    "type": "Heading",
-   "text": "المهمة 6 — GitHub Actions: البناء والاختبار مع كل تغيير",
+   "text": "Task 6 — GitHub Actions: Build and Test on Every Change",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "**القرار الأهم:** اختبارات التكامل من Sprint 5 تحتاج SQL Server حقيقيًا (لا InMemory — لأن سلوك الـ transactions و `RowVersion` والـ unique indexes لا يظهر إلا على مزوّد حقيقي). في الـ CI نشغّل SQL Server كـ **service container** بجانب الـ job، وكلمة مروره من Repository Secret. ونشغّل Redis أيضًا كـ service container ليقترب الخط من بيئة التشغيل، مع أنه ليس شرطًا: factory الـ Sprint 5 تستبدل `IDistributedCache` بنسخة في الذاكرة، و `DistributedCacheService` (Sprint 3) يبتلع أخطاء Redis أصلًا. Stripe و SMTP **مزيّفان** في الاختبارات (الـ webhook يُوقَّع محليًا بسرّ اختبار، والبريد عبر fake sender)، فلا يحتاج الخط أي مفتاح حقيقي."
+   "markdown": "**Key decision:** The Sprint 5 integration tests require a real SQL Server (not InMemory — because transaction behavior, `RowVersion`, and unique indexes only manifest on a real database provider). In CI, we spin up SQL Server as a **service container** alongside the job, reading its password from a Repository Secret. We also run Redis as a service container to mirror the runtime environment, though it is not strictly required: Sprint 5's factory replaces `IDistributedCache` with an in-memory implementation, and `DistributedCacheService` (Sprint 3) swallows Redis errors anyway. Stripe and SMTP are **faked** in tests (webhooks are signed locally with a test secret, and emails go through a fake sender), so the pipeline needs no real API keys."
   },
   {
    "type": "Code",
@@ -1041,16 +1041,16 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "**قبل أول تشغيل:** أضف السرّ `CI_SQL_PASSWORD` من Settings ← Secrets and variables ← Actions (كلمة مرور قوية **بلا مسافات ولا `$`** لأنها تمر عبر أمر الـ health-cmd). بدونها يفشل SQL Server في الإقلاع ويظهر خطأ غامض في خطوة الاختبار. ولاحظ أن الأسرار لا تُمرَّر إلى pull requests القادمة من forks — هذا سلوك أمني مقصود من GitHub."
+   "markdown": "**Before the first run:** Add the `CI_SQL_PASSWORD` secret under Settings → Secrets and variables → Actions (a strong password **with no spaces and no `$`** since it passes through the health-cmd command). Without it, SQL Server fails to start and produces a cryptic error during the test step. Also note that secrets are not passed to pull requests from forks — this is intentional GitHub security behavior."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "**تحقّق من نقطتين:** (1) على .NET 10، `dotnet test` بوضع VSTest (الافتراضي) يقبل ملف `.slnx` كمعامل موضعي؛ إن فعّلت Microsoft.Testing.Platform عبر `global.json` فالصيغة تصبح `dotnet test --solution DonationHub.slnx`. (2) أي اختبار يفشل يُرجع exit code غير صفري، فيفشل الـ job تلقائيًا — لا تضف `continue-on-error`. (3) بيئة `Testing` لا تقرأ `appsettings.Development.json` ولا user-secrets: تأكّد أن `DonationHubApiFactory` من Sprint 5 يضبط بـ `UseSetting` كل إعداد إلزامي عليه `ValidateOnStart()` (مثل `Email:*` و `HangfireDashboard:*`)، وإلا يفشل إقلاع الـ host داخل الـ CI."
+   "markdown": "**Verify these points:** (1) On .NET 10, `dotnet test` in VSTest mode (default) accepts a `.slnx` file as a positional argument; if you enabled Microsoft.Testing.Platform via `global.json`, the syntax becomes `dotnet test --solution DonationHub.slnx`. (2) Any failing test returns a non-zero exit code, failing the job automatically — do not add `continue-on-error`. (3) The `Testing` environment does not read `appsettings.Development.json` or user-secrets: ensure `DonationHubApiFactory` from Sprint 5 configures via `UseSetting` every required setting marked with `ValidateOnStart()` (such as `Email:*` and `HangfireDashboard:*`), otherwise the host will fail to start in CI."
   },
   {
    "type": "Paragraph",
-   "markdown": "الشارة أعلى الـ README (استبدل `<user>` و `<repo>`):"
+   "markdown": "The badge at the top of the README (replace `<user>` and `<repo>`):"
   },
   {
    "type": "Code",
@@ -1060,12 +1060,12 @@
   },
   {
    "type": "Heading",
-   "text": "المهمة 7 — README النهائي: وثيقة الدفاع",
+   "text": "Task 7 — Final README: The Defense Document",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "**كيف تفكّر في الـ README؟** ليس دليل تثبيت فقط، بل **سجل قراراتك**. المراجع سيختار منه قرارًا ويسألك «لماذا؟» (جزء Explanation = 20 نقطة)، ولجنة الدفاع ستفعل الشيء نفسه. لذلك كل قرار مكتوب يجب أن يحمل: ماذا اخترت، ولماذا، وما الثمن. الهيكل التالي نموذج — الأوامر مكتوبة بإزاحة 4 مسافات (code blocks بالإزاحة) بدل الأسوار."
+   "markdown": "**How to think about the README?** It is not just an installation guide — it is **your decision log**. The reviewer will pick a decision from it and ask \"Why?\" (the Explanation part = 20 points), and the defense committee will do the same. Therefore, every documented decision must state: what you chose, why, and at what cost. The following outline is a template — commands are written with 4-space indentation (indented code blocks) instead of fences."
   },
   {
    "type": "Code",
@@ -1076,108 +1076,108 @@
   {
    "type": "Callout",
    "variant": "Tip",
-   "markdown": "لا تنسخ قسم «Design decisions» كما هو — اكتب قراراتك **أنت**، بكلماتك، وبما فعلته فعلًا في مشروعك. إن كتبت قرارًا لا تستطيع الدفاع عنه شفهيًا فهو يضرّك أكثر مما ينفعك. قرار واحد صادق مع مقايضته أفضل من عشرة منسوخة."
+   "markdown": "Do not copy the \"Design decisions\" section verbatim — write **your own** decisions, in your own words, reflecting what you actually implemented in your project. Writing a decision you cannot defend orally hurts you more than it helps. One honest decision with its trade-off is better than ten copied ones."
   },
   {
    "type": "Divider"
   },
   {
    "type": "Heading",
-   "text": "أخطاء شائعة تخسّر نقاطًا",
+   "text": "Common Mistakes That Cost Points",
    "level": 2
   },
   {
    "type": "Checklist",
    "items": [
-    "استدعاء `ToListAsync()` قبل `GroupBy`/`Sum` فيتحوّل التقرير إلى تجميع في الذاكرة على كامل جدول التبرعات.",
-    "التجميع على `CreatedAt.ToString(...)` أو دالة C# مخصّصة بدل `CreatedAt.Date`، فيفشل الاستعلام أو يُقيَّم في جهة العميل.",
-    "نسيان `Status == Succeeded` في الملخّص، فتدخل التبرعات `Pending` و `Failed` في المجموع ولا تطابق الأرقام استعلام SQL اليدوي.",
-    "نطاق تاريخ مغلق `CreatedAt <= to` فتضيع تبرعات اليوم الأخير بعد منتصف الليل.",
-    "عدم تقييد `count` في `top-campaigns` (مثلًا `count=100000`).",
-    "حذف المستخدم فعليًا (`DeleteAsync`) بدل تعطيله، أو السماح للـ Admin بتعطيل نفسه أو تخفيض دوره.",
-    "رمي استثناء لقاعدة «آخر Admin» بدل إرجاع `Result` بخطأ من الكتالوج يتحوّل إلى ProblemDetails.",
-    "Dockerfile بمرحلة واحدة على صورة الـ SDK، أو بدون `USER $APP_UID` فيعمل التطبيق كـ root.",
-    "نسخ الكود كله قبل `dotnet restore` فيُعاد تنزيل الحزم مع كل تعديل.",
-    "`.dockerignore` ناقص فيُرسل `bin/` و `obj/` و `.git/` (وربما `.env`) إلى سياق البناء.",
-    "`localhost` في connection string داخل compose بدل اسم الخدمة `sqlserver`.",
-    "`depends_on` بدون `condition: service_healthy` فيقلع الـ API قبل جاهزية SQL Server ويفشل الترحيل.",
-    "health check للـ api يستخدم `curl` غير المثبَّت في صورة `aspnet` فتبقى الحاوية `unhealthy` للأبد.",
-    "رفع `.env` أو وضع كلمة مرور `sa` أو مفتاح JWT في `docker-compose.yml` أو `appsettings*.json`.",
-    "`/health/live` يفحص قاعدة البيانات، أو الاستجابة نص `Healthy` بدل JSON بحالة كل فحص.",
-    "workflow يعمل على `main` فقط بدل كل push و pull request، أو يتجاهل فشل الاختبارات (`continue-on-error`).",
-    "اختبارات تستدعي Stripe الحقيقي أو SMTP حقيقيًا فتفشل في الـ CI.",
-    "الـ tag `sprint-6` على commit لا ينجح عليه الـ CI، أو تحريكه بـ force-push بعد التسليم.",
-    "README بلا شارة CI أو بلا قسم قرارات التصميم أو بلا استعلام SQL للتحقق من اللوحة."
+    "Calling `ToListAsync()` before `GroupBy`/`Sum`, turning the report into in-memory aggregation over the entire donations table.",
+    "Grouping on `CreatedAt.ToString(...)` or a custom C# method instead of `CreatedAt.Date`, causing the query to fail or fall back to client-side evaluation.",
+    "Forgetting `Status == Succeeded` in the summary, causing `Pending` and `Failed` donations to be included in totals and mismatching the manual SQL query.",
+    "Using an inclusive upper bound `CreatedAt <= to`, causing donations on the final day after midnight to be missed.",
+    "Failing to cap `count` in `top-campaigns` (e.g., `count=100000`).",
+    "Hard-deleting a user (`DeleteAsync`) instead of deactivating them, or allowing an Admin to deactivate themself or demote their own role.",
+    "Throwing an exception for the \"last Admin\" rule instead of returning a `Result` with a catalog error mapped to ProblemDetails.",
+    "Single-stage Dockerfile using the SDK image, or omitting `USER $APP_UID` so the app runs as root.",
+    "Copying all source code before `dotnet restore`, causing packages to be re-downloaded on every edit.",
+    "Missing or incomplete `.dockerignore`, sending `bin/`, `obj/`, `.git/` (and possibly `.env`) to the build context.",
+    "Using `localhost` in the connection string inside compose instead of the service name `sqlserver`.",
+    "Using `depends_on` without `condition: service_healthy`, causing the API to boot before SQL Server is ready and migrations to fail.",
+    "API health check using `curl` when it is not installed in the `aspnet` image, leaving the container `unhealthy` forever.",
+    "Committing `.env` or placing the `sa` password or JWT key inside `docker-compose.yml` or `appsettings*.json`.",
+    "`/health/live` checking the database, or returning plain text `Healthy` instead of JSON with each check's status.",
+    "Workflow triggering only on `main` instead of every push and pull request, or ignoring test failures (`continue-on-error`).",
+    "Tests calling real Stripe or real SMTP, causing failures in CI.",
+    "Tagging `sprint-6` on a commit where CI fails, or moving it with force-push after submission.",
+    "README missing the CI badge, the design decisions section, or the SQL verification query for the dashboard."
    ]
   },
   {
    "type": "Heading",
-   "text": "أسئلة استعد لها في المراجعة والدفاع النهائي",
+   "text": "Questions to Prepare For in Code Review & Final Defense",
    "level": 2
   },
   {
    "type": "Checklist",
    "items": [
-    "اشرح رحلة طلب `PATCH /admin/users/{id}/status` من الـ Controller حتى قاعدة البيانات: أي طبقة تتحقق من ماذا؟",
-    "لماذا لا تمر استعلامات التقارير عبر الـ Repository والـ Unit of Work؟",
-    "ما الفرق بين `AsNoTracking()` و `AsSplitQuery()`؟ ومتى يكون `AsSplitQuery` ضارًّا؟",
-    "كيف تتأكد أن `GroupBy(d => d.CreatedAt.Date)` تُرجم إلى SQL فعلًا ولم يُقيَّم في الذاكرة؟",
-    "لماذا تخزّن `RaisedAmount` بدل حسابه بـ `SUM` كل مرة؟ وكيف تثبت أنه صحيح؟",
-    "الكاش يجعل أرقام اللوحة متأخرة حتى 5 دقائق — كيف توفّق ذلك مع «الأرقام تطابق قاعدة البيانات»؟",
-    "لماذا نحمي «آخر Admin نشط» إذا كان التعطيل الذاتي ممنوعًا؟ أعطِ سيناريو حقيقيًا.",
-    "المستخدم المعطَّل ما زال معه access token صالح — ماذا يحدث؟ وما خياراتك لتقليل الأثر؟",
-    "لماذا Dockerfile متعدد المراحل؟ وما فائدة نسخ ملفات `.csproj` قبل الكود؟",
-    "لماذا يعمل التطبيق بمستخدم غير root؟ وكيف حصل مجلد الرفع على الصلاحيات الصحيحة؟",
-    "ما الفرق بين `service_started` و `service_healthy` في `depends_on`؟",
-    "ما الفرق بين liveness و readiness؟ ولماذا لا يفحص `/health/live` قاعدة البيانات؟",
-    "أين تعيش الأسرار في كل بيئة: محليًا، في Docker، وفي GitHub Actions؟",
-    "ما مخاطر تطبيق الـ migrations عند الإقلاع في الإنتاج؟ وما البديل؟",
-    "لماذا تستخدم اختبارات التكامل SQL Server حقيقيًا بدل InMemory provider؟",
-    "لو أعدت بناء DonationHub من الصفر، ما القرار الذي ستغيّره؟ ولماذا؟"
+    "Walk through the request lifecycle of `PATCH /admin/users/{id}/status` from the Controller to the database: which layer validates what?",
+    "Why do reporting queries bypass the Repository and Unit of Work?",
+    "What is the difference between `AsNoTracking()` and `AsSplitQuery()`? And when can `AsSplitQuery` be harmful?",
+    "How do you verify that `GroupBy(d => d.CreatedAt.Date)` actually translated to SQL and was not evaluated in memory?",
+    "Why store `RaisedAmount` instead of computing it with `SUM` every time? And how do you prove it is accurate?",
+    "Caching makes dashboard numbers lag by up to 5 minutes — how do you reconcile that with \"the numbers must match the database\"?",
+    "Why protect the \"last active Admin\" if self-deactivation is already blocked? Give a realistic scenario.",
+    "A deactivated user still holds a valid access token — what happens? And what are your options to mitigate the impact?",
+    "Why use a multi-stage Dockerfile? And what is the benefit of copying `.csproj` files before the source code?",
+    "Why does the application run as a non-root user? And how did the uploads folder get the proper permissions?",
+    "What is the difference between `service_started` and `service_healthy` in `depends_on`?",
+    "What is the difference between liveness and readiness? And why does `/health/live` not check the database?",
+    "Where do secrets live in each environment: locally, in Docker, and in GitHub Actions?",
+    "What are the risks of applying migrations on startup in production? And what is the alternative?",
+    "Why do integration tests use a real SQL Server instead of the InMemory provider?",
+    "If you rebuilt DonationHub from scratch, which decision would you change, and why?"
    ]
   },
   {
    "type": "Heading",
-   "text": "تلميحات للمهام الإضافية",
+   "text": "Hints for BONUS Tasks",
    "level": 2
   },
   {
    "type": "Paragraph",
-   "markdown": "**RPT-05 (حسب التصنيف والشهر):** اضمم التبرعات بالحملات ثم بالتصنيفات، وجمّع على مفتاح مركّب من التصنيف والسنة والشهر. EF Core يترجم `CreatedAt.Year` و `CreatedAt.Month` إلى `DATEPART`:"
+   "markdown": "**RPT-05 (By category and month):** Join donations to campaigns and then to categories, and group by a composite key of category, year, and month. EF Core translates `CreatedAt.Year` and `CreatedAt.Month` into `DATEPART`:"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "var rows = await (\n        from d in db.Donations\n        join c in db.Campaigns on d.CampaignId equals c.Id\n        join cat in db.Categories on c.CategoryId equals cat.Id\n        where d.Status == DonationStatus.Succeeded && d.CreatedAt >= start && d.CreatedAt < endExclusive\n        group d by new { cat.Id, cat.NameEn, cat.NameAr, d.CreatedAt.Year, d.CreatedAt.Month } into g\n        orderby g.Key.Year, g.Key.Month\n        select new CategoryMonthDto(\n            g.Key.Id, g.Key.NameEn, g.Key.NameAr, g.Key.Year, g.Key.Month,\n            g.Sum(x => x.Amount), g.Count()))\n    .ToListAsync(ct);\n// ملاحظة: الـ join مع Campaigns يطبّق الـ query filter، فتبرعات الحملات المحذوفة ناعمًا مستبعدة — وثّق ذلك.",
+   "code": "var rows = await (\n        from d in db.Donations\n        join c in db.Campaigns on d.CampaignId equals c.Id\n        join cat in db.Categories on c.CategoryId equals cat.Id\n        where d.Status == DonationStatus.Succeeded && d.CreatedAt >= start && d.CreatedAt < endExclusive\n        group d by new { cat.Id, cat.NameEn, cat.NameAr, d.CreatedAt.Year, d.CreatedAt.Month } into g\n        orderby g.Key.Year, g.Key.Month\n        select new CategoryMonthDto(\n            g.Key.Id, g.Key.NameEn, g.Key.NameAr, g.Key.Year, g.Key.Month,\n            g.Sum(x => x.Amount), g.Count()))\n    .ToListAsync(ct);\n// Note: joining with Campaigns applies its query filter, so donations for soft-deleted campaigns are excluded — document this.",
    "filename": "src/DonationHub.Application/Features/Dashboard/GetByCategoryAndMonth/Rpt05Query.cs"
   },
   {
    "type": "Paragraph",
-   "markdown": "**CMP-12 (الإلغاء من الـ Admin):** أضف `Cancelled` إلى `CampaignStatus` ودالة `Campaign.Cancel(reason, utcNow)` ترفض الإلغاء إن كانت الحملة نهائية. التحدي الحقيقي هو محاولات الدفع المعلّقة: اجعل `CreateCheckout` يرفض الحملة غير النشطة (`Campaign.NotActive`)، وفي معالج الـ webhook إن وصل `checkout.session.completed` لحملة ملغاة فلا تزد `RaisedAmount` — سجّل تحذيرًا وضع التبرعة في حالة تحتاج استردادًا (مرتبط بـ PAY-11). يمكنك أيضًا إنهاء جلسات Checkout المفتوحة عبر Stripe API (`SessionService.ExpireAsync`)."
+   "markdown": "**CMP-12 (Admin cancellation):** Add `Cancelled` to `CampaignStatus` and a `Campaign.Cancel(reason, utcNow)` method that rejects cancellation if the campaign is in a final state. The real challenge is pending payment attempts: have `CreateCheckout` reject inactive campaigns (`Campaign.NotActive`), and in the webhook handler, if `checkout.session.completed` arrives for a cancelled campaign, do not increment `RaisedAmount` — log a warning and place the donation in a state requiring a refund (linked to PAY-11). You can also expire open Checkout Sessions via the Stripe API (`SessionService.ExpireAsync`)."
   },
   {
    "type": "Paragraph",
-   "markdown": "**Testcontainers في CI:** بدل الـ service container، تشغّل الـ fixture حاوية SQL Server بنفسها، فتعمل الاختبارات بنفس الطريقة محليًا وفي الـ CI (runner الـ ubuntu فيه Docker جاهز):"
+   "markdown": "**Testcontainers in CI:** Instead of a service container, the fixture starts a SQL Server container itself, so tests run identically locally and in CI (the Ubuntu runner comes with Docker preinstalled):"
   },
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using Testcontainers.MsSql;\n\npublic sealed class SqlServerFixture : IAsyncLifetime\n{\n    private readonly MsSqlContainer _container = new MsSqlBuilder()\n        .WithImage(\"mcr.microsoft.com/mssql/server:2022-latest\")\n        .Build();\n\n    public string ConnectionString => _container.GetConnectionString();\n\n    public Task InitializeAsync() => _container.StartAsync();\n    public Task DisposeAsync() => _container.DisposeAsync().AsTask();\n}\n// DonationHubApiFactory يأخذ ConnectionString من الـ fixture ويستبدل به إعداد ConnectionStrings:Default",
+   "code": "using Testcontainers.MsSql;\n\npublic sealed class SqlServerFixture : IAsyncLifetime\n{\n    private readonly MsSqlContainer _container = new MsSqlBuilder()\n        .WithImage(\"mcr.microsoft.com/mssql/server:2022-latest\")\n        .Build();\n\n    public string ConnectionString => _container.GetConnectionString();\n\n    public Task InitializeAsync() => _container.StartAsync();\n    public Task DisposeAsync() => _container.DisposeAsync().AsTask();\n}\n// DonationHubApiFactory reads ConnectionString from the fixture and overrides ConnectionStrings:Default",
    "filename": "tests/DonationHub.Api.IntegrationTests/Infrastructure/SqlServerFixture.cs"
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "التوقيعات أعلاه لـ xUnit v2 (`IAsyncLifetime` يُرجع `Task`). في xUnit v3 تُرجع الدوال `ValueTask`. وراجع وثائق نسخة Testcontainers التي تثبّتها: النسخ الحديثة قد تفضّل تمرير الصورة في الـ constructor بدل `WithImage`."
+   "markdown": "The signatures above are for xUnit v2 (`IAsyncLifetime` returns `Task`). In xUnit v3, these methods return `ValueTask`. Also check the documentation for the Testcontainers version you install: newer versions may prefer passing the image in the constructor rather than `WithImage`."
   },
   {
    "type": "Paragraph",
-   "markdown": "**النشر السحابي:** اختياري ولا يُقيَّم. إن جرّبته فالصورة نفسها تعمل على Azure Container Apps أو أي منصة حاويات — فقط مرّر نفس متغيرات البيئة واستخدم قاعدة بيانات و Redis مُدارين."
+   "markdown": "**Cloud deployment:** Optional and never graded. If you try it, the exact same image runs on Azure Container Apps or any container platform — simply pass the same environment variables and use a managed database and managed Redis."
   },
   {
    "type": "Callout",
    "variant": "Success",
-   "markdown": "لو حلّك يحقق نفس **المبادئ** (تجميع داخل SQL مع أرقام يمكن إثباتها، قواعد إدارة لا تقفل النظام، صورة نحيفة بمستخدم غير root، بيئة كاملة بأمر واحد بلا أسرار في Git، فحوص صحة تفرّق بين الحياة والجاهزية، CI يحرس كل تغيير، و README يشرح **لماذا** قبل **كيف**) فأنت جاهز للدفاع النهائي. مبروك إتمام DonationHub 🎉"
+   "markdown": "If your solution upholds these same **principles** (SQL-side aggregation with provable numbers, admin rules that cannot lock out the system, a lean image with a non-root user, a full stack in one command with no secrets in Git, health checks separating liveness from readiness, CI guarding every change, and a README explaining **why** before **how**), then you are ready for the final defense. Congratulations on completing DonationHub 🎉"
   }
  ]
 }

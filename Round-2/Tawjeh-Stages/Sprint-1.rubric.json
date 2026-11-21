@@ -1,53 +1,53 @@
 {
  "criteria": [
   {
-   "title": "المعمارية النظيفة وتنظيم الحل",
-   "description": "الحل بصيغة .slnx (أو .sln على SDK أقدم) ويحتوي أربعة مشاريع (Domain وApplication وInfrastructure وApi) والاعتماد بينها في اتجاه واحد صحيح. Domain بدون أي PackageReference. طبقة Application منظّمة في مجلدات حسب الميزة (Vertical Slices) وليس حسب النوع التقني. كل طبقة لها دالة تسجيل DI خاصة بها (AddApplicationServices وAddInfrastructureServices) تُستدعى من Program.cs. الحل يُبنى بدون أخطاء (dotnet build).",
+   "title": "Clean Architecture and Solution Organization",
+   "description": "The solution uses the .slnx format (or .sln on an older SDK) and contains four projects (Domain, Application, Infrastructure, and Api) with unidirectional dependencies in the correct direction. Domain has zero PackageReference entries. The Application layer is organized into feature folders (Vertical Slices) rather than by technical type. Each layer has its own DI registration method (AddApplicationServices and AddInfrastructureServices) called from Program.cs. The solution builds with zero errors (dotnet build).",
    "maxPoints": 10
   },
   {
-   "title": "نموذج المجال الغني والقواعد الثابتة",
-   "description": "الكيانات الثمانية والـ Enums الثلاثة موجودة بأسماء الحقول المطلوبة (المعرّفات Guid والأوقات UTC). الـ setters خاصة، والإنشاء والتعديل يتمّان عبر Factory Methods ودوال الكيان. الكلاس الأساسي ValueObject يقارن بالقيمة، ومعه Value Object واحد على الأقل مثل Money. القواعد العشر في SRS §4.5 كلها ممثّلة في الـ Domain: داخل الكيانات، والقاعدة 10 كدالة على الكيان (مثل Category.EnsureCanBeDeleted) تستقبل نتيجة الاستعلام من الـ handler، والقاعدة 9 عبر ISoftDeletable والحذف الناعم. لا يوجد DateTime.UtcNow داخل الـ Domain؛ الوقت يُمرَّر كمعامل.",
+   "title": "Rich Domain Model and Invariants",
+   "description": "All eight entities and three enums exist with the required field names (Guid IDs and UTC timestamps). Setters are private, and creation and modification happen through factory methods and entity methods. The ValueObject base class compares by value, accompanied by at least one Value Object such as Money. All ten invariants in SRS §4.5 are modeled in the Domain: inside the entities, invariant 10 as an entity method (such as Category.EnsureCanBeDeleted) that receives the query result from the handler, and invariant 9 via ISoftDeletable and soft delete. DateTime.UtcNow is never called inside the Domain; the current time is passed as a parameter.",
    "maxPoints": 12
   },
   {
-   "title": "طبقة البيانات: EF Core وFluent API وMigrations",
-   "description": "يوجد AppDbContext، وكل كيان له كلاس IEntityTypeConfiguration مستقل يُسجَّل عبر ApplyConfigurationsFromAssembly، ولا تُستخدم Data Annotations للـ mapping. العلاقات صحيحة (Category ← Campaigns مع Restrict، وCampaign ← Donations، وUser ← Campaigns وDonations)، ودقة الحقول المالية مضبوطة، والفهارس مناسبة. RowVersion مضبوط كـ concurrency token على Campaign. الـ Migration الأولى موجودة في المستودع وتُطبَّق بنجاح على SQL Server.",
+   "title": "Persistence Layer: EF Core, Fluent API, and Migrations",
+   "description": "AppDbContext exists, each entity has a separate IEntityTypeConfiguration class registered via ApplyConfigurationsFromAssembly, and Data Annotations are not used for mapping. Relationships are configured properly (Category → Campaigns with Restrict, Campaign → Donations, and User → Campaigns and Donations), decimal precision for monetary fields is configured, and appropriate indexes are defined. RowVersion is configured as a concurrency token on Campaign. The initial migration is committed to the repository and applies cleanly to SQL Server.",
    "maxPoints": 10
   },
   {
-   "title": "Generic Repository وUnit of Work وفصل القراءة عن الكتابة",
-   "description": "الواجهتان IGenericRepository<T> وIUnitOfWork معرّفتان في Application ومطبّقتان في Infrastructure. عمليات الكتابة تمر عبر الـ Repository والـ UoW، وتُحفظ بـ SaveChangesAsync واحد لكل عملية. استعلامات القراءة تستخدم AsNoTracking وتعمل projection مباشرة إلى DTO. الفلترة تتم على IQueryable داخل قاعدة البيانات وليس في الذاكرة.",
+   "title": "Generic Repository, Unit of Work, and Read/Write Separation",
+   "description": "The IGenericRepository<T> and IUnitOfWork interfaces are defined in Application and implemented in Infrastructure. Write operations go through the Repository and UoW and are persisted with a single SaveChangesAsync call per operation. Read queries use AsNoTracking and project directly to DTOs. Filtering executes on IQueryable in the database rather than in memory.",
    "maxPoints": 6
   },
   {
-   "title": "الحذف الناعم وفلاتر الاستعلام",
-   "description": "الواجهة ISoftDeletable موجودة، وSoftDeleteInterceptor يحوّل حالة Deleted إلى IsDeleted = true مع تسجيل DeletedAtUtc. الـ interceptor مسجّل على الـ DbContext. الفلتر HasQueryFilter يستبعد السجلات المحذوفة، ويُستخدم IgnoreQueryFilters فقط حيث يلزم (مثل التحقق من وجود حملات قبل حذف تصنيف).",
+   "title": "Soft Delete and Global Query Filters",
+   "description": "The ISoftDeletable interface exists, and SoftDeleteInterceptor converts Deleted state to IsDeleted = true while recording DeletedAtUtc. The interceptor is registered on DbContext. The HasQueryFilter excludes deleted records, and IgnoreQueryFilters is used only where necessary (such as checking for associated campaigns before deleting a category).",
    "maxPoints": 6
   },
   {
-   "title": "Options Pattern وحماية الأسرار",
-   "description": "الكلاسات JwtOptions وSeedAdminOptions وDonationOptions موجودة بقيمها الافتراضية المطلوبة، وعليها Data Annotations، ومسجّلة مع ValidateOnStart. التطبيق يتوقف فورًا عند بدء التشغيل إذا نقص إعداد مطلوب أو كان غير صالح. الخدمات تقرأ الإعدادات عبر IOptions<T> وليس IConfiguration مباشرة. appsettings.json يحتوي placeholders فقط، ولا يوجد أي سر (مفتاح JWT، كلمات مرور، connection string حقيقي) في المستودع أو في تاريخ Git.",
+   "title": "Options Pattern and Secrets Protection",
+   "description": "The JwtOptions, SeedAdminOptions, and DonationOptions classes exist with their required default values, have Data Annotations, and are registered with ValidateOnStart. The application fails fast on startup if any required setting is missing or invalid. Services read configuration via IOptions<T> rather than IConfiguration directly. appsettings.json contains placeholders only, and no secrets (JWT key, passwords, real connection string) exist in the repository or Git history.",
    "maxPoints": 8
   },
   {
-   "title": "الهوية والمصادقة: JWT وتدوير Refresh Token",
-   "description": "المتطلبات IDN-01 إلى IDN-12 تعمل: التسجيل بدور Donor، وسياسة كلمة المرور، ورفض البريد المكرر بدون حساسية لحالة الأحرف (Auth.EmailAlreadyExists — 409)، والدخول بـ Access Token عمره 15 دقيقة (قابل للضبط) يحتوي الـ claims المطلوبة. الـ Refresh Token يُخزَّن hash فقط، ويُلغى القديم ويُربط بالجديد عند كل تجديد، ولا يمكن إعادة استخدامه؛ الرمز غير الصالح أو المنتهي أو الملغى يُرجع Auth.RefreshTokenInvalid (401). تسجيل الخروج يلغي الرمز، وGET /auth/me يعمل، والمستخدم المعطَّل يُمنع من الدخول والتجديد (Auth.AccountDeactivated — 403). رسالة الخطأ موحّدة (Auth.InvalidCredentials) سواء كان البريد أو كلمة المرور خطأ. Admin البذر يُنشأ من الإعدادات (مع الأدوار الثلاثة)، ومستخدما التجربة (Campaign Manager وDonor) يُنشآن في بيئة التطوير فقط ببيانات من user-secrets، وPOST /admin/staff يعمل للـ Admin فقط. الـ endpoints المحمية تُرجع 401 بدون توكن.",
+   "title": "Identity & Authentication: JWT and Refresh Token Rotation",
+   "description": "Requirements IDN-01 to IDN-12 work: registration with the Donor role, password policy, case-insensitive duplicate email rejection (Auth.EmailAlreadyExists — 409), and login returning a 15-minute Access Token (configurable) containing the required claims. Refresh tokens are stored hashed only; on every refresh, the old token is revoked and linked to the new one and cannot be replayed; an invalid, expired, or revoked token returns Auth.RefreshTokenInvalid (401). Logout revokes the token, GET /auth/me works, and a deactivated user is blocked from logging in or refreshing (Auth.AccountDeactivated — 403). Login returns a generic error message (Auth.InvalidCredentials) whether the email or password is wrong. The seeded Admin is created from options (along with the three roles), the two development test users (Campaign Manager and Donor) are seeded in the development environment only using credentials from user-secrets, and POST /admin/staff works for Admin only. Protected endpoints return 401 without a token.",
    "maxPoints": 14
   },
   {
-   "title": "وحدة التصنيفات",
-   "description": "المتطلبات CAT-01 إلى CAT-04 تعمل: الإنشاء والتعديل والحذف للـ Admin فقط، والعرض متاح بدون تسجيل دخول. الاسم مطلوب بالعربي والإنجليزي، بحد أقصى 100 حرف، وفريد في كل لغة. حذف تصنيف مرتبط بحملات يُرجع 409 Category.HasCampaigns، والتصنيف غير الموجود يُرجع 404 Category.NotFound. الـ API كله (التصنيفات والهوية) يُرجع DTOs وليس الكيانات، والـ Controller رفيع بلا منطق عمل. بيانات التطوير تحتوي خمسة تصنيفات ثنائية اللغة.",
+   "title": "Categories Module",
+   "description": "Requirements CAT-01 to CAT-04 work: creating, updating, and deleting are Admin-only, while listing and retrieving are available anonymously. The name is required in both Arabic and English, max 100 characters, and unique per language. Deleting a category associated with campaigns returns 409 Category.HasCampaigns, and a missing category returns 404 Category.NotFound. The entire API (Categories and Identity) returns DTOs rather than entities, and controllers are thin with no business logic. Development seed data includes five bilingual categories.",
    "maxPoints": 8
   },
   {
-   "title": "توثيق الـ API والـ README والتسليم",
-   "description": "Scalar (أو Swagger على .NET 8) يعمل ويدعم إدخال Bearer Token لتجربة الـ endpoints المحمية. الـ README يشرح المتطلبات وأوامر الـ Migrations وضبط الأسرار عبر dotnet user-secrets وطريقة التجربة، ويحتوي قسم Design decisions يبرّر فصل القراءة عن الكتابة. الـ tag باسم sprint-1 موجود ويشير إلى آخر commit، وأي تصحيح يكون على tag باسم sprint-1-fix دون تحريك الأصلي.",
+   "title": "API Documentation, README, and Submission",
+   "description": "Scalar (or Swagger on .NET 8) works and supports entering a Bearer Token to test protected endpoints. The README documents prerequisites, Migrations commands, setting secrets via dotnet user-secrets, and testing instructions, and includes a Design decisions section justifying read/write separation. The sprint-1 tag exists and points to the final commit, and any fixes are tagged sprint-1-fix without moving the original tag.",
    "maxPoints": 6
   },
   {
-   "title": "شرح القرارات المعمارية والمقايضات",
-   "description": "قدرة الطالب في المراجعة على شرح سبب قراراته وبدائلها والمقايضات (trade-offs) بين كل قرار وبدائله، مثل: لماذا تمر الكتابة عبر Repository والقراءة لا، والفرق بين Entity وValue Object، ولماذا يُخزَّن الـ Refresh Token كـ hash، وأعمار الخدمات في DI، ولماذا يُمنع Task.Run حول استعلامات EF Core. تُقيَّم الإجابة بمدى الفهم وليس بالحفظ.",
+   "title": "Explaining Architectural Decisions and Trade-offs",
+   "description": "During review, the learner's ability to explain the rationale behind their decisions, alternatives, and trade-offs between each choice and its alternatives—such as why writes go through a Repository while reads do not, the difference between an Entity and a Value Object, why the Refresh Token is stored as a hash, DI service lifetimes, and why wrapping EF Core queries in Task.Run is prohibited. Answers are evaluated on comprehension rather than memorization.",
    "maxPoints": 20
   }
  ]
