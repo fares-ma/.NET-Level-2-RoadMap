@@ -20,7 +20,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "- **Duration:** 15 Days (07/11/2026 to 21/11/2026)\n- **Stand-up 1 (Day 5):** 11/11/2026 — Session Leader: **Asma ELhadidy**\n- **Stand-up 2 (Day 10):** 16/11/2026 — Session Leader: **Kareem Zein**\n- **Closing & Deadline (Day 15):** 21/11/2026 — Session Leader: **Mohamed Atef**\n- **Code Review & Corrections (Days 16–18):** 22/11/2026 to 24/11/2026\n- **Evaluation:** 100 Points"
+   "markdown": "- **Evaluation:** 100 Points"
   },
   {
    "type": "Callout",
@@ -637,7 +637,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "Submit your repository URL on **tawjeh.net** before **23:59 on 21/11/2026** (Day 15). Tag the latest commit and push it:"
+   "markdown": "Submit your repository URL on **tawjeh.net** before the sprint deadline announced on the platform. Tag the latest commit and push it:"
   },
   {
    "type": "Code",
@@ -648,21 +648,7 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "Fixes are allowed during the review window (**22/11/2026 to 24/11/2026** — Days 16–18). **Do not** move or force-push the `sprint-2` tag; instead tag the fixed commit as `sprint-2-fix` and push it: `git tag sprint-2-fix && git push origin sprint-2-fix`."
-  },
-  {
-   "type": "Heading",
-   "text": "🧮 Grading (100 Points)",
-   "level": 2
-  },
-  {
-   "type": "Paragraph",
-   "markdown": "| Part | Points | How |\n|---|---|---|\n| Automated | 40 | Build succeeds, `dotnet test` passes, the `sprint-2` tag exists, and CORE endpoints respond as specified (smoke check by the mentor) |\n| Checklist | 40 | The Definition of Done items above |\n| Explanation | 20 | One design-decision question (e.g., why reads bypass the Repository? why Result instead of exceptions?), or review of the decisions written in your README |"
-  },
-  {
-   "type": "Callout",
-   "variant": "Info",
-   "markdown": "BONUS tasks add capped extra credit on top of the 100 points, only when all CORE items pass."
+   "markdown": "Fixes are allowed during the Code Review & Corrections window announced on the platform. **Do not** move or force-push the `sprint-2` tag; instead tag the fixed commit as `sprint-2-fix` and push it: `git tag sprint-2-fix && git push origin sprint-2-fix`."
   },
   {
    "type": "Heading",

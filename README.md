@@ -5,7 +5,7 @@
 > **Core Project:** **DonationHub** (Donation Management & Charity Crowdfunding Platform)  
 > **Program Duration:** ~13 Weeks — 6 Sprints × 15 Days (23 Oct 2026 → 20 Jan 2027) + Final Defense (21–23 Jan 2027)  
 > **Total Effort:** ~180 Hours (~15 Hours / Week)  
-> **Evaluation:** 600 Points Total (100 Points / Sprint: 40 Automated + 40 Checklist + 20 Explanation)  
+> **Evaluation:** 600 Points Total (100 Points / Sprint: 80 Technical Implementation via Automated Tests & Code Checklist + 20 Explanation)  
 > **Requirements Source of Truth:** `resources/SRS-DonationHub.md` (v1.0) — every task below implements SRS requirement IDs; when in doubt, the SRS wins.  
 > **Target Framework:** .NET 10 (`net10.0` with `.slnx` solution format, compatible with .NET 8 / .NET 9)  
 > **Target Audience:** Junior to Intermediate .NET Developers transitioning to Production-Ready Backend Engineers  
@@ -225,7 +225,7 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 ### 🛠️ Tasks:
 - **Task 1 (Clean Architecture Solution Setup):** Create 4 projects (`Domain`, `Application`, `Infrastructure`, `Api`) with `.slnx`. Setup vertical feature slices.
   - ⭐ [Clean Architecture 10,000ft View — Essam Abdelnabi [Arabic] (19:37)](https://youtu.be/DRSZ6V-eKUY) (Layers at 09:18, request journey at 14:30)
-  - 🔄 [Beginner's Guide to Clean Architecture — Milan Jovanović](https://youtu.be/TQdLgzVk2T8) | [Clean Architecture & CQRS in Action (.NET 10) — Essam Abdelnabi (09:18 to 20:25)](https://youtu.be/v9fRFyg414k) | [Microsoft Learn — Common Web Application Architectures](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures) | 📘 [Clean Architecture in .NET](https://codewithmukesh.com/blog/clean-architecture-dotnet/)
+  - 🔄 [Beginner's Guide to Clean Architecture — Milan Jovanović](https://youtu.be/TQdLgzVk2T8) | [Clean Architecture & CQRS in Action (.NET 10) — Essam Abdelnabi (09:18 to 20:25)](https://youtu.be/v9fRFyg414k) | [Microsoft Learn — Common Web Application Architectures](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures) | 📘 [Clean Architecture in .NET](https://codewithmukesh.com/blog/clean-architecture-dotnet/) | 📘 [Migrate from .sln to .slnx](https://codewithmukesh.com/blog/slnx-solution-format-dotnet/)
 - **Task 2 (Domain Modeling & Invariants):** Model Entities (`ApplicationUser`, `RefreshToken`, `Category`, `Campaign`, `Donation`, `PaymentAttempt`, `ProcessedStripeEvent`, `IdempotencyRecord`) and Value Objects.
   - ⭐ [Tactical DDD — Mohamed El-Mehdi [Arabic] (33:40)](https://youtu.be/bHEDV62ATNM) (Entity at 09:00, ValueObject at 19:10, Aggregate Root at 24:55)
   - 🔄 [Value Objects in C# — Milan Jovanović (13:54)](https://youtu.be/P5CRea21R2E) | [What Is An Entity — Milan Jovanović](https://youtu.be/00tCda35Bvk) | [#003 Immutable Vs. Mutable — Essam Abdelnabi](https://youtu.be/bbdmknnwcP8)
@@ -238,7 +238,7 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
   - 🔄 [Transactions & Unit of Work — Milan Jovanović](https://youtu.be/25H84BXcr9M)
 - **Task 5 (Soft Delete & Global Query Filter):** `ISoftDeletable` + `SoftDeleteInterceptor` + `HasQueryFilter`.
   - ⭐ [#019 Interceptors EF Core — Essam Abdelnabi [Arabic] (22:02)](https://youtu.be/hEMCDxqURr8) (ISoftDeletable at 05:05, Interceptor at 10:40, HasQueryFilter at 20:10)
-  - 🔄 [Soft Deletes With EF Core — Milan Jovanović (12:39)](https://youtu.be/zwBaWiu-rF4) | [Global Query Filters — Milan Jovanović](https://youtu.be/q09fw5OCa_w) | 📘 [Soft Deletes](https://codewithmukesh.com/blog/soft-deletes-efcore/) | 📘 [EF Core Interceptors](https://codewithmukesh.com/blog/ef-core-interceptors/)
+  - 🔄 [Soft Deletes With EF Core — Milan Jovanović (12:39)](https://youtu.be/zwBaWiu-rF4) | [Global Query Filters — Milan Jovanović](https://youtu.be/q09fw5OCa_w) | 📘 [Soft Deletes](https://codewithmukesh.com/blog/soft-deletes-efcore/) | 📘 [EF Core Interceptors](https://codewithmukesh.com/blog/ef-core-interceptors/) | 📘 [Global Query Filters in EF Core](https://codewithmukesh.com/blog/global-query-filters-efcore/)
 - **Task 6 (Options Pattern & Startup Validation):** `JwtOptions`, `SeedAdminOptions`, `DonationOptions`, and `ValidateOnStart()`.
   - ⭐ [#11 Options Pattern in ASP.NET Core 9 — CodingClass [Arabic] (13:55)](https://youtu.be/S3ygXq94dLo)
   - 🔄 [Options Pattern in ASP.NET Core — Milan Jovanović](https://youtu.be/wxYt0motww0) | 📘 [Options Pattern](https://codewithmukesh.com/blog/options-pattern-in-aspnet-core/)
@@ -250,7 +250,7 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
   - 📘 [JWT Authentication](https://codewithmukesh.com/blog/jwt-authentication-in-aspnet-core/) | 📘 [Refresh Tokens](https://codewithmukesh.com/blog/refresh-tokens-in-aspnet-core/) | 📘 [Custom User Management](https://codewithmukesh.com/blog/custom-user-management-in-aspnet-core/) | 📘 [Role-Based Authorization](https://codewithmukesh.com/blog/role-based-authorization-in-aspnet-core/)
 - **Task 8 (Categories Module):** Bilingual Categories CRUD (Admin manage, public view, restrict delete on linked campaigns).
 - **Task 9 (API Documentation & Bearer Security):** Scalar OpenAPI with JWT Bearer scheme on .NET 10 (or Swashbuckle on .NET 8).
-  - ⭐ [No Swagger? Replace with SCALAR! — Israel Quiroz (12:15)](https://youtu.be/J8i1RWowjwc) (Bearer transformer at 09:50) | [Swagger is Gone! — Nick Chapsas (09:34)](https://youtu.be/8yI4gD1HruY) | [Swagger JWT — El-Helaly (10:44)](https://youtu.be/LGPiZcacG5g)
+  - ⭐ [No Swagger? Replace with SCALAR! — Israel Quiroz (12:15)](https://youtu.be/J8i1RWowjwc) (Bearer transformer at 09:50) | [Swagger is Gone! — Nick Chapsas (09:34)](https://youtu.be/8yI4gD1HruY) | [Swagger JWT — El-Helaly (10:44)](https://youtu.be/LGPiZcacG5g) | 📘 [Swagger is Dead — OpenAPI Alternatives in .NET](https://codewithmukesh.com/blog/dotnet-swagger-alternatives-openapi/)
 - **Task 10 (Repository Documentation):** Initial setup guide in `README.md`.
 
 ### 💡 Post-Sprint 1 Enrichment:
@@ -264,6 +264,9 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 - [Validate Options with FluentValidation — Nick Chapsas](https://youtu.be/I0YPTeCYvrE)
 - [What Is JWT and How Does It Work?](https://youtu.be/7Q17ubqLfaM)
 - [OAuth 2.0 and OpenID Connect in Plain English](https://youtu.be/t18YB3xDfXI)
+- 📘 [REST API Best Practices for .NET Developers](https://codewithmukesh.com/blog/restful-api-best-practices-for-dotnet-developers/)
+- 📘 [Middleware & the Request Pipeline in ASP.NET Core](https://codewithmukesh.com/blog/middlewares-in-aspnet-core/)
+- 📘 [Best Libraries for ASP.NET Core (12 Free NuGet Packages)](https://codewithmukesh.com/blog/best-libraries-for-aspnet-core/)
 
 ---
 
@@ -278,7 +281,7 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 ### 🛠️ Tasks:
 - **Task 1 (CQRS with MediatR [12.5.0]):** Refactor all use cases into commands/queries and thin controllers.
   - ⭐ [23 Add mediator pattern with CQRS — Ahmed Mohamady [Arabic] (14:05)](https://youtu.be/W7_zEf3eRQA)
-  - 🔄 [CQRS & MediatR in ASP.NET Core — Patrick God](https://youtu.be/BewUyKLZjtc) | [Clean Architecture & CQRS in Action (.NET 10) — Essam Abdelnabi (26:25 to 43:20)](https://youtu.be/v9fRFyg414k) | 📘 [CQRS and MediatR](https://codewithmukesh.com/blog/cqrs-and-mediatr-in-aspnet-core/) (⚠️ article uses MediatR 14.x — install `[12.5.0]`)
+  - 🔄 [CQRS & MediatR in ASP.NET Core — Patrick God](https://youtu.be/BewUyKLZjtc) | [Clean Architecture & CQRS in Action (.NET 10) — Essam Abdelnabi (26:25 to 43:20)](https://youtu.be/v9fRFyg414k) | 📘 [CQRS and MediatR](https://codewithmukesh.com/blog/cqrs-and-mediatr-in-aspnet-core/) (⚠️ article uses MediatR 14.x — install `[12.5.0]`) | 📘 [Tracking vs No-Tracking Queries in EF Core](https://codewithmukesh.com/blog/tracking-vs-no-tracking-queries-efcore/)
 - **Task 2 (CancellationToken & TimeProvider):** Forward cancellation token to EF Core and inject `TimeProvider`.
   - ⭐1 [Cancellation Token in .NET — Rahul Nath (18:42)](https://youtu.be/39gIPekzpjs) (Forwarding RequestAborted at 10:40–18:00)
   - ⭐2 [TimeProvider in .NET 8+ — Nick Chapsas (09:47)](https://youtu.be/xa6YusjCFF0) (DI registration at 04:55, mocking time at 05:25)
@@ -310,6 +313,8 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 - [MediatR Commercial Licensing Context — Nick Chapsas](https://youtu.be/bNuQ9xOG9eQ)
 - [CQRS Architectural Trade-offs — Mohamad Lawand](https://youtu.be/sUjNZAYTZwI)
 - [FluentValidation Deep Dive — Nick Chapsas](https://youtu.be/Ut6mRRFT2vM)
+- 📘 [CQRS Without MediatR (Custom Dispatcher)](https://codewithmukesh.com/blog/cqrs-without-mediatr/)
+- 📘 [Filters in ASP.NET Core](https://codewithmukesh.com/blog/filters-in-aspnet-core/)
 
 ---
 
@@ -327,7 +332,7 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 - **Task 1 (Resource-Based Authorization):** CampaignManager manages own campaigns only; 404 returned for unowned private resources.
   - ⭐1 [Resource-based authorization — Microsoft Learn](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/resourcebased)
   - ⭐2 [Who Owns This Order? — Code Story (01:46)](https://youtu.be/29x5WmcUNtM)
-  - 🔄 [ASP.NET Web API 8 Identity — Fullstack Dev (at 02:19:44)](https://youtu.be/tXUtSGvHMeg) | [14- Create Policy Part 1 — Mahmoud Hamza [Arabic]](https://youtu.be/tdMrNKPO39U) | [Custom Authorization Handler — Milan Jovanović](https://youtu.be/SZtZuvcMBA0) | 📘 [Policy-Based Authorization](https://codewithmukesh.com/blog/policy-based-authorization-in-aspnet-core/)
+  - 🔄 [ASP.NET Web API 8 Identity — Fullstack Dev (at 02:19:44)](https://youtu.be/tXUtSGvHMeg) | [14- Create Policy Part 1 — Mahmoud Hamza [Arabic]](https://youtu.be/tdMrNKPO39U) | [Custom Authorization Handler — Milan Jovanović](https://youtu.be/SZtZuvcMBA0) | 📘 [Policy-Based Authorization](https://codewithmukesh.com/blog/policy-based-authorization-in-aspnet-core/) | 📘 [Claims-Based Authorization in ASP.NET Core](https://codewithmukesh.com/blog/claims-based-authorization-in-aspnet-core/)
 - **Task 2 (Donations Core & Transactions):** DON-01 to DON-08 (incl. the temporary Admin `mark-succeeded` stub). Atomic EF Core transactions and concurrency-safe `RaisedAmount` for donation settlement.
   - ⭐ [#020 DB Transaction EF Core — Essam Abdelnabi [Arabic] (32:57)](https://youtu.be/m2RDSxGPuhs) (BeginTransaction at 19:15, Rollback at 24:40, Savepoints at 28:50)
   - 🔄 [Transactions in EF Core — Milan Jovanović](https://youtu.be/25H84BXcr9M) | [Avoid EF Core Transaction Mistakes — Milan](https://youtu.be/cUszBUYSFzw)
@@ -356,6 +361,9 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 - [Minimal APIs vs Controllers in ASP.NET Core — Milan Jovanović](https://youtu.be/gsAuFIhXz3g)
 - [Minimal API Versioning in ASP.NET Core](https://youtu.be/F9j3X6KuIpw)
 - [Building High-Performance APIs with FastEndpoints — Nick Chapsas](https://youtu.be/oqNu0xavAyc)
+- 📘 [HybridCache in ASP.NET Core](https://codewithmukesh.com/blog/hybridcache-in-aspnet-core/)
+- 📘 [Permission-Based Authorization in ASP.NET Core](https://codewithmukesh.com/blog/permission-based-authorization-in-aspnet-core/)
+- 📘 [Filtering by a Large List — Contains and the 2,100 Parameter Wall](https://codewithmukesh.com/blog/ef-core-contains-large-list/)
 
 ---
 
@@ -397,6 +405,7 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 - [TickerQ: Modern Background Job Queue in .NET](https://youtu.be/x0dfj95Cj0U)
 - [Zero-Allocation File Streaming in ASP.NET Core — Raw Coding](https://youtu.be/l69kUe1fNSc)
 - [Logging Crash Course in .NET](https://youtu.be/XrCxy0SNRqM)
+- 📘 [IHostedService vs BackgroundService in .NET](https://codewithmukesh.com/blog/ihostedservice-vs-backgroundservice-dotnet/)
 
 ---
 
@@ -406,7 +415,7 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 
 ### 📌 Prerequisites:
 1. **Docker Daemon Active:** Needed for the SQL Server test database (and for Testcontainers if you take the BONUS).
-2. **Stripe CLI Installed:** For local webhook forwarding (`stripe listen --forward-to ...`).
+2. **[Stripe CLI](https://docs.stripe.com/stripe-cli) Installed:** For local webhook forwarding (`stripe listen --forward-to ...`).
 
 ### 🛠️ Tasks:
 - **Task 1 (Stripe Checkout Session):** PAY-01 to PAY-03. Create session with `client_reference_id`, metadata, and minor units (cents).
@@ -438,7 +447,7 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 ### 🛠️ Tasks:
 - **Task 1 (Admin Analytics Dashboard & Aggregations):** High-performance reporting (`Sum`, `Count`, `GroupBy`) with `AsNoTracking` and Redis caching.
   - ⭐1 [EF Core Query Data: Projections & Aggregations — Essam Abdelnabi [Arabic] (1:11:58)](https://youtu.be/fb8j6CjyWWw)
-  - ⭐2 [Microsoft Learn — Complex Query Operators (GroupBy in EF Core)](https://learn.microsoft.com/en-us/ef/core/querying/complex-query-operators)
+  - ⭐2 [Microsoft Learn — Complex Query Operators (GroupBy in EF Core)](https://learn.microsoft.com/en-us/ef/core/querying/complex-query-operators) | 📘 [Tracking vs No-Tracking Queries in EF Core](https://codewithmukesh.com/blog/tracking-vs-no-tracking-queries-efcore/)
 - **Task 2 (Admin User & Staff Management):** ADM-01 to ADM-03 — list/filter users, activate/deactivate, manage staff (last active Admin protected). Admin campaign cancellation is BONUS (CMP-12).
 - **Task 3 (Production Multi-Stage Dockerfile):** Lean production runtime image running under non-root user.
   - ⭐ [Dockerize ASP.NET Core Application Part 12 — Codographia (27:04)](https://youtu.be/nINTOS2fhVY)
@@ -446,10 +455,10 @@ Students are split into 3 groups (**G1, G2, G3 ≈ 33% each**). Mentors swap rev
 - **Task 4 (Full Stack Orchestration via Docker Compose):** Spin up API, SQL Server, Redis, and Mailpit together.
   - ⭐ [Build a Complete .NET 10 Dev Environment with Docker Compose — Milan Jovanović (16:00)](https://youtu.be/svfxvsGfLlU)
   - 🔄 [Docker Compose Tutorial — Mosh Hamedani](https://youtu.be/HG6yIjZapSA)
-- **Task 5 (ASP.NET Core Health Checks):** Expose `/health`, `/health/ready`, and `/health/live` validating SQL and Redis connectivity.
+- **Task 5 (ASP.NET Core Health Checks):** Expose `/health/live` (process liveness) and `/health/ready` (SQL Server, Redis, and local file-storage write check).
   - ⭐ [How to Add Health Checks in ASP.NET Core — Milan Jovanović (11:51)](https://youtu.be/4abSfjdzqms)
   - 🔄 [Best Way to Add Health Checks in .NET — Nick Chapsas](https://youtu.be/p2faw9DCSsY) | 📘 [Health Checks in ASP.NET Core](https://codewithmukesh.com/blog/health-checks-in-aspnet-core/)
-- **Task 6 (Automated CI/CD Pipeline via GitHub Actions):** Automated build, unit tests, and integration tests pipeline on every PR.
+- **Task 6 (Automated CI Pipeline via GitHub Actions):** Automated build, unit tests, and integration tests pipeline on every push and pull request.
   - ⭐ [1. CI/CD Pipeline Using GitHub Actions — Coding-Future (23:29)](https://youtu.be/Zv-NJBRmoVU)
   - 🔄 [GitHub Actions Full Tutorial — TechWorld with Nana](https://youtu.be/R8_veQiYBjI) | [GitHub Actions Complete Course — Ahmed El-Fakharany [Arabic]](https://youtu.be/7gJFHjXscr8)
 - **Task 7 (Final Documentation & Architecture Guide):** Production architecture and setup guide in `README.md`.
@@ -489,13 +498,14 @@ During defense, the learner must not only explain **what** was built, but **why*
 ### 1. Real-Time Communication with SignalR
 - [SignalR Full Course — tutorialsEU](https://youtu.be/LEImpa77irI)
 - [Real-Time Web Apps with SignalR — Mohamad Lawand](https://youtu.be/pvi_ZS_PrSc)
-- [SignalR in ASP.NET Core Playlist — Ahmed Mohamady [Arabic]](https://youtube.com/playlist?list=PL62tSREI9C-e6nQ47brLj00iSGddiee73)
+- [المختصر المفيد في مكتبة SignalR مع ASP.NET Core — خالد السعداني [Arabic]](https://youtu.be/pfJkGBiH9Uo)
 
 ### 2. Cloud Native .NET Aspire & Microservices
 - [.NET Aspire Crash Course — Julio Casal](https://youtu.be/pk6FJfHhfq8)
 - [.NET Microservices Full Course — Les Jackson](https://youtu.be/DgVjEo3OGBI)
 - [Microservices Architecture with .NET — Julio Casal](https://youtu.be/ByYyk8eMG6c)
 - [Microservices with .NET — DotNetMastery](https://youtu.be/Nw4AZs1kLAs)
+- 📘 [Containerize .NET Without a Dockerfile](https://codewithmukesh.com/blog/containerize-dotnet-without-dockerfile/)
 - 📘 [When to Use Microservices (And When Not To) — codewithmukesh](https://codewithmukesh.com/blog/when-to-use-microservices/)
 - 📘 [Anti-Patterns to Avoid in .NET APIs — codewithmukesh](https://codewithmukesh.com/blog/anti-patterns-to-avoid-dotnet-apis/)
 - 📘 [.NET Web API Zero to Hero — full course (testing, observability & CI/CD lessons are being added)](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/)

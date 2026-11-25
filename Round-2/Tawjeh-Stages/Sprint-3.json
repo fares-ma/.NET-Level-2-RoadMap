@@ -20,7 +20,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "- **Duration:** 15 Days (22/11/2026 to 06/12/2026)\n- **Stand-up 1 (Day 5):** 26/11/2026 — Session Leader: **Kareem Zein**\n- **Stand-up 2 (Day 10):** 01/12/2026 — Session Leader: **Mohamed Atef**\n- **Closing & Deadline (Day 15):** 06/12/2026 — Session Leader: **Asma ELhadidy**\n- **Code Review & Corrections (Days 16–18):** 07/12/2026 to 09/12/2026\n- **Evaluation:** 100 Points"
+   "markdown": "- **Evaluation:** 100 Points"
   },
   {
    "type": "Callout",
@@ -592,7 +592,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "Submit your repository URL on **tawjeh.net** before **23:59 on 06/12/2026** (Day 15). Commit your latest work, then tag the final commit and push it:"
+   "markdown": "Submit your repository URL on **tawjeh.net** before the sprint deadline announced on the platform. Commit your latest work, then tag the final commit and push it:"
   },
   {
    "type": "Code",
@@ -603,16 +603,7 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "Fixes are allowed during the Code Review & Corrections window (**07/12/2026 to 09/12/2026**). **Do not move** or force-push the `sprint-3` tag; tag the fixed commit `sprint-3-fix` and push it: `git tag sprint-3-fix && git push origin sprint-3-fix`."
-  },
-  {
-   "type": "Heading",
-   "text": "🧮 Grading (100 Points)",
-   "level": 2
-  },
-  {
-   "type": "Paragraph",
-   "markdown": "| Part | Points | How |\n|---|---|---|\n| Automated | 40 | Build succeeds, `dotnet test` passes, the `sprint-3` tag exists, and CORE endpoints respond as specified (smoke check by the mentor) |\n| Checklist | 40 | The Definition of Done items above (structure, rules, security, README) |\n| Explanation | 20 | A short question on one of your design decisions (e.g., how did you make `RaisedAmount` concurrency-safe?), or a code review of the decisions written in your README |\n\nBONUS items add capped extra credit on top of the 100 points, only when all CORE items pass."
+   "markdown": "Fixes are allowed during the Code Review & Corrections window announced on the platform. **Do not move** or force-push the `sprint-3` tag; tag the fixed commit `sprint-3-fix` and push it: `git tag sprint-3-fix && git push origin sprint-3-fix`."
   },
   {
    "type": "Heading",
@@ -798,6 +789,11 @@
    "language": "csharp",
    "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Options;\nusing DonationHub.Application.Resources;\nusing DonationHub.Domain.Campaigns;\nusing DonationHub.Domain.Common;\nusing DonationHub.Domain.Donations;\nusing FluentValidation;\nusing MediatR;\nusing Microsoft.Extensions.Localization;\nusing Microsoft.Extensions.Options;\n\nnamespace DonationHub.Application.Features.Donations.Create;\n\npublic sealed record CreateDonationCommand(Guid CampaignId, decimal Amount) : IRequest<Result<DonationResponse>>;\n\npublic sealed class CreateDonationCommandValidator : AbstractValidator<CreateDonationCommand>\n{\n    public CreateDonationCommandValidator(IStringLocalizer<ValidationMessages> localizer)\n    {\n        RuleFor(x => x.CampaignId).NotEmpty();\n        RuleFor(x => x.Amount)\n            .GreaterThan(0).WithMessage(_ => localizer[\"Donation.AmountMustBePositive\"])\n            .PrecisionScale(18, 2, ignoreTrailingZeros: true).WithMessage(_ => localizer[\"Donation.AmountPrecision\"]);\n        // Range [Min, Max] is a business rule (422), not shape validation (400) → checked in handler/Domain\n    }\n}\n\npublic sealed class CreateDonationCommandHandler(\n    IUnitOfWork unitOfWork,\n    ICurrentUser currentUser,\n    IOptions<DonationOptions> options,\n    TimeProvider clock) : IRequestHandler<CreateDonationCommand, Result<DonationResponse>>\n{\n    public async Task<Result<DonationResponse>> Handle(CreateDonationCommand command, CancellationToken ct)\n    {\n        var campaign = await unitOfWork.Repository<Campaign>().GetByIdAsync(command.CampaignId, ct);\n        if (campaign is null)\n            return CampaignErrors.NotFound;\n\n        var now = clock.GetUtcNow().UtcDateTime;\n        var limits = options.Value;\n\n        // Expected errors are returned as Result (SRS §6.1); Domain remains the last line of defense\n        if (campaign.Status != CampaignStatus.Active || campaign.EndDate <= now)\n            return CampaignErrors.NotActive;                  // Invariant 3 → 409\n\n        if (command.Amount < limits.MinAmount || command.Amount > limits.MaxAmount)\n            return DonationErrors.AmountOutOfRange;           // Invariant 4 → 422\n\n        var donation = Donation.Create(campaign, currentUser.UserId, command.Amount,\n            limits.MinAmount, limits.MaxAmount, now);\n\n        await unitOfWork.Repository<Donation>().AddAsync(donation, ct);\n        await unitOfWork.SaveChangesAsync(ct);\n\n        return DonationResponse.From(donation);\n    }\n}",
    "filename": "DonationHub.Application/Features/Donations/Create/CreateDonationCommand.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Warning",
+   "markdown": "**Don't skip `ExceptionHandlerMiddleware`:** Although handlers check limits and campaign state and return `Result` errors first, `Donation.Create(...)` still throws `DomainException` as a domain safety net if called directly or out of order — keep `ExceptionHandlerMiddleware` mapping `DomainException` to `ProblemDetails`."
   },
   {
    "type": "Code",

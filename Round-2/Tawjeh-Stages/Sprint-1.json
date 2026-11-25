@@ -20,7 +20,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "- **Duration:** 15 Days (23/10/2026 to 06/11/2026)\n- **Stand-up 1 (Day 5):** 27/10/2026 — Session Leader: **Mohamed Atef**\n- **Stand-up 2 (Day 10):** 01/11/2026 — Session Leader: **Asma ELhadidy**\n- **Closing & Deadline (Day 15):** 06/11/2026 — Session Leader: **Kareem Zein**\n- **Code Review & Corrections (Days 16–18):** 07/11/2026 to 09/11/2026\n- **Evaluation:** 100 Points"
+   "markdown": "- **Evaluation:** 100 Points"
   },
   {
    "type": "Callout",
@@ -40,7 +40,7 @@
    "type": "Code",
    "language": "text",
    "code": "Domain Model (Entities + Invariants + Value Objects)\n        ↓\nClean Architecture (4 Layers + Dependency Inversion)\n        ↓\nVertical Slice Organization inside Application Layer\n        ↓\nEF Core Persistence (Fluent API + Migrations + Interceptors)\n        ↓\nSecure & Documented API (JWT Bearer + Scalar / Swagger)",
-   "filename": "snippet-1.Part1.txt"
+   "filename": "sprint-1-flow.txt"
   },
   {
    "type": "Heading",
@@ -94,21 +94,21 @@
    "title": "🔄 #038 Asynchronous Programming in C# — Essam Abdelnabi [Arabic] (43:48)",
    "url": "https://youtu.be/kDUDX3VJFEc",
    "kind": "video",
-   "description": "🔄 #038 Asynchronous Programming in C# — Essam Abdelnabi [Arabic] (43:48)"
+   "description": "Arabic deep dive into async/await mechanics, Tasks, and execution flow in C#."
   },
   {
    "type": "Resource",
    "title": "🔄 Microsoft Learn — Asynchronous programming with async and await",
    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/",
    "kind": "doc",
-   "description": "🔄 Microsoft Learn — Asynchronous programming with async and await"
+   "description": "Official Microsoft guide to Task-based asynchronous patterns and await behavior."
   },
   {
    "type": "Resource",
    "title": "🔄 Microsoft Learn — ASP.NET Core Performance Best Practices",
    "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/best-practices",
    "kind": "doc",
-   "description": "🔄 Microsoft Learn — ASP.NET Core Performance Best Practices"
+   "description": "Official ASP.NET Core guidance on avoiding thread starvation, blocking calls, and allocations."
   },
   {
    "type": "Heading",
@@ -136,7 +136,7 @@
    "title": "🔄 Solid In Practice Workshop — Essam Abdelnabi [Arabic] (54:21)",
    "url": "https://youtu.be/c_UnR7F900s",
    "kind": "video",
-   "description": "🔄 Solid In Practice Workshop — Essam Abdelnabi [Arabic] (54:21)"
+   "description": "Hands-on Arabic workshop applying SOLID principles to real C# code."
   },
   {
    "type": "Heading",
@@ -158,7 +158,7 @@
    "title": "🔄 #001 Pure Vs. Impure Function #linq — Essam Abdelnabi [Arabic] (27:19)",
    "url": "https://youtu.be/XLIqOBr7Cm0",
    "kind": "video",
-   "description": "🔄 #001 Pure Vs. Impure Function #linq — Essam Abdelnabi [Arabic] (27:19)"
+   "description": "Arabic explanation of pure vs. impure functions and side-effect-free LINQ queries."
   },
   {
    "type": "Resource",
@@ -204,7 +204,7 @@
    "type": "Code",
    "language": "text",
    "code": "DonationHub.Domain         (Zero external dependencies)\n        ↑\nDonationHub.Application    (References Domain only)\n        ↑\nDonationHub.Infrastructure (References Application & Domain to implement abstractions)\n        ↑\nDonationHub.Api            (Presentation layer & Composition Root — references Application & Infrastructure)",
-   "filename": "snippet-2.txt"
+   "filename": "dependency-direction.txt"
   },
   {
    "type": "Checklist",
@@ -229,7 +229,7 @@
    "title": "🔄 Beginner's Guide to Clean Architecture — Milan Jovanović",
    "url": "https://youtu.be/TQdLgzVk2T8",
    "kind": "video",
-   "description": "🔄 Beginner's Guide to Clean Architecture — Milan Jovanović"
+   "description": "Overview of Clean Architecture layers, dependency rules, and core trade-offs."
   },
   {
    "type": "Resource",
@@ -243,21 +243,21 @@
    "title": "🔄 Microsoft Learn — Common web application architectures",
    "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures",
    "kind": "doc",
-   "description": "🔄 Microsoft Learn — Common web application architectures"
+   "description": "Microsoft architecture reference comparing monolithic, N-layer, and Clean Architecture designs."
   },
   {
    "type": "Resource",
    "title": "📘 Clean Architecture in .NET — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/clean-architecture-dotnet/",
    "kind": "article",
-   "description": "📘 Clean Architecture in .NET — codewithmukesh"
+   "description": "Written .NET 10 guide to structuring Domain, Application, Infrastructure, and API layers."
   },
   {
    "type": "Resource",
    "title": "📘 Migrate from .sln to .slnx — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/slnx-solution-format-dotnet/",
    "kind": "article",
-   "description": "📘 Migrate from .sln to .slnx — codewithmukesh"
+   "description": "Step-by-step walkthrough for creating and migrating to the XML-free .slnx solution format."
   },
   {
    "type": "Heading",
@@ -311,14 +311,14 @@
    "title": "🔄 What Is An Entity — Milan Jovanović",
    "url": "https://youtu.be/00tCda35Bvk",
    "kind": "video",
-   "description": "🔄 What Is An Entity — Milan Jovanović"
+   "description": "How rich entities encapsulate identity, state transitions, and domain invariants in DDD."
   },
   {
    "type": "Resource",
    "title": "🔄 #003 Immutable Vs. Mutable — Essam Abdelnabi",
    "url": "https://youtu.be/bbdmknnwcP8",
    "kind": "video",
-   "description": "🔄 #003 Immutable Vs. Mutable — Essam Abdelnabi"
+   "description": "Arabic comparison of mutable vs. immutable types and how immutability protects invariants."
   },
   {
    "type": "Heading",
@@ -355,28 +355,28 @@
    "title": "🔄 Correct Way to Run Database Migrations — Nick Chapsas",
    "url": "https://youtu.be/StBf3-M5WdM",
    "kind": "video",
-   "description": "🔄 Correct Way to Run Database Migrations — Nick Chapsas"
+   "description": "Best practices for generating, reviewing, and applying EF Core migrations safely."
   },
   {
    "type": "Resource",
    "title": "📘 EF Core Relationships (1:1, 1:N, M:N) — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/ef-core-relationships-one-to-one-one-to-many-many-to-many/",
    "kind": "article",
-   "description": "📘 EF Core Relationships (1:1, 1:N, M:N) — codewithmukesh"
+   "description": "Fluent API examples for configuring 1:1, 1:N, and M:N entity relationships in EF Core."
   },
   {
    "type": "Resource",
    "title": "📘 Running Migrations in EF Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/running-migrations-efcore/",
    "kind": "article",
-   "description": "📘 Running Migrations in EF Core — codewithmukesh"
+   "description": "Practical guide to creating, updating, and scripting EF Core migrations cleanly."
   },
   {
    "type": "Resource",
    "title": "📘 Seeding Initial Data in EF Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/seeding-initial-data-efcore/",
    "kind": "article",
-   "description": "📘 Seeding Initial Data in EF Core — codewithmukesh"
+   "description": "Comparison of data seeding strategies in EF Core including startup async seeders."
   },
   {
    "type": "Heading",
@@ -409,7 +409,7 @@
    "title": "🔄 Transactions & Unit of Work — Milan Jovanović",
    "url": "https://youtu.be/25H84BXcr9M",
    "kind": "video",
-   "description": "🔄 Transactions & Unit of Work — Milan Jovanović"
+   "description": "How the Unit of Work coordinates repositories and atomic SaveChanges transactions in EF Core."
   },
   {
    "type": "Heading",
@@ -439,35 +439,35 @@
    "title": "🔄 Soft Deletes With EF Core — Milan Jovanović (12:39)",
    "url": "https://youtu.be/zwBaWiu-rF4",
    "kind": "video",
-   "description": "🔄 Soft Deletes With EF Core — Milan Jovanović (12:39)"
+   "description": "Implementing soft delete cleanly using EF Core SaveChanges interceptors."
   },
   {
    "type": "Resource",
    "title": "🔄 Global Query Filters — Milan Jovanović",
    "url": "https://youtu.be/q09fw5OCa_w",
    "kind": "video",
-   "description": "🔄 Global Query Filters — Milan Jovanović"
+   "description": "Using EF Core HasQueryFilter to hide soft-deleted rows automatically across queries."
   },
   {
    "type": "Resource",
    "title": "📘 Soft Deletes in EF Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/soft-deletes-efcore/",
    "kind": "article",
-   "description": "📘 Soft Deletes in EF Core — codewithmukesh"
+   "description": "Written guide to tracking deletion state and filtering deleted records in EF Core."
   },
   {
    "type": "Resource",
    "title": "📘 Global Query Filters in EF Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/global-query-filters-efcore/",
    "kind": "article",
-   "description": "📘 Global Query Filters in EF Core — codewithmukesh"
+   "description": "How to define HasQueryFilter rules and bypass them selectively with IgnoreQueryFilters."
   },
   {
    "type": "Resource",
    "title": "📘 EF Core Interceptors — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/ef-core-interceptors/",
    "kind": "article",
-   "description": "📘 EF Core Interceptors — codewithmukesh"
+   "description": "Intercepting DbContext SaveChanges events to automate cross-cutting persistence logic."
   },
   {
    "type": "Heading",
@@ -502,14 +502,14 @@
    "title": "🔄 Options Pattern in ASP.NET Core — Milan Jovanović",
    "url": "https://youtu.be/wxYt0motww0",
    "kind": "video",
-   "description": "🔄 Options Pattern in ASP.NET Core — Milan Jovanović"
+   "description": "Comparing IOptions, IOptionsSnapshot, and IOptionsMonitor with startup validation."
   },
   {
    "type": "Resource",
    "title": "📘 Options Pattern in ASP.NET Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/options-pattern-in-aspnet-core/",
    "kind": "article",
-   "description": "📘 Options Pattern in ASP.NET Core — codewithmukesh"
+   "description": "Written guide to binding strongly-typed configuration sections and calling ValidateOnStart."
   },
   {
    "type": "Heading",
@@ -556,7 +556,7 @@
    "title": "⭐1 (.NET 10 alternative) Auth made easy with ASP.NET Core Identity — Remigiusz Zalewski (14:50)",
    "url": "https://youtu.be/g9YSB4bXhes",
    "kind": "video",
-   "description": "⭐1 (.NET 10 alternative) Auth made easy with ASP.NET Core Identity — Remigiusz Zalewski (14:50)"
+   "description": "Quick .NET 10 walkthrough of ASP.NET Core Identity setup and token endpoints."
   },
   {
    "type": "Video",
@@ -569,14 +569,14 @@
    "title": "⭐2 06 Prepare Registration EndPoint — El-Helaly (12:48)",
    "url": "https://youtu.be/FqQjESC4Gvs",
    "kind": "video",
-   "description": "⭐2 06 Prepare Registration EndPoint — El-Helaly (12:48)"
+   "description": "Arabic walkthrough building the user registration DTO, validation, and handler."
   },
   {
    "type": "Resource",
    "title": "⭐2 07 Registration EndPoint Part 2 — El-Helaly (06:26)",
    "url": "https://youtu.be/PXKrGK4zjuM",
    "kind": "video",
-   "description": "⭐2 07 Registration EndPoint Part 2 — El-Helaly (06:26)"
+   "description": "Arabic continuation completing password creation, role assignment, and registration responses."
   },
   {
    "type": "Video",
@@ -589,14 +589,14 @@
    "title": "⭐3 7. Generate New JWT Using Refresh Token — El-Helaly (05:55)",
    "url": "https://youtu.be/jefxQ2xFM8I",
    "kind": "video",
-   "description": "⭐3 7. Generate New JWT Using Refresh Token — El-Helaly (05:55)"
+   "description": "Arabic tutorial issuing new JWT access tokens during refresh token rotation."
   },
   {
    "type": "Resource",
    "title": "🔄 Microsoft Learn — Identity API Endpoints (MapIdentityApi)",
    "url": "https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization",
    "kind": "doc",
-   "description": "🔄 Microsoft Learn — Identity API Endpoints (MapIdentityApi)"
+   "description": "Microsoft Learn reference for ASP.NET Core Identity endpoints and token-based auth."
   },
   {
    "type": "Resource",
@@ -610,42 +610,42 @@
    "title": "🔄 Master Refresh Tokens in ASP.NET Core — Milan Jovanović (17:19)",
    "url": "https://youtu.be/kR_9gRBeRMQ",
    "kind": "video",
-   "description": "🔄 Master Refresh Tokens in ASP.NET Core — Milan Jovanović (17:19)"
+   "description": "Designing secure refresh token storage, rotation, and revocation in ASP.NET Core."
   },
   {
    "type": "Resource",
    "title": "🔄 ASP.NET Web API 8 Identity — Fullstack Dev (2:23:36)",
    "url": "https://youtu.be/tXUtSGvHMeg",
    "kind": "video",
-   "description": "🔄 ASP.NET Web API 8 Identity — Fullstack Dev (2:23:36)"
+   "description": "End-to-end ASP.NET Core Identity, JWT, role seeding, and user management walkthrough."
   },
   {
    "type": "Resource",
    "title": "📘 JWT Authentication in ASP.NET Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/jwt-authentication-in-aspnet-core/",
    "kind": "article",
-   "description": "📘 JWT Authentication in ASP.NET Core — codewithmukesh"
+   "description": "Written guide to issuing, signing, and validating JWT Bearer tokens in ASP.NET Core."
   },
   {
    "type": "Resource",
    "title": "📘 Refresh Tokens in ASP.NET Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/refresh-tokens-in-aspnet-core/",
    "kind": "article",
-   "description": "📘 Refresh Tokens in ASP.NET Core — codewithmukesh"
+   "description": "Written walkthrough for implementing secure refresh token persistence and rotation."
   },
   {
    "type": "Resource",
    "title": "📘 Custom User Management in ASP.NET Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/custom-user-management-in-aspnet-core/",
    "kind": "article",
-   "description": "📘 Custom User Management in ASP.NET Core — codewithmukesh"
+   "description": "Extending IdentityUser with custom profile fields, claims, and admin management endpoints."
   },
   {
    "type": "Resource",
    "title": "📘 Role-Based Authorization in ASP.NET Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/role-based-authorization-in-aspnet-core/",
    "kind": "article",
-   "description": "📘 Role-Based Authorization in ASP.NET Core — codewithmukesh"
+   "description": "Configuring [Authorize(Roles = ...)] and role claims across protected endpoints."
   },
   {
    "type": "Heading",
@@ -698,21 +698,21 @@
    "title": "⭐ (Swagger alternative) Swagger is Gone in .NET 9! Replace It With This — Nick Chapsas (09:34)",
    "url": "https://youtu.be/8yI4gD1HruY",
    "kind": "video",
-   "description": "⭐ (Swagger alternative) Swagger is Gone in .NET 9! Replace It With This — Nick Chapsas (09:34)"
+   "description": "Why Swashbuckle was dropped from .NET 9+ templates and how built-in OpenAPI replaces it."
   },
   {
    "type": "Resource",
    "title": "⭐ (.NET 8) Swagger JWT Setup — Mohamed El-Helaly [Arabic] (10:44)",
    "url": "https://youtu.be/LGPiZcacG5g",
    "kind": "video",
-   "description": "⭐ (.NET 8) Swagger JWT Setup — Mohamed El-Helaly [Arabic] (10:44)"
+   "description": "Arabic guide to adding JWT Bearer authorization support inside Swagger UI (.NET 8)."
   },
   {
    "type": "Resource",
    "title": "📘 Swagger is Dead — OpenAPI Alternatives in .NET — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/dotnet-swagger-alternatives-openapi/",
    "kind": "article",
-   "description": "📘 Swagger is Dead — OpenAPI Alternatives in .NET — codewithmukesh"
+   "description": "Comparing Scalar, SwaggerUI, and Microsoft.AspNetCore.OpenApi for interactive API docs."
   },
   {
    "type": "Heading",
@@ -808,32 +808,18 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "Submit your repository URL on **tawjeh.net** before **23:59 on 06/11/2026** (Day 15). Commit your final work, then create and push the tag:"
+   "markdown": "Submit your repository URL on **tawjeh.net** before the sprint deadline announced on the platform. Commit your final work, then create and push the tag:"
   },
   {
    "type": "Code",
    "language": "bash",
    "code": "git tag sprint-1\ngit push origin sprint-1",
-   "filename": "snippet-3.Part1.sh"
+   "filename": "submit-sprint-1.sh"
   },
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "Fixes are allowed during the review window (**07/11/2026 to 09/11/2026**). **Do not move** or force-push the `sprint-1` tag; create a new `sprint-1-fix` tag on the fixed commit and push it: `git tag sprint-1-fix && git push origin sprint-1-fix`."
-  },
-  {
-   "type": "Heading",
-   "text": "🧮 Grading (100 Points)",
-   "level": 2
-  },
-  {
-   "type": "Paragraph",
-   "markdown": "| Part | Points | How |\n|---|---|---|\n| Automated | 40 | Build succeeds, `dotnet test` passes, tag `sprint-1` exists, and CORE endpoints respond as specified (mentor smoke check) |\n| Checklist | 40 | The \"Definition of Done\" items above (structure, rules, security, README) |\n| Explanation | 20 | A question on a design decision, or a review of the decisions written in your README |\n\nBonus items are extra credit on top of the 100 points (capped by the mentors) and count only when all CORE items pass."
-  },
-  {
-   "type": "Callout",
-   "variant": "Info",
-   "markdown": "**Regarding \"`dotnet test` passes\":** Unit tests are optional (BONUS) in Sprint 1. If your solution has no test project yet, this means the solution builds and the command finishes without any failures. If you added tests (BONUS), they must all pass."
+   "markdown": "Fixes are allowed during the Code Review & Corrections window announced on the platform. **Do not move** or force-push the `sprint-1` tag; create a new `sprint-1-fix` tag on the fixed commit and push it: `git tag sprint-1-fix && git push origin sprint-1-fix`."
   },
   {
    "type": "Heading",
@@ -845,91 +831,91 @@
    "title": "Clean Architecture vs. Vertical Slice — Derek Comartin",
    "url": "https://youtu.be/Az4Z0HJYl-U",
    "kind": "video",
-   "description": "Clean Architecture vs. Vertical Slice — Derek Comartin"
+   "description": "Architectural comparison contrasting Clean Architecture layers with Vertical Slice features."
   },
   {
    "type": "Resource",
    "title": "Simplest Vertical Slice Architecture — Milan Jovanović",
    "url": "https://youtu.be/dQdXHRkePr8",
    "kind": "video",
-   "description": "Simplest Vertical Slice Architecture — Milan Jovanović"
+   "description": "Introduction to organizing application handlers by use-case slice instead of technical layer."
   },
   {
    "type": "Resource",
    "title": "Project Setup & Clean Architecture Solution Layout",
    "url": "https://youtu.be/tLk4pZZtiDY",
    "kind": "video",
-   "description": "Project Setup & Clean Architecture Solution Layout"
+   "description": "Structuring a Clean Architecture .NET solution with clean project references from scratch."
   },
   {
    "type": "Resource",
    "title": "DDD Strategic Design 01 — Mohamed El-Mehdi [Arabic]",
    "url": "https://youtu.be/AV3yzj6Ck7k",
    "kind": "video",
-   "description": "DDD Strategic Design 01 — Mohamed El-Mehdi [Arabic]"
+   "description": "Arabic introduction to DDD strategic design, ubiquitous language, and domain modeling."
   },
   {
    "type": "Resource",
    "title": "DDD Bounded Contexts Explained",
    "url": "https://youtu.be/kLLsVT_53bw",
    "kind": "video",
-   "description": "DDD Bounded Contexts Explained"
+   "description": "Clear breakdown of Bounded Contexts and model boundaries in Domain-Driven Design."
   },
   {
    "type": "Resource",
    "title": "Specification Pattern in EF Core — Milan Jovanović",
    "url": "https://youtu.be/bEyBtpnCqVY",
    "kind": "video",
-   "description": "Specification Pattern in EF Core — Milan Jovanović"
+   "description": "Encapsulating reusable EF Core filtering and query criteria with the Specification Pattern."
   },
   {
    "type": "Resource",
    "title": "High-Performance Data Access with Dapper — Nick Chapsas",
    "url": "https://youtu.be/C763K-VGkfc",
    "kind": "video",
-   "description": "High-Performance Data Access with Dapper — Nick Chapsas"
+   "description": "Micro-ORM basics showing when and why Dapper complements EF Core for read-heavy queries."
   },
   {
    "type": "Resource",
    "title": "Validate Options with FluentValidation — Nick Chapsas",
    "url": "https://youtu.be/I0YPTeCYvrE",
    "kind": "video",
-   "description": "Validate Options with FluentValidation — Nick Chapsas"
+   "description": "Combining IOptions startup validation with FluentValidation rules for complex configs."
   },
   {
    "type": "Resource",
    "title": "What Is JWT and How Does It Work?",
    "url": "https://youtu.be/7Q17ubqLfaM",
    "kind": "video",
-   "description": "What Is JWT and How Does It Work?"
+   "description": "Visual explanation of JSON Web Token structure (header, payload, signature) and claims."
   },
   {
    "type": "Resource",
    "title": "OAuth 2.0 and OpenID Connect in Plain English",
    "url": "https://youtu.be/t18YB3xDfXI",
    "kind": "video",
-   "description": "OAuth 2.0 and OpenID Connect in Plain English"
+   "description": "Conceptual overview of OAuth 2.0 flows, scopes, and OpenID Connect identity tokens."
   },
   {
    "type": "Resource",
    "title": "📘 REST API Best Practices for .NET Developers — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/restful-api-best-practices-for-dotnet-developers/",
    "kind": "article",
-   "description": "📘 REST API Best Practices for .NET Developers — codewithmukesh"
+   "description": "Checklist of REST naming, HTTP status codes, versioning, and error response conventions."
   },
   {
    "type": "Resource",
    "title": "📘 Middleware & the Request Pipeline in ASP.NET Core — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/middlewares-in-aspnet-core/",
    "kind": "article",
-   "description": "📘 Middleware & the Request Pipeline in ASP.NET Core — codewithmukesh"
+   "description": "How the ASP.NET Core request pipeline works and how to build custom middleware."
   },
   {
    "type": "Resource",
    "title": "📘 Best Libraries for ASP.NET Core (12 Free NuGet Packages) — codewithmukesh",
    "url": "https://codewithmukesh.com/blog/best-libraries-for-aspnet-core/",
    "kind": "article",
-   "description": "📘 Best Libraries for ASP.NET Core (12 Free NuGet Packages) — codewithmukesh"
+   "description": "Curated overview of popular .NET ecosystem packages for validation, mapping, and resilience."
   }
  ],
  "solutionBlocks": [
@@ -970,7 +956,7 @@
    "type": "Code",
    "language": "text",
    "code": "src/\n├── DonationHub.Domain/\n│   ├── Common/            Entity, ValueObject, DomainException, ISoftDeletable\n│   ├── Campaigns/         Campaign, CampaignStatus\n│   ├── Categories/        Category\n│   ├── Donations/         Donation, DonationStatus, PaymentAttempt, ...\n│   ├── Identity/          RefreshToken\n│   └── ValueObjects/      Money\n├── DonationHub.Application/\n│   ├── Abstractions/      IGenericRepository<T>, IUnitOfWork, IReadDbContext, IAuthService\n│   ├── Common/            AppException, Roles\n│   ├── Features/\n│   │   ├── Auth/          Register/, Login/, Refresh/, Logout/, Me/, CreateStaff/\n│   │   └── Categories/    CreateCategory/, UpdateCategory/, DeleteCategory/, GetCategories/, GetCategoryById/\n│   └── DependencyInjection.cs\n├── DonationHub.Infrastructure/\n│   ├── Identity/          ApplicationUser, JwtTokenService, AuthService, RefreshTokenGenerator\n│   ├── Options/           JwtOptions, SeedAdminOptions, DonationOptions\n│   ├── Persistence/       AppDbContext, Configurations/, Interceptors/, Repositories/, Migrations/, DbSeeder\n│   └── DependencyInjection.cs\n└── DonationHub.Api/\n    ├── Controllers/       AuthController, AdminStaffController, CategoriesController\n    ├── Infrastructure/    AppExceptionHandler, BearerSecuritySchemeTransformer\n    └── Program.cs",
-   "filename": "snippet-1.Part2.txt"
+   "filename": "solution-layout.txt"
   },
   {
    "type": "Paragraph",
@@ -1100,7 +1086,7 @@
    "type": "Code",
    "language": "bash",
    "code": "dotnet tool install --global dotnet-ef\ndotnet add src/DonationHub.Api package Microsoft.EntityFrameworkCore.Design\n\ndotnet ef migrations add InitialCreate \\\n  --project src/DonationHub.Infrastructure \\\n  --startup-project src/DonationHub.Api \\\n  --output-dir Persistence/Migrations\n\ndotnet ef database update \\\n  --project src/DonationHub.Infrastructure \\\n  --startup-project src/DonationHub.Api",
-   "filename": "snippet-2.sh"
+   "filename": "ef-migrations.sh"
   },
   {
    "type": "Heading",
@@ -1190,7 +1176,7 @@
    "type": "Code",
    "language": "bash",
    "code": "cd src/DonationHub.Api\ndotnet user-secrets init\ndotnet user-secrets set \"Jwt:SecretKey\" \"<random-string-of-at-least-32-characters>\"\ndotnet user-secrets set \"SeedAdmin:Password\" \"<Strong-Passw0rd>\"\ndotnet user-secrets set \"ConnectionStrings:Default\" \"Server=localhost;Database=DonationHub;User Id=sa;Password=<password>;TrustServerCertificate=True\"",
-   "filename": "snippet-3.Part2.sh"
+   "filename": "user-secrets-setup.sh"
   },
   {
    "type": "Callout",
@@ -1273,7 +1259,7 @@
   {
    "type": "Code",
    "language": "csharp",
-   "code": "internal sealed class AppExceptionHandler(IProblemDetailsService problemDetailsService, ILogger<AppExceptionHandler> logger)\n    : IExceptionHandler\n{\n    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken ct)\n    {\n        var (status, code, title) = exception switch\n        {\n            AppException app => (app.StatusCode, app.Code, app.Message),\n            DomainException domain when domain.Code == \"Validation.Failed\" => (StatusCodes.Status400BadRequest, domain.Code, domain.Message),\n            DomainException domain when domain.Code is \"Campaign.NotActive\" or \"Donation.InvalidState\" or \"Category.HasCampaigns\"\n                => (StatusCodes.Status409Conflict, domain.Code, domain.Message),            // Per SRS §6.1 catalog\n            DomainException domain => (StatusCodes.Status422UnprocessableEntity, domain.Code, domain.Message),\n            _ => (StatusCodes.Status500InternalServerError, \"Server.Error\", \"An unexpected error occurred.\")\n        };\n\n        if (status == StatusCodes.Status500InternalServerError)\n            logger.LogError(exception, \"Unhandled exception\");   // Details in log only, never exposed to client\n\n        var problem = new ProblemDetails { Status = status, Title = title };\n        problem.Extensions[\"code\"] = code;\n        problem.Extensions[\"traceId\"] = httpContext.TraceIdentifier;\n\n        httpContext.Response.StatusCode = status;\n        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext\n        {\n            HttpContext = httpContext,\n            Exception = exception,\n            ProblemDetails = problem\n        });\n    }\n}",
+   "code": "using System.Diagnostics;\n\ninternal sealed class AppExceptionHandler(IProblemDetailsService problemDetailsService, ILogger<AppExceptionHandler> logger)\n    : IExceptionHandler\n{\n    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken ct)\n    {\n        var (status, code, title) = exception switch\n        {\n            AppException app => (app.StatusCode, app.Code, app.Message),\n            DomainException domain when domain.Code == \"Validation.Failed\" => (StatusCodes.Status400BadRequest, domain.Code, domain.Message),\n            DomainException domain when domain.Code is \"Campaign.NotActive\" or \"Donation.InvalidState\" or \"Category.HasCampaigns\"\n                => (StatusCodes.Status409Conflict, domain.Code, domain.Message),            // Per SRS §6.1 catalog\n            DomainException domain => (StatusCodes.Status422UnprocessableEntity, domain.Code, domain.Message),\n            _ => (StatusCodes.Status500InternalServerError, \"Server.Error\", \"An unexpected error occurred.\")\n        };\n\n        if (status == StatusCodes.Status500InternalServerError)\n            logger.LogError(exception, \"Unhandled exception\");   // Details in log only, never exposed to client\n\n        var problem = new ProblemDetails { Status = status, Title = title };\n        problem.Extensions[\"code\"] = code;\n        problem.Extensions[\"traceId\"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;\n\n        httpContext.Response.StatusCode = status;\n        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext\n        {\n            HttpContext = httpContext,\n            Exception = exception,\n            ProblemDetails = problem\n        });\n    }\n}",
    "filename": "DonationHub.Api/Infrastructure/AppExceptionHandler.cs"
   },
   {
@@ -1410,7 +1396,7 @@
    "type": "Code",
    "language": "csharp",
    "code": "if (stored is not null && stored.RevokedAt is not null)\n{\n    var current = stored;\n    while (current.ReplacedByTokenId is Guid nextId)\n    {\n        current = await db.RefreshTokens.SingleAsync(t => t.Id == nextId, ct);\n        current.Revoke(now);\n    }\n    await db.SaveChangesAsync(ct);\n    throw AuthErrors.RefreshTokenInvalid();\n}",
-   "filename": "snippet-4.cs"
+   "filename": "RefreshTokenReuseDetection.cs"
   },
   {
    "type": "Paragraph",

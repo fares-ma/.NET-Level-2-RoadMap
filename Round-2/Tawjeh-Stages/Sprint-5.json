@@ -20,7 +20,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "This sprint deals with **money**: any mistake here means a donor gets charged twice, or a campaign is credited with funds that were never actually paid. Therefore, correctness and security come before speed.\n\n- **Duration:** 15 Days (22/12/2026 to 05/01/2027)\n- **Stand-up 1 (Day 5):** 26/12/2026 — Session Leader: **Asma ELhadidy**\n- **Stand-up 2 (Day 10):** 31/12/2026 — Session Leader: **Kareem Zein**\n- **Closing & Deadline (Day 15):** 05/01/2027 — Session Leader: **Mohamed Atef**\n- **Code Review & Corrections (Days 16–18):** 06/01/2027 to 08/01/2027\n- **Evaluation:** 100 Points"
+   "markdown": "This sprint deals with **money**: any mistake here means a donor gets charged twice, or a campaign is credited with funds that were never actually paid. Therefore, correctness and security come before speed.\n\n- **Evaluation:** 100 Points"
   },
   {
    "type": "Callout",
@@ -88,7 +88,7 @@
    "items": [
     "Sign up for a free Stripe developer account and obtain **test mode** API keys only (`pk_test_...` and `sk_test_...`).",
     "Store the secret key and webhook secret using `dotnet user-secrets` (or environment variables). **Never** put them in `appsettings*.json`.",
-    "If you cannot create a Stripe test account in your country, tell your mentor **before Stand-up 1 (26/12/2026)**.",
+    "If you cannot create a Stripe test account in your country, tell your mentor **early in the sprint**.",
     "Download and install the [Stripe CLI](https://docs.stripe.com/stripe-cli).",
     "Authenticate via `stripe login`.",
     "Forward webhooks to your local API: `stripe listen --forward-to https://localhost:7001/api/v1/payments/webhook`"
@@ -114,7 +114,7 @@
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "If Stripe is unavailable in your country and you cannot create a test account, notify your mentor **before Stand-up 1 (26/12/2026)** so an alternative can be arranged — do not wait until the end of the sprint."
+   "markdown": "If Stripe is unavailable in your country and you cannot create a test account, notify your mentor **early in the sprint** so an alternative can be arranged — do not wait until the end of the sprint."
   },
   {
    "type": "Resource",
@@ -177,12 +177,12 @@
     "**PAY-01:** `POST /donations/{id}/checkout` (Owner only) creates a Stripe **Checkout Session** (`mode: payment`) for a `Pending` donation and returns the session's checkout URL.",
     "**PAY-02:** The session carries `client_reference_id` = `donation.Id.ToString()`.",
     "**PAY-02:** Metadata dictionary containing `donationId` and `campaignId`.",
-    "**PAY-02:** Single line item: Campaign Title as name, amount converted to **minor units** (cents), and currency from configuration.",
+    "**PAY-02:** Single line item: Campaign Title as name, amount converted to **minor units** (cents), and currency from `DonationOptions.DefaultCurrency`.",
     "**PAY-02:** Success and Cancel callback URLs defined in `StripeOptions`.",
     "**PAY-03:** Create and persist a `PaymentAttempt` for each session: `DonationId`, `StripeCheckoutSessionId`, `StripePaymentIntentId?`, `Amount`, `Status`, `CreatedAt`, `UpdatedAt`, `FailureCode?`.",
     "**PAY-03:** Status values: `Created`, `Succeeded`, `Failed`, `Expired`. A donor may start a new attempt for the same pending donation if a prior session was abandoned.",
     "**Payment status:** `GET /donations/{id}/payment-status` (Owner and Admin) returns the donation status and its latest payment attempt status. Another user's donation returns **404**.",
-    "**PAY-10:** Stripe **test mode** keys only. `StripeOptions` (secret key, webhook secret, currency, success/cancel URLs) is validated with `ValidateOnStart()`, and secret values come from `dotnet user-secrets` or environment variables, never from `appsettings*.json`.",
+    "**PAY-10:** Stripe **test mode** keys only. `StripeOptions` (secret key, webhook secret, success/cancel URLs; system currency lives in `DonationOptions.DefaultCurrency`) is validated with `ValidateOnStart()`, and secret values come from `dotnet user-secrets` or environment variables, never from `appsettings*.json`.",
     "**PAY-09:** Remove the temporary stub endpoint `POST /admin/donations/{id}/mark-succeeded` (DON-06) and its handler. From now on, **only the webhook** can complete a donation."
    ]
   },
@@ -192,7 +192,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "**Required Checkout session payload (PAY-02):**\n\n| Stripe Field | Value | Source |\n|---|---|---|\n| `mode` | `payment` | Constant |\n| `client_reference_id` | `donation.Id.ToString()` | Database |\n| `metadata` | `donationId`, `campaignId` | Database |\n| `line_items[0].price_data.product_data.name` | Campaign title | Database |\n| `line_items[0].price_data.unit_amount` | Amount in minor units (`long`) | `donation.Amount` |\n| `line_items[0].price_data.currency` | e.g., `usd` | `StripeOptions` |\n| `line_items[0].quantity` | `1` | Constant |\n| `success_url` / `cancel_url` | Frontend URLs | `StripeOptions` |"
+   "markdown": "**Required Checkout session payload (PAY-02):**\n\n| Stripe Field | Value | Source |\n|---|---|---|\n| `mode` | `payment` | Constant |\n| `client_reference_id` | `donation.Id.ToString()` | Database |\n| `metadata` | `donationId`, `campaignId` | Database |\n| `line_items[0].price_data.product_data.name` | Campaign title | Database |\n| `line_items[0].price_data.unit_amount` | Amount in minor units (`long`) | `donation.Amount` |\n| `line_items[0].price_data.currency` | e.g., `usd` | `DonationOptions.DefaultCurrency` |\n| `line_items[0].quantity` | `1` | Constant |\n| `success_url` / `cancel_url` | Frontend URLs | `StripeOptions` |"
   },
   {
    "type": "Paragraph",
@@ -371,7 +371,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "The README must include a **How to test Stripe locally** section explaining: creating a test mode account, storing keys with user-secrets, running `stripe listen`, copying the `whsec`, the three `stripe trigger` commands, and testing a full payment with the test card. This section will be used during grading."
+   "markdown": "The README must include a **How to test Stripe locally** section explaining: creating a test mode account, storing keys with user-secrets, running `stripe listen`, copying the `whsec`, the three `stripe trigger` commands, and testing a full payment with the test card. This section will be used during evaluation."
   },
   {
    "type": "Heading",
@@ -610,7 +610,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "Submit your repository URL on **tawjeh.net** before **23:59 on 05/01/2027** (Day 15). Commit your final work, then create and push the tag:"
+   "markdown": "Submit your repository URL on **tawjeh.net** before the sprint deadline announced on the platform. Commit your final work, then create and push the tag:"
   },
   {
    "type": "Code",
@@ -621,21 +621,12 @@
   {
    "type": "Callout",
    "variant": "Warning",
-   "markdown": "Fixes are allowed during the review window (**06/01/2027 to 08/01/2027**). **Do not move** or force-push the `sprint-5` tag; create a new `sprint-5-fix` tag on the fixed commit and push it: `git tag sprint-5-fix && git push origin sprint-5-fix`."
+   "markdown": "Fixes are allowed during the Code Review & Corrections window announced on the platform. **Do not move** or force-push the `sprint-5` tag; create a new `sprint-5-fix` tag on the fixed commit and push it: `git tag sprint-5-fix && git push origin sprint-5-fix`."
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "Reminder: If you cannot create a Stripe test account in your country, tell your mentor **before Stand-up 1 (26/12/2026)** — not on submission day."
-  },
-  {
-   "type": "Heading",
-   "text": "🧮 Grading (100 Points)",
-   "level": 2
-  },
-  {
-   "type": "Paragraph",
-   "markdown": "| Part | Points | How |\n|---|---|---|\n| Automated | 40 | Build succeeds, `dotnet test` passes, the `sprint-5` tag exists, CORE endpoints respond as specified (smoke check by the mentor) |\n| Checklist | 40 | The \"Definition of Done\" items above (structure, rules, security, README) |\n| Explanation | 20 | A short question on one of your design decisions, or a code review of the decisions written in your README |\n\nBONUS items add extra credit (capped by the mentors) on top of the 100 points, and only when all CORE items pass."
+   "markdown": "Reminder: If you cannot create a Stripe test account in your country, tell your mentor **early in the sprint** — not on submission day."
   },
   {
    "type": "Heading",
@@ -681,6 +672,11 @@
    "filename": "DonationHub.Domain/Donations/PaymentAttempt.cs"
   },
   {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**`DomainException` as safety net:** Handlers guard state transitions with `Result` errors first (`409 Donation.InvalidState`), while `PaymentAttempt` methods (`Create`, `MarkSucceeded`, `MarkFailed`, `MarkExpired`) still throw `DomainException` if invoked in an invalid state — caught globally by `ExceptionHandlerMiddleware`."
+  },
+  {
    "type": "Paragraph",
    "markdown": "**Minor units** are calculated in one place only, using `decimal` and `checked` so any overflow surfaces as an error instead of silently producing a wrong number:"
   },
@@ -702,7 +698,7 @@
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Application.Abstractions;\n\npublic sealed record CreateCheckoutSessionRequest(\n    Guid DonationId, Guid CampaignId, Guid PaymentAttemptId,\n    string CampaignTitle, long AmountMinor, string IdempotencyKey);\n\npublic sealed record CheckoutSessionCreated(string SessionId, string CheckoutUrl);\n\npublic interface IPaymentGateway\n{\n    string Currency { get; }   // From StripeOptions, lowercase e.g. \"usd\"\n    Task<CheckoutSessionCreated> CreateCheckoutSessionAsync(CreateCheckoutSessionRequest request, CancellationToken ct);\n}\n\npublic enum PaymentEventKind { CheckoutCompleted, CheckoutExpired, PaymentFailed, Unhandled }\n\n// Stripe.net-agnostic event: the handler operates on this type only\npublic sealed record PaymentWebhookEvent(\n    string EventId,\n    string Type,\n    PaymentEventKind Kind,\n    string? CheckoutSessionId = null,\n    string? ClientReferenceId = null,\n    string? PaymentIntentId = null,\n    string? PaymentStatus = null,\n    long? AmountTotalMinor = null,\n    string? Currency = null,\n    string? FailureCode = null,\n    string? PaymentAttemptId = null);\n\npublic interface IPaymentWebhookVerifier\n{\n    Result<PaymentWebhookEvent> Verify(string payload, string signatureHeader);\n}\n\n// Post-commit jobs: IBackgroundJobScheduler from Sprint 4 (EnqueueDonationReceipt / EnqueueGoalReachedEmail)",
+   "code": "using DonationHub.Domain.Common;\n\nnamespace DonationHub.Application.Abstractions;\n\npublic sealed record CreateCheckoutSessionRequest(\n    Guid DonationId, Guid CampaignId, Guid PaymentAttemptId,\n    string CampaignTitle, long AmountMinor, string IdempotencyKey);\n\npublic sealed record CheckoutSessionCreated(string SessionId, string CheckoutUrl);\n\npublic interface IPaymentGateway\n{\n    string Currency { get; }   // From DonationOptions.DefaultCurrency, lowercase e.g. \"usd\"\n    Task<CheckoutSessionCreated> CreateCheckoutSessionAsync(CreateCheckoutSessionRequest request, CancellationToken ct);\n}\n\npublic enum PaymentEventKind { CheckoutCompleted, CheckoutExpired, PaymentFailed, Unhandled }\n\n// Stripe.net-agnostic event: the handler operates on this type only\npublic sealed record PaymentWebhookEvent(\n    string EventId,\n    string Type,\n    PaymentEventKind Kind,\n    string? CheckoutSessionId = null,\n    string? ClientReferenceId = null,\n    string? PaymentIntentId = null,\n    string? PaymentStatus = null,\n    long? AmountTotalMinor = null,\n    string? Currency = null,\n    string? FailureCode = null,\n    string? PaymentAttemptId = null);\n\npublic interface IPaymentWebhookVerifier\n{\n    Result<PaymentWebhookEvent> Verify(string payload, string signatureHeader);\n}\n\n// Post-commit jobs: IBackgroundJobScheduler from Sprint 4 (EnqueueDonationReceipt / EnqueueGoalReachedEmail)",
    "filename": "DonationHub.Application/Abstractions/Payments.cs"
   },
   {
@@ -712,8 +708,13 @@
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using System.ComponentModel.DataAnnotations;\n\nnamespace DonationHub.Infrastructure.Options;\n\npublic sealed class StripeOptions\n{\n    public const string SectionName = \"Stripe\";\n\n    // PAY-10: test mode keys only\n    [Required]\n    [RegularExpression(\"^sk_test_[A-Za-z0-9_]+$\", ErrorMessage = \"Stripe:SecretKey must be a test-mode key (sk_test_...).\")]\n    public string SecretKey { get; init; } = string.Empty;\n\n    [Required]\n    [RegularExpression(\"^whsec_[A-Za-z0-9_]+$\", ErrorMessage = \"Stripe:WebhookSecret must start with whsec_.\")]\n    public string WebhookSecret { get; init; } = string.Empty;\n\n    [Required, StringLength(3, MinimumLength = 3)]\n    public string Currency { get; init; } = \"usd\";\n\n    [Required, Url] public string SuccessUrl { get; init; } = string.Empty;\n    [Required, Url] public string CancelUrl { get; init; } = string.Empty;\n\n    // Stripe requires the session to expire at least 30 minutes after creation\n    [Range(31, 1440)] public int SessionExpiryMinutes { get; init; } = 60;\n}",
+   "code": "using System.ComponentModel.DataAnnotations;\n\nnamespace DonationHub.Infrastructure.Options;\n\npublic sealed class StripeOptions\n{\n    public const string SectionName = \"Stripe\";\n\n    // PAY-10: test mode keys only\n    [Required]\n    [RegularExpression(\"^sk_test_[A-Za-z0-9_]+$\", ErrorMessage = \"Stripe:SecretKey must be a test-mode key (sk_test_...).\")]\n    public string SecretKey { get; init; } = string.Empty;\n\n    [Required]\n    [RegularExpression(\"^whsec_[A-Za-z0-9_]+$\", ErrorMessage = \"Stripe:WebhookSecret must start with whsec_.\")]\n    public string WebhookSecret { get; init; } = string.Empty;\n\n    [Required, Url] public string SuccessUrl { get; init; } = string.Empty;\n    [Required, Url] public string CancelUrl { get; init; } = string.Empty;\n\n    // Stripe requires the session to expire at least 30 minutes after creation\n    [Range(31, 1440)] public int SessionExpiryMinutes { get; init; } = 60;\n}",
    "filename": "DonationHub.Infrastructure/Options/StripeOptions.cs"
+  },
+  {
+   "type": "Callout",
+   "variant": "Info",
+   "markdown": "**Single system currency (`DonationOptions.DefaultCurrency`):** Currency is configured once in `DonationOptions.DefaultCurrency` from Sprint 3 (`USD` by default) instead of duplicating a `Currency` field inside `StripeOptions`. `StripePaymentGateway` injects `IOptions<DonationOptions>` and converts it to lowercase (e.g., `\"usd\"`) for Stripe."
   },
   {
    "type": "Code",
@@ -724,7 +725,7 @@
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Infrastructure.Options;\nusing Microsoft.Extensions.Options;\nusing Stripe;\nusing Stripe.Checkout;\n\nnamespace DonationHub.Infrastructure.Payments;\n\ninternal sealed class StripePaymentGateway(\n    IStripeClient stripeClient,\n    IOptions<StripeOptions> options,\n    TimeProvider timeProvider) : IPaymentGateway\n{\n    private readonly StripeOptions _options = options.Value;\n\n    public string Currency => _options.Currency.ToLowerInvariant();\n\n    public async Task<CheckoutSessionCreated> CreateCheckoutSessionAsync(\n        CreateCheckoutSessionRequest request, CancellationToken ct)\n    {\n        var metadata = new Dictionary<string, string>\n        {\n            [\"donationId\"] = request.DonationId.ToString(),\n            [\"campaignId\"] = request.CampaignId.ToString(),\n            [\"paymentAttemptId\"] = request.PaymentAttemptId.ToString()\n        };\n\n        var sessionOptions = new SessionCreateOptions\n        {\n            Mode = \"payment\",\n            ClientReferenceId = request.DonationId.ToString(),   // PAY-02\n            Metadata = metadata,\n            // payment_intent.payment_failed carries the PaymentIntent rather than the session, so copy metadata to it\n            PaymentIntentData = new SessionPaymentIntentDataOptions { Metadata = metadata },\n            LineItems =\n            [\n                new SessionLineItemOptions\n                {\n                    Quantity = 1,\n                    PriceData = new SessionLineItemPriceDataOptions\n                    {\n                        Currency = Currency,\n                        UnitAmount = request.AmountMinor,   // long in cents\n                        ProductData = new SessionLineItemPriceDataProductDataOptions\n                        {\n                            Name = request.CampaignTitle\n                        }\n                    }\n                }\n            ],\n            SuccessUrl = _options.SuccessUrl,\n            CancelUrl = _options.CancelUrl,\n            ExpiresAt = timeProvider.GetUtcNow().UtcDateTime.AddMinutes(_options.SessionExpiryMinutes)\n        };\n\n        var service = new SessionService(stripeClient);\n        var session = await service.CreateAsync(\n            sessionOptions,\n            new RequestOptions { IdempotencyKey = request.IdempotencyKey },  // Safe retry for the same attempt\n            ct);\n\n        return new CheckoutSessionCreated(session.Id, session.Url);\n    }\n}",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Application.Common.Options;\nusing DonationHub.Infrastructure.Options;\nusing Microsoft.Extensions.Options;\nusing Stripe;\nusing Stripe.Checkout;\n\nnamespace DonationHub.Infrastructure.Payments;\n\ninternal sealed class StripePaymentGateway(\n    IStripeClient stripeClient,\n    IOptions<StripeOptions> options,\n    IOptions<DonationOptions> donationOptions,\n    TimeProvider timeProvider) : IPaymentGateway\n{\n    private readonly StripeOptions _options = options.Value;\n\n    public string Currency => donationOptions.Value.DefaultCurrency.ToLowerInvariant();\n\n    public async Task<CheckoutSessionCreated> CreateCheckoutSessionAsync(\n        CreateCheckoutSessionRequest request, CancellationToken ct)\n    {\n        var metadata = new Dictionary<string, string>\n        {\n            [\"donationId\"] = request.DonationId.ToString(),\n            [\"campaignId\"] = request.CampaignId.ToString(),\n            [\"paymentAttemptId\"] = request.PaymentAttemptId.ToString()\n        };\n\n        var sessionOptions = new SessionCreateOptions\n        {\n            Mode = \"payment\",\n            ClientReferenceId = request.DonationId.ToString(),   // PAY-02\n            Metadata = metadata,\n            // payment_intent.payment_failed carries the PaymentIntent rather than the session, so copy metadata to it\n            PaymentIntentData = new SessionPaymentIntentDataOptions { Metadata = metadata },\n            LineItems =\n            [\n                new SessionLineItemOptions\n                {\n                    Quantity = 1,\n                    PriceData = new SessionLineItemPriceDataOptions\n                    {\n                        Currency = Currency,\n                        UnitAmount = request.AmountMinor,   // long in cents\n                        ProductData = new SessionLineItemPriceDataProductDataOptions\n                        {\n                            Name = request.CampaignTitle\n                        }\n                    }\n                }\n            ],\n            SuccessUrl = _options.SuccessUrl,\n            CancelUrl = _options.CancelUrl,\n            ExpiresAt = timeProvider.GetUtcNow().UtcDateTime.AddMinutes(_options.SessionExpiryMinutes)\n        };\n\n        var service = new SessionService(stripeClient);\n        var session = await service.CreateAsync(\n            sessionOptions,\n            new RequestOptions { IdempotencyKey = request.IdempotencyKey },  // Safe retry for the same attempt\n            ct);\n\n        return new CheckoutSessionCreated(session.Id, session.Url);\n    }\n}",
    "filename": "DonationHub.Infrastructure/Payments/StripePaymentGateway.cs"
   },
   {
@@ -951,7 +952,7 @@
   },
   {
    "type": "Paragraph",
-   "markdown": "**Strategy:** A single shared factory for all tests (`ICollectionFixture`) recreates the test database once at the start, and each test creates its own isolated data (unique email, new campaign) so tests never interfere with each other. We replace only four things: the gateway (no Stripe network calls), the email sender, the job scheduler (to assert what was enqueued), and `IDistributedCache` with an in-memory implementation instead of Redis. Every option with `ValidateOnStart` is configured via `UseSetting` because `Testing` does not load user-secrets or the Development settings file. **Signature verification stays real** — which is precisely what we want to test."
+   "markdown": "**Strategy:** A single shared factory for all tests (`ICollectionFixture`) recreates the test database once at the start, and each test creates its own isolated data (unique email, new campaign) so tests never interfere with each other. We replace only four things: the gateway (no Stripe network calls), the email sender, the job scheduler (to assert what was enqueued), and `IDistributedCache` with an in-memory implementation instead of Redis. Every option with `ValidateOnStart` (and `ConnectionStrings:Default`) is set as `__` environment variables in the factory constructor because `Testing` does not load user-secrets or the Development settings file, and `AddInfrastructureServices` reads configuration before `UseSetting`/`ConfigureAppConfiguration` apply. **Signature verification stays real** — which is precisely what we want to test."
   },
   {
    "type": "Code",
@@ -967,13 +968,13 @@
   {
    "type": "Code",
    "language": "csharp",
-   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Infrastructure.Persistence;\nusing Microsoft.AspNetCore.Hosting;\nusing Microsoft.AspNetCore.Mvc.Testing;\nusing Microsoft.AspNetCore.TestHost;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.Extensions.Caching.Distributed;\nusing Microsoft.Extensions.DependencyInjection;\nusing Microsoft.Extensions.DependencyInjection.Extensions;\n\nnamespace DonationHub.Api.IntegrationTests.Infrastructure;\n\npublic sealed class DonationHubApiFactory : WebApplicationFactory<Program>, IAsyncLifetime\n{\n    public const string WebhookSecret = \"whsec_integration_tests_secret\";\n    public const string AdminEmail = \"admin@tests.local\";\n    public const string AdminPassword = \"Admin#12345\";\n\n    private static readonly string ConnectionString =\n        Environment.GetEnvironmentVariable(\"DONATIONHUB_TEST_SQL\")\n        ?? @\"Server=(localdb)\\MSSQLLocalDB;Database=DonationHub_IntegrationTests;Trusted_Connection=True;TrustServerCertificate=True\";\n\n    public FakeEmailService Emails { get; } = new();\n    public FakeBackgroundJobs Jobs { get; } = new();\n\n    protected override void ConfigureWebHost(IWebHostBuilder builder)\n    {\n        builder.UseEnvironment(\"Testing\");\n\n        builder.UseSetting(\"ConnectionStrings:Default\", ConnectionString);\n        builder.UseSetting(\"Stripe:SecretKey\", \"sk_test_integration_fake\");   // Unused: the gateway is faked\n        builder.UseSetting(\"Stripe:WebhookSecret\", WebhookSecret);\n        builder.UseSetting(\"Stripe:Currency\", \"usd\");\n        builder.UseSetting(\"Stripe:SuccessUrl\", \"https://localhost/payment/success\");\n        builder.UseSetting(\"Stripe:CancelUrl\", \"https://localhost/payment/cancel\");\n        builder.UseSetting(\"SeedAdmin:Email\", AdminEmail);\n        builder.UseSetting(\"SeedAdmin:Password\", AdminPassword);\n        builder.UseSetting(\"SeedAdmin:FullName\", \"Test Admin\");\n        builder.UseSetting(\"Jwt:SecretKey\", \"integration-tests-signing-key-with-32-plus-chars\");\n        // ValidateOnStart options from Sprint 3–4 (Testing does not load user-secrets or the Development file)\n        builder.UseSetting(\"Email:Host\", \"localhost\");   // No SMTP: jobs and email are faked\n        builder.UseSetting(\"Email:SenderEmail\", \"no-reply@tests.local\");\n        builder.UseSetting(\"Email:SenderName\", \"DonationHub Tests\");\n        builder.UseSetting(\"HangfireDashboard:Username\", \"tests\");\n        builder.UseSetting(\"HangfireDashboard:Password\", \"integration-tests-pass\");\n        builder.UseSetting(\"ConnectionStrings:Redis\", \"localhost:6379\");   // Required only by registration; cache is in-memory\n\n        builder.ConfigureTestServices(services =>\n        {\n            services.RemoveAll<IPaymentGateway>();\n            services.AddSingleton<IPaymentGateway, FakePaymentGateway>();\n\n            services.RemoveAll<IEmailService>();\n            services.AddSingleton<IEmailService>(Emails);\n\n            services.RemoveAll<IBackgroundJobScheduler>();\n            services.AddSingleton<IBackgroundJobScheduler>(Jobs);\n\n            services.RemoveAll<IDistributedCache>();   // No Redis in tests\n            services.AddDistributedMemoryCache();\n        });\n    }\n\n    // Runs before the first access to Services/CreateClient, i.e. before the host starts and runs seeding\n    public async Task InitializeAsync()\n    {\n        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(ConnectionString).Options;\n        await using var db = new AppDbContext(options);\n        await db.Database.EnsureDeletedAsync();\n        await db.Database.MigrateAsync();   // Same real migrations — never EnsureCreated\n    }\n\n    Task IAsyncLifetime.DisposeAsync() => Task.CompletedTask;   // Leave DB for inspection; recreated on next run\n\n    public async Task<T> QueryDbAsync<T>(Func<AppDbContext, Task<T>> query)\n    {\n        using var scope = Services.CreateScope();\n        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();\n        return await query(db);\n    }\n}\n\n[CollectionDefinition(Name)]\npublic sealed class ApiCollection : ICollectionFixture<DonationHubApiFactory>\n{\n    public const string Name = \"api\";\n}",
+   "code": "using DonationHub.Application.Abstractions;\nusing DonationHub.Infrastructure.Persistence;\nusing Microsoft.AspNetCore.Hosting;\nusing Microsoft.AspNetCore.Mvc.Testing;\nusing Microsoft.AspNetCore.TestHost;\nusing Microsoft.EntityFrameworkCore;\nusing Microsoft.Extensions.Caching.Distributed;\nusing Microsoft.Extensions.DependencyInjection;\nusing Microsoft.Extensions.DependencyInjection.Extensions;\n\nnamespace DonationHub.Api.IntegrationTests.Infrastructure;\n\npublic sealed class DonationHubApiFactory : WebApplicationFactory<Program>, IAsyncLifetime\n{\n    public const string WebhookSecret = \"whsec_integration_tests_secret\";\n    public const string AdminEmail = \"admin@tests.local\";\n    public const string AdminPassword = \"Admin#12345\";\n\n    private static readonly string ConnectionString =\n        Environment.GetEnvironmentVariable(\"DONATIONHUB_TEST_SQL\")\n        ?? @\"Server=(localdb)\\MSSQLLocalDB;Database=DonationHub_IntegrationTests;Trusted_Connection=True;TrustServerCertificate=True\";\n\n    private static readonly IReadOnlyDictionary<string, string> TestSettings = new Dictionary<string, string>\n    {\n        [\"ConnectionStrings:Default\"] = ConnectionString,\n        [\"Stripe:SecretKey\"] = \"sk_test_integration_fake\",   // Unused: the gateway is faked\n        [\"Stripe:WebhookSecret\"] = WebhookSecret,\n        [\"Stripe:SuccessUrl\"] = \"https://localhost/payment/success\",\n        [\"Stripe:CancelUrl\"] = \"https://localhost/payment/cancel\",\n        [\"SeedAdmin:Email\"] = AdminEmail,\n        [\"SeedAdmin:Password\"] = AdminPassword,\n        [\"SeedAdmin:FullName\"] = \"Test Admin\",\n        [\"Jwt:SecretKey\"] = \"integration-tests-signing-key-with-32-plus-chars\",\n        // ValidateOnStart options from Sprint 3–4 (Testing does not load user-secrets or the Development file)\n        [\"Email:Host\"] = \"localhost\",   // No SMTP: jobs and email are faked\n        [\"Email:SenderEmail\"] = \"no-reply@tests.local\",\n        [\"Email:SenderName\"] = \"DonationHub Tests\",\n        [\"HangfireDashboard:Username\"] = \"tests\",\n        [\"HangfireDashboard:Password\"] = \"integration-tests-pass\",\n        [\"ConnectionStrings:Redis\"] = \"localhost:6379\"   // Required only by registration; cache is in-memory\n    };\n\n    public DonationHubApiFactory()\n    {\n        // Set process env vars BEFORE WebApplicationFactory builds the host so AddInfrastructureServices\n        // sees them during Program.cs service registration (before UseSetting/ConfigureAppConfiguration apply).\n        foreach (var (key, value) in TestSettings)\n            Environment.SetEnvironmentVariable(key.Replace(\":\", \"__\"), value);\n    }\n\n    public FakeEmailService Emails { get; } = new();\n    public FakeBackgroundJobs Jobs { get; } = new();\n\n    protected override void ConfigureWebHost(IWebHostBuilder builder)\n    {\n        builder.UseEnvironment(\"Testing\");\n\n        builder.ConfigureTestServices(services =>\n        {\n            services.RemoveAll<IPaymentGateway>();\n            services.AddSingleton<IPaymentGateway, FakePaymentGateway>();\n\n            services.RemoveAll<IEmailService>();\n            services.AddSingleton<IEmailService>(Emails);\n\n            services.RemoveAll<IBackgroundJobScheduler>();\n            services.AddSingleton<IBackgroundJobScheduler>(Jobs);\n\n            services.RemoveAll<IDistributedCache>();   // No Redis in tests\n            services.AddDistributedMemoryCache();\n        });\n    }\n\n    // Runs before the first access to Services/CreateClient, i.e. before the host starts and runs seeding\n    public async Task InitializeAsync()\n    {\n        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(ConnectionString).Options;\n        await using var db = new AppDbContext(options);\n        await db.Database.EnsureDeletedAsync();\n        await db.Database.MigrateAsync();   // Same real migrations — never EnsureCreated\n    }\n\n    Task IAsyncLifetime.DisposeAsync() => Task.CompletedTask;   // Leave DB for inspection; recreated on next run\n\n    public async Task<T> QueryDbAsync<T>(Func<AppDbContext, Task<T>> query)\n    {\n        using var scope = Services.CreateScope();\n        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();\n        return await query(db);\n    }\n}\n\n[CollectionDefinition(Name)]\npublic sealed class ApiCollection : ICollectionFixture<DonationHubApiFactory>\n{\n    public const string Name = \"api\";\n}",
    "filename": "tests/DonationHub.Api.IntegrationTests/Infrastructure/DonationHubApiFactory.cs"
   },
   {
    "type": "Callout",
    "variant": "Info",
-   "markdown": "**Checkpoints in your project:** (1) In .NET 10, the generated `Program` class is automatically public; in .NET 8/9, add `public partial class Program;` at the end of `Program.cs`. (2) If `Program.cs` reads a setting before `UseSetting` values take effect, use environment variables (`ConnectionStrings__Default`). (3) The `AppDbContext(DbContextOptions<AppDbContext>)` constructor must be accessible. (4) Raise the `auth` policy limits in the `Testing` environment, otherwise tests will hit 429."
+   "markdown": "**Checkpoints in your project:** (1) In .NET 10, the generated `Program` class is automatically public; in .NET 8/9, add `public partial class Program;` at the end of `Program.cs`. (2) Setting `__` environment variables in the factory constructor (such as `ConnectionStrings__Default`) ensures `AddInfrastructureServices` reads them during `Program.cs` registration before `UseSetting` or `ConfigureAppConfiguration` would run. (3) The `AppDbContext(DbContextOptions<AppDbContext>)` constructor must be accessible. (4) Raise the `auth` policy limits in the `Testing` environment, otherwise tests will hit 429."
   },
   {
    "type": "Paragraph",

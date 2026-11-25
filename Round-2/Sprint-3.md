@@ -267,6 +267,8 @@ Implement scalable querying across public and admin list endpoints (`GET /campai
 
 BONUS items add capped extra credit on top of the 100 points, only when all CORE items pass.
 
+> **How this maps to the platform rubric:** Automated (40) + Checklist (40) = **80 points** covering the technical criteria in [`Tawjeh-Stages/Sprint-3.rubric.json`](Tawjeh-Stages/Sprint-3.rubric.json), plus **20 points** for *Explaining Decisions and Trade-offs* = **100 points total**.
+
 ---
 
 ## 💡 Post-Sprint Enrichment

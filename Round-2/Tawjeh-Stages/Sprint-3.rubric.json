@@ -22,7 +22,7 @@
   },
   {
    "title": "Caching: In-Memory Then Redis with Invalidation (CMP-09)",
-   "description": "A custom cache abstraction in Application using the cache-aside pattern, implemented first with IMemoryCache and then with IDistributedCache via AddStackExchangeRedisCache, with expiration durations from CacheOptions (registered with ValidateOnStart). The Redis container (redis:alpine or valkey/valkey:alpine) runs and the application connects to it without runtime exceptions. Cached items: categories list, public campaign list pages and success stories, and campaign details GET /campaigns/{id} with sliding and absolute expiration. Keys include the language and all query parameters. Invalidation occurs immediately when a campaign is created, updated, deleted, or changes status, when a category changes, and when a donation succeeds. GET /donations/mine and any user-specific data are never cached under a shared key.",
+   "description": "A custom cache abstraction in Application using the cache-aside pattern, implemented first with IMemoryCache and then with IDistributedCache via AddStackExchangeRedisCache, with expiration durations from CacheOptions. The Redis container (redis:alpine or valkey/valkey:alpine) runs and the application connects to it without runtime exceptions. Cached items: categories list, public campaign list pages and success stories, and campaign details GET /campaigns/{id} with sliding and absolute expiration. Keys include the language and all query parameters. Invalidation occurs immediately when a campaign is created, updated, deleted, or changes status, when a category changes, and when a donation succeeds. GET /donations/mine and any user-specific data are never cached under a shared key.",
    "maxPoints": 9
   },
   {
@@ -32,7 +32,7 @@
   },
   {
    "title": "API Versioning & Rate Limiting",
-   "description": "Versioning is via the URL segment /api/v1/... using Asp.Versioning.Mvc, and Scalar displays one OpenAPI document per version. The built-in Rate Limiter is configured with named policies whose limits come from RateLimitOptions (registered with ValidateOnStart): global for all endpoints partitioned per IP (default 100 requests/minute), auth on login, register, and refresh (10 requests/minute per IP), and donations on donation creation (20 requests/minute per user). Exceeding the limit returns 429 Too Many Requests with a Retry-After header and a ProblemDetails body with code: Common.RateLimited. Middleware ordering is correct (UseRateLimiter after UseAuthentication so the user ID is available).",
+   "description": "Versioning is via the URL segment /api/v1/... using Asp.Versioning.Mvc, and Scalar displays one OpenAPI document per version. The built-in Rate Limiter is configured with named policies whose limits come from RateLimitOptions: global for all endpoints partitioned per IP (default 100 requests/minute), auth on login, register, and refresh (10 requests/minute per IP), and donations on donation creation (20 requests/minute per user). Exceeding the limit returns 429 Too Many Requests with a Retry-After header and a ProblemDetails body with code: Common.RateLimited. Middleware ordering is correct (UseRateLimiter after UseAuthentication so the user ID is available).",
    "maxPoints": 7
   },
   {
@@ -42,7 +42,7 @@
   },
   {
    "title": "Donation Unit Tests",
-   "description": "New unit tests covering donation invariants: amount range, campaign must be active, final states cannot change (Donation.InvalidState), and campaign completion when the goal is reached. Also tests for the handlers: creating a donation, fetching own donation with 404 for another user's donation, and mark-succeeded (status, ReceiptNumber, and RaisedAmount). The repository and TimeProvider are faked (Moq [4.18.4] and FakeTimeProvider), and pinned package versions are respected (FluentAssertions [7.0.0] and MediatR [12.5.0]). All tests pass with dotnet test.",
+   "description": "New unit tests covering donation invariants: amount range, campaign must be active, final states cannot change (Donation.InvalidState), and campaign completion when the goal is reached. Also tests for the handlers: creating a donation, fetching own donation with 404 for another user's donation, and mark-succeeded (status, ReceiptNumber, and RaisedAmount). The repository and TimeProvider are faked (Moq [4.18.4] and FakeTimeProvider), and the pinned test package versions are respected (FluentAssertions [7.0.0]). All tests pass with dotnet test.",
    "maxPoints": 6
   },
   {

@@ -6,7 +6,7 @@
 
 ## 🧭 كيف تقرأ هذا الدليل؟
 
-- ⭐ = المطلوب الأساسي لتنفيذ التاسك. 🔄 = بديل أو استزادة (اختياري).
+- ⭐ = المطلوب الأساسي لتنفيذ التاسك. 🔄 = بديل أو استزادة (اختياري). 📘 = مراجع مكتوبة مجانية من [دورة .NET Web API Zero to Hero (codewithmukesh)](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) (.NET 10 — تستخدم PostgreSQL و Minimal APIs، طبّق الأفكار على إعدادنا SQL Server + Thin Controllers).
 - العربي أولاً؛ الإنجليزي ⭐ فقط إذا لم يتوفر شرح عربي مباشر أو كان أقصر وأدق لإصدار .NET 8/9/10.
 - حين يتكون التاسك من عدة متطلبات في الـ SRS يُقسم إلى ⭐1 و ⭐2 حتى لا يسقط متطلب في خانة الاختياري.
 
@@ -52,6 +52,16 @@
 
 ## 📖 ما بعد الدورة (Post-Course Reading)
 
-- SignalR: tutorialsEU [`LEImpa77irI`](https://youtu.be/LEImpa77irI) · Mohamad Lawand [`pvi_ZS_PrSc`](https://youtu.be/pvi_ZS_PrSc) · قائمة أحمد محمدي بالعربي
+- SignalR: tutorialsEU [`LEImpa77irI`](https://youtu.be/LEImpa77irI) · Mohamad Lawand [`pvi_ZS_PrSc`](https://youtu.be/pvi_ZS_PrSc) · خالد السعداني (بالعربي — المختصر المفيد في مكتبة SignalR) [`pfJkGBiH9Uo`](https://youtu.be/pfJkGBiH9Uo)
 - .NET Aspire & Microservices: Aspire — Julio Casal [`pk6FJfHhfq8`](https://youtu.be/pk6FJfHhfq8) · Microservices — Les Jackson [`DgVjEo3OGBI`](https://youtu.be/DgVjEo3OGBI) · Julio Casal [`ByYyk8eMG6c`](https://youtu.be/ByYyk8eMG6c) · DotNetMastery [`Nw4AZs1kLAs`](https://youtu.be/Nw4AZs1kLAs)
 - كتب مقترحة: Clean Architecture، و Dependency Injection Principles, Practices, and Patterns، و Domain-Driven Design، و Software Architecture with C# 12 and .NET 8، و Designing Data-Intensive Applications.
+
+## 📄 ملفات PDF المرجعية
+
+المجلد يحتوي أيضاً على ملفات PDF مرجعية للخرائط والمصادر العامة في مسار `.NET`:
+
+- [`ASP.NET Roadmap V3 with resources.pdf`](ASP.NET%20Roadmap%20V3%20with%20resources.pdf) — الدليل الشامل لـ `ASP.NET CORE ROADMAP V3` (18 صفحة بالعربي: كورسات، قنوات، مشاريع، وكتب).
+- [`julios.net-developer-roadmap-2025.pdf`](julios.net-developer-roadmap-2025.pdf) — خريطة بصرية لمسار `.NET Backend Developer` من Julio Casal (`juliocasal.com`).
+- [`_net roadmap.pdf`](_net%20roadmap.pdf) — دليل عربي مختصر (9 صفحات) بروابط كورسات يوتيوب ويوديمي من HTML/CSS/JS وGit وC#/SQL/EF Core حتى MVC/API وCQRS/DDD/SignalR/Microservices/Docker.
+- [`1783244784588.pdf`](1783244784588.pdf) — شرح `Async/Await` و`I/O Completion Ports` و`ThreadPool` ولماذا `Task.Run` مع EF Core خطأ (11 صفحة بالعربي — النسخة المحلية من ملف Sprint 1 Prerequisite 2).
+- [`file_B3B91874-591C-40B5-9147-56923347900D.pdf`](file_B3B91874-591C-40B5-9147-56923347900D.pdf) — نسخة ثانية مكررة من `ASP.NET Roadmap V3 with resources.pdf` (18 صفحة — باختلافات بسيطة في التظليل الأصفر فقط).

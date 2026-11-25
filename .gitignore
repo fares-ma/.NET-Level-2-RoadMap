@@ -1,0 +1,28 @@
+# Build outputs & caches
+bin/
+obj/
+out/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# IDEs & OS
+.vs/
+.vscode/*
+!.vscode/extensions.json
+*.user
+*.suo
+*.sln.docstates
+.DS_Store
+Thumbs.db
+
+# Local secrets & overrides
+appsettings.Development.json
+secrets.json
+.env
+*.local
+
+# Logs
+*.log
+logs/

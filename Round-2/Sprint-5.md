@@ -77,11 +77,11 @@ Implement the checkout initiation workflow according to SRS §5.9:
 - **PAY-02:** The created session must carry:
   - `client_reference_id` = `donation.Id.ToString()`.
   - Metadata dictionary containing `donationId` and `campaignId`.
-  - Single line item: Campaign Title as name, amount converted to **minor units** (cents), and currency from configuration.
+  - Single line item: Campaign Title as name, amount converted to **minor units** (cents), and currency from `DonationOptions.DefaultCurrency`.
   - Success and Cancel callback URLs defined in `StripeOptions`.
 - **PAY-03:** Create and persist a `PaymentAttempt` for each created session (`DonationId`, `StripeCheckoutSessionId`, `StripePaymentIntentId?`, `Amount`, `Status`, `CreatedAt`, `UpdatedAt`, `FailureCode?`). Status values: `Created`, `Succeeded`, `Failed`, `Expired`. A donor may start a new attempt for the same pending donation if a prior session was abandoned.
 - **Payment status:** `GET /donations/{id}/payment-status` (Owner, Admin) returns the donation status and its latest payment attempt status. Another user's donation returns 404.
-- **PAY-10:** Use Stripe **test mode** keys only. `StripeOptions` (secret key, webhook secret, currency, success/cancel URLs) is validated with `ValidateOnStart()`; the secret values come from `dotnet user-secrets` or environment variables, never from `appsettings*.json`.
+- **PAY-10:** Use Stripe **test mode** keys only. `StripeOptions` (secret key, webhook secret, success/cancel URLs; system currency stays in `DonationOptions.DefaultCurrency`) is validated with `ValidateOnStart()`; the secret values come from `dotnet user-secrets` or environment variables, never from `appsettings*.json`.
 - **PAY-09:** Remove the temporary stub endpoint `POST /admin/donations/{id}/mark-succeeded` (DON-06) and its handler. From now on, only the webhook can complete a donation.
 
 **Resources:**
@@ -247,6 +247,8 @@ Create `DonationHub.Api.IntegrationTests` (SRS §6.13):
 | Explanation | 20 | A short question on one of your design decisions, or a code review of the decisions written in your README |
 
 BONUS items add extra credit (capped by the mentors) on top of the 100 points, and only when all CORE items pass.
+
+> **How this maps to the platform rubric:** Automated (40) + Checklist (40) = **80 points** covering the technical criteria in [`Tawjeh-Stages/Sprint-5.rubric.json`](Tawjeh-Stages/Sprint-5.rubric.json), plus **20 points** for *Explaining Decisions and Trade-offs* = **100 points total**.
 
 ---
 

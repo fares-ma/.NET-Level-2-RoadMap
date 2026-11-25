@@ -58,6 +58,8 @@ Send Email with Attachment via MailKit (Captured in Mailpit)
 
 ## 🛠️ Sprint Tasks
 
+> 📘 **Written references:** Links marked 📘 point to the free [.NET Web API Zero to Hero](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) course (.NET 10 articles + source code). Its samples use **PostgreSQL** and **Minimal APIs** — apply the ideas to our **SQL Server** + **thin Controllers** setup.
+
 All tasks below are **CORE** unless marked BONUS.
 
 ### Task 1 — Hangfire Infrastructure & Protected Dashboard
@@ -247,6 +249,8 @@ Implement logging according to SRS §6.10:
 | Explanation | 20 | Short questions to explain your decisions (e.g., "what happens if this job runs twice?"). |
 
 BONUS items earn capped extra credit only after all CORE items pass.
+
+> **How this maps to the platform rubric:** Automated (40) + Checklist (40) = **80 points** covering the technical criteria in [`Tawjeh-Stages/Sprint-4.rubric.json`](Tawjeh-Stages/Sprint-4.rubric.json), plus **20 points** for *Explaining Decisions and Trade-offs* = **100 points total**.
 
 ---
 

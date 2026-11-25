@@ -119,7 +119,7 @@
 ## الخطوة 28 (Idempotency)
 
 - 🎬 [`smXAgcdJzLc`](https://youtu.be/smXAgcdJzLc) — 14:26
-  - 01:50 قراءة هيدر X-Idempotency-Key، 03:13 بناء IdempotentCommandPipelineBehavior، 07:45 جدول IdempotentRequests.
+  - 01:50 قراءة هيدر `Idempotency-Key` (ملاحظة: الفيديو يستخدم اسم `X-Idempotency-Key`، بينما معيار مشروعنا في SRS §6.5 هو `Idempotency-Key`)، 03:13 بناء `IdempotentCommandPipelineBehavior`، 07:45 جدول `IdempotentRequests`.
 
 ## الخطوة 30 (Aggregations)
 

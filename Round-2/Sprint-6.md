@@ -43,6 +43,8 @@ Production Architecture Documentation & Final Project Defense
 
 ## 🛠️ Sprint Tasks
 
+> 📘 **Written references:** Links marked 📘 point to the free [.NET Web API Zero to Hero](https://codewithmukesh.com/courses/dotnet-webapi-zero-to-hero/) course (.NET 10 articles + source code). Its samples use **PostgreSQL** and **Minimal APIs** — apply the ideas to our **SQL Server** + **thin Controllers** setup.
+
 All tasks below are **CORE** unless marked BONUS.
 
 ### Task 1 — Admin Analytics Dashboard & EF Core Aggregations
@@ -146,7 +148,7 @@ Implement health monitoring endpoints according to SRS §6.11:
 
 ---
 
-### Task 6 — Automated CI/CD Pipeline via GitHub Actions
+### Task 6 — Automated CI Pipeline via GitHub Actions
 
 Create `.github/workflows/ci.yml` according to SRS §6.14:
 - Trigger on **every** `push` and `pull_request` (all branches).
@@ -248,6 +250,8 @@ Write a comprehensive, publication-ready `README.md` for DonationHub documenting
 - BONUS items add capped extra credit on top of the 100 points, only after all CORE items pass.
 - The final defense is evaluated separately using the 5 × 20% criteria in the Round 2 RoadMap.
 
+> **How this maps to the platform rubric:** Automated (40) + Checklist (40) = **80 points** covering the technical criteria in [`Tawjeh-Stages/Sprint-6.rubric.json`](Tawjeh-Stages/Sprint-6.rubric.json), plus **20 points** for *Explaining Decisions and Trade-offs* = **100 points total**.
+
 ---
 
 ## 📖 Post-Course Reading (Continuous Learning)
@@ -255,7 +259,7 @@ Write a comprehensive, publication-ready `README.md` for DonationHub documenting
 ### 1. Real-Time Communication with SignalR
 - [SignalR Full Course — tutorialsEU](https://youtu.be/LEImpa77irI)
 - [Real-Time Web Apps with SignalR — Mohamad Lawand](https://youtu.be/pvi_ZS_PrSc)
-- [SignalR in ASP.NET Core Playlist — Ahmed Mohamady [Arabic]](https://youtube.com/playlist?list=PL62tSREI9C-e6nQ47brLj00iSGddiee73)
+- [المختصر المفيد في مكتبة SignalR مع ASP.NET Core — خالد السعداني [Arabic]](https://youtu.be/pfJkGBiH9Uo)
 
 ### 2. Cloud Native .NET Aspire & Microservices
 - [.NET Aspire Crash Course — Julio Casal](https://youtu.be/pk6FJfHhfq8)
